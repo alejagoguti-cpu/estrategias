@@ -31,6 +31,16 @@ h1, h2, h3 { font-family: var(--titulo); font-weight: 300; text-transform: upper
 .rotulo { font-family: var(--dato); font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; color: var(--tinta-3); }
 .nota { font-size: .72rem; line-height: 1.5; color: var(--tinta-3); }
 ::selection { background: var(--acento); color: #000; }
+.rv { opacity: 0; transform: translateY(26px); transition: opacity .9s var(--curva), transform .9s var(--curva); }
+.visto .rv { opacity: 1; transform: none; }
+.ficha-esp { animation: flota 7s ease-in-out infinite alternate; }
+.ficha-esp:nth-of-type(2) { animation-duration: 5.5s; animation-delay: -2s; } .ficha-esp:nth-of-type(3) { animation-duration: 6.2s; animation-delay: -4s; } .ficha-esp:nth-of-type(4) { animation-duration: 4.8s; animation-delay: -1s; }
+@keyframes flota { from { translate: 0 0; } to { translate: 0 -14px; } }
+.portada-texto h1 { animation: aparece 1.4s var(--curva) both .2s; } .portada-texto p { animation: aparece 1.4s var(--curva) both .5s; } .portada-texto .boton { animation: aparece 1.4s var(--curva) both .8s; }
+@keyframes aparece { from { opacity: 0; transform: translateY(30px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+.boton span { display: inline-block; animation: baja 2s ease-in-out infinite; } @keyframes baja { 0%,100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+.rejilla:not(.modo-media):not(.modo-op) .mini canvas { animation: escanea 6s ease-in-out infinite; } @keyframes escanea { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.25) saturate(1.2); } }
+.mini:hover canvas { transform: scale(1.06); }
 
 /* ---------- cabecera ---------- */
 header { position: fixed; z-index: 30; inset: 0 0 auto 0; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px 40px 14px; background: linear-gradient(var(--campo-0) 30%, transparent); }

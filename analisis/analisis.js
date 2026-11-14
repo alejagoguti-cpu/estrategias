@@ -4,7 +4,13 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const $ = (s) => document.querySelector(s);
 const fmt = (n, d = 0) => n.toLocaleString('es-CO', { minimumFractionDigits: d, maximumFractionDigits: d });
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-let pausado = reduce;
+let pausado = false; // arranca animada siempre; el botón «Pausar movimiento» la detiene
+const entrada = {}; // momento en que cada sección se vio por primera vez
+const intro = (id, t, dur = 1600) => { if (!entrada[id]) return 0; return clamp01((t - entrada[id]) / dur); };
+const suave = (x) => 1 - Math.pow(1 - clamp01(x), 3);
+
+const obsEntrada = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { if (!entrada[e.target.id]) entrada[e.target.id] = performance.now(); e.target.classList.add('visto'); } }), { threshold: 0.12 });
+document.querySelectorAll('main > section, footer').forEach((s) => obsEntrada.observe(s));
 const DPR = Math.min(devicePixelRatio || 1, 2);
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
 const ajustarLienzo = (cv) => { const r = cv.getBoundingClientRect(); const w = Math.max(1, Math.round(r.width * DPR)); const h = Math.max(1, Math.round(r.height * DPR)); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } return [w, h]; };
@@ -100,10 +106,10 @@ function dibujarCampo(t) {
   const ih = h * 0.86; const iw = ih * (GW / GH) * (W.w / W.h) / (GW / GH); const ix = w * (innerWidth < 760 ? 0.5 : 0.66) - iw / 2; const iy = h * 0.07;
   for (const [x, y, r, g, b] of islaPts) { ccx.fillStyle = `rgba(${r * 0.7 + 30},${g * 0.8 + 50},${b * 0.8 + 60},0.35)`; ccx.fillRect(ix + x * iw, iy + y * ih, 1.6 * DPR, 1.6 * DPR); }
   for (const p of pts) {
-    const ang = Math.sin(p.x * 6 + t * 0.00007) * 2 + Math.cos(p.y * 5 - t * 0.00005) * 2;
-    if (!pausado) { p.x += Math.cos(ang) * 0.00006 * (0.4 + p.z); p.y += Math.sin(ang) * 0.00006 * (0.4 + p.z); if (p.x < 0) p.x += 1; if (p.x > 1) p.x -= 1; if (p.y < 0) p.y += 1; if (p.y > 1) p.y -= 1; }
+    const ang = Math.sin(p.x * 6 + t * 0.00025) * 2 + Math.cos(p.y * 5 - t * 0.0002) * 2;
+    if (!pausado) { p.x += Math.cos(ang) * 0.00028 * (0.4 + p.z); p.y += Math.sin(ang) * 0.00028 * (0.4 + p.z); if (p.x < 0) p.x += 1; if (p.x > 1) p.x -= 1; if (p.y < 0) p.y += 1; if (p.y > 1) p.y -= 1; }
     const cxp = p.x - 0.62; const cyp = p.y - 0.48; const dens = Math.exp(-(cxp * cxp * 3 + cyp * cyp * 4));
-    const a = (0.12 + 0.55 * dens) * (0.5 + 0.5 * p.r);
+    const a = (0.12 + 0.55 * dens) * (0.35 + 0.65 * (0.5 + 0.5 * Math.sin(t * 0.0025 * (0.5 + p.r) + p.r * 40)));
     const c = p.z > 0.82 ? `rgba(220,248,255,${a})` : p.z > 0.4 ? `rgba(73,198,229,${a * 0.85})` : `rgba(46,130,140,${a * 0.7})`;
     ccx.fillStyle = c; const s = (0.8 + p.z * 1.6) * DPR; ccx.fillRect(p.x * w, p.y * h, s, s);
   }
@@ -175,7 +181,9 @@ function dibujarTr(t) {
     const x = off[0] + (ii + 0.5) * esc; const y = off[1] + (jj + 0.5) * esc; if (x < -10 || y < -10 || x > w + 10 || y > h + 10) continue;
     const ya = aniosDe(k); const perdido = anio > 0 && ya <= anio; const inu = i >= 1 && capa.inundable.val(k) > 0.5;
     let c; if (perdido) c = `rgba(255,${Math.round(70 + ya * 3)},${Math.round(50 + ya * 2)},0.95)`; else if (inu) c = 'rgba(73,166,240,0.85)'; else c = `rgb(${sat[k * 3]},${sat[k * 3 + 1]},${sat[k * 3 + 2]})`;
-    trCx.fillStyle = c; trCx.beginPath(); trCx.arc(x, y, perdido ? rad * 1.25 : rad, 0, 6.283); trCx.fill();
+    const resp = pausado ? 1 : 0.82 + 0.18 * Math.sin(t * 0.002 + ii * 0.35 + jj * 0.22);
+    if (!perdido && i === 0 && ya < 12) { const ola = Math.max(0, Math.sin(t * 0.0026 - ya * 0.55)); if (ola > 0.4) c = `rgba(255,${Math.round(120 + 80 * (1 - ola))},${Math.round(90 + 60 * (1 - ola))},${0.35 + 0.6 * ola})`; }
+    trCx.fillStyle = c; trCx.beginPath(); trCx.arc(x, y, (perdido ? rad * 1.25 : rad) * resp, 0, 6.283); trCx.fill();
   }
   // sombra para que el texto se lea sobre los puntos
   const gr = trCx.createLinearGradient(0, h, 0, h * 0.45); gr.addColorStop(0, 'rgba(4,6,7,0.92)'); gr.addColorStop(1, 'rgba(4,6,7,0)'); trCx.fillStyle = gr; trCx.fillRect(0, h * 0.45, w, h * 0.55);
@@ -202,8 +210,8 @@ function dibujarTerr(t) {
   const r = tCv.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
   const M = MARCOS[tObj]; const k = pausado ? 1 : 0.08; tCam.cx += (M.cx - tCam.cx) * k; tCam.cy += (M.cy - tCam.cy) * k; tCam.ancho += (M.ancho - tCam.ancho) * k;
   const g = tGeom(); tCx.fillStyle = '#040607'; tCx.fillRect(0, 0, g.w, g.h);
-  const rad = Math.max(0.7, g.esc * 0.34);
-  for (let q = 0; q < N; q++) { if (!isla[q]) continue; const x = g.ox + ((q % GW) + 0.5) * g.esc; const y = g.oy + (Math.floor(q / GW) + 0.5) * g.esc; if (x < -5 || y < -5 || x > g.w + 5 || y > g.h + 5) continue; tCx.fillStyle = `rgb(${sat[q * 3] * 0.9 + 20},${sat[q * 3 + 1] * 0.9 + 26},${sat[q * 3 + 2] * 0.9 + 30})`; tCx.beginPath(); tCx.arc(x, y, rad, 0, 6.283); tCx.fill(); }
+  const rad = Math.max(0.7, g.esc * 0.34); const ia = intro('territorio', t, 2200);
+  for (let q = 0; q < N; q++) { if (!isla[q]) continue; const sem = (q * 2654435761 % 1000) / 1000; const e = suave((ia - sem * 0.45) / 0.55); let x = g.ox + ((q % GW) + 0.5) * g.esc; let y = g.oy + (Math.floor(q / GW) + 0.5) * g.esc; if (e < 1) { x += (Math.cos(sem * 40) * g.w * 0.6) * (1 - e); y += (Math.sin(sem * 57) * g.h * 0.6) * (1 - e); } tCx.globalAlpha = (0.25 + 0.75 * e) * (pausado ? 1 : 0.72 + 0.28 * Math.sin(t * 0.003 + sem * 30)); if (x < -5 || y < -5 || x > g.w + 5 || y > g.h + 5) continue; tCx.fillStyle = `rgb(${sat[q * 3] * 0.9 + 20},${sat[q * 3 + 1] * 0.9 + 26},${sat[q * 3 + 2] * 0.9 + 30})`; tCx.beginPath(); tCx.arc(x, y, rad, 0, 6.283); tCx.fill(); } tCx.globalAlpha = 1;
   claves.forEach((s) => { const [a, b] = sectCelda[s]; const x = g.ox + a * g.esc; const y = g.oy + b * g.esc; const pul = 0.5 + 0.5 * Math.sin(t * 0.004); tCx.strokeStyle = `rgba(255,107,74,${0.4 + 0.4 * pul})`; tCx.lineWidth = 1.5 * DPR; tCx.beginPath(); tCx.arc(x, y, (8 + 8 * pul) * DPR, 0, 6.283); tCx.stroke(); tCx.fillStyle = '#ff6b4a'; tCx.beginPath(); tCx.arc(x, y, 4.5 * DPR, 0, 6.283); tCx.fill(); tCx.font = `500 ${12 * DPR}px "Geist Mono"`; tCx.fillStyle = s === tHover || s === tObj ? '#e8eef0' : '#a7b3b8'; tCx.fillText(NOMBRE_SECT[s].toUpperCase(), x + 12 * DPR, y + 4 * DPR); });
 }
 
@@ -226,11 +234,11 @@ function dibujarPila() {
   const g = isoGeom(); pCx.setTransform(1, 0, 0, 1, 0, 0); pCx.clearRect(0, 0, g.w, g.h);
   document.querySelectorAll('[data-capa]').forEach((b) => (b.dataset.capa === pHover ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
   for (let i = orden.length - 1; i >= 0; i--) {
-    const c = orden[i]; lev[c.id] += ((c.id === pHover ? g.gap * 2.6 : 0) - lev[c.id]) * 0.18; const y0 = g.top + i * g.gap - lev[c.id];
+    const c = orden[i]; lev[c.id] += ((c.id === pHover ? g.gap * 2.6 : 0) - lev[c.id]) * 0.18; const ic = suave((intro('capas', performance.now(), 2600) - (orden.length - 1 - i) * 0.06) / 0.4); const flota = pausado ? 0 : Math.sin(performance.now() * 0.0016 + i * 0.7) * g.gap * 0.12; const y0 = g.top + i * g.gap - lev[c.id] - (1 - ic) * g.h * 0.6 + flota; pCx.globalAlpha = ic;
     pCx.setTransform(g.ux[0], g.ux[1], g.uy[0], g.uy[1], g.x0, y0);
-    pCx.imageSmoothingEnabled = false; pCx.globalAlpha = pHover && c.id !== pHover ? 0.55 : 1;
+    pCx.imageSmoothingEnabled = false; pCx.globalAlpha = ic * (pHover && c.id !== pHover ? 0.55 : 1);
     pCx.drawImage(c.lienzo, 0, 0);
-    pCx.globalAlpha = 1; pCx.strokeStyle = c.id === pHover ? 'rgba(255,107,74,.9)' : 'rgba(214,230,236,.22)'; pCx.lineWidth = 1 / Math.hypot(g.ux[0], g.ux[1]); pCx.strokeRect(0, 0, GW, GH);
+    pCx.globalAlpha = ic; pCx.strokeStyle = c.id === pHover ? 'rgba(255,107,74,.9)' : 'rgba(214,230,236,.22)'; pCx.lineWidth = 1 / Math.hypot(g.ux[0], g.ux[1]); pCx.strokeRect(0, 0, GW, GH);
   }
   pCx.setTransform(1, 0, 0, 1, 0, 0);
 }
@@ -264,7 +272,8 @@ const fils = [];
 const curva = (x0, y0, x1, y1) => `M${x0} ${y0} C${(x0 + x1) / 2} ${y0}, ${(x0 + x1) / 2} ${y1}, ${x1} ${y1}`;
 D.capas.forEach((c, i) => { Object.values(IND).forEach((I) => { if (I.usa?.includes(c.id)) fils.push({ d: curva(250, yCapa(i), posI[I.id][0] - 70, posI[I.id][1]), de: c.id, a: I.id }); }); });
 Object.values(IND).forEach((I) => (I.de || []).forEach((src) => { const [x0, y0] = posI[src]; const [x1, y1] = posI[I.id]; fils.push({ d: curva(x0 + 60, y0, x1 - 90, y1), de: src, a: I.id }); }));
-const gFil = el('g', {}); fils.forEach((f) => { f.el = el('path', { d: f.d, class: 'filamento' }, gFil); });
+const gFil = el('g', {}); fils.forEach((f, q) => { f.el = el('path', { d: f.d, class: 'filamento', pathLength: 1, style: `stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset 1.4s cubic-bezier(.65,0,.35,1) ${0.05 * q}s, stroke .3s, opacity .3s` }, gFil); const pulso = el('circle', { r: 2.6, fill: '#ff8a6a', opacity: 0.9 }, gFil); const m = el('animateMotion', { dur: `3.2s`, begin: `0s`, repeatCount: 'indefinite', path: f.d }, pulso); m.setAttribute('begin', `-${(q * 0.37) % 3.2}s`); f.pulso = pulso; });
+const obsGen = new IntersectionObserver((es) => { if (es[0].isIntersecting) fils.forEach((f) => { f.el.style.strokeDashoffset = '0'; }); }, { threshold: 0.2 }); obsGen.observe(svg);
 const nodosCapa = D.capas.map((c, i) => { const g = el('g', { class: 'gen-nodo', transform: `translate(0 ${yCapa(i)})` }); el('text', { x: 0, y: 4, class: 'cod' }, g).textContent = c.n; el('text', { x: 28, y: 4 }, g).textContent = c.nombre; const usada = fils.some((f) => f.de === c.id); el('circle', { cx: 250, cy: 0, r: 3, fill: usada ? '#ff6b4a' : '#46505a' }, g); g.onclick = () => abrirFicha(c); g.dataset.id = c.id; return g; });
 el('text', { x: 0, y: yCapa(12) + 20, class: 'nota', fill: '#6f7c82', 'font-size': 11, 'font-family': 'Geist Mono' }).textContent = 'Elevación y pendiente no entran a los índices: dan forma al relieve.';
 const nodosInd = Object.values(IND).map((I) => { const [x, y] = posI[I.id]; const g = el('g', { class: 'gen-nodo gen-indice', transform: `translate(${x} ${y})`, tabindex: 0 }); el('rect', { x: -70, y: -24, width: I.id === 'C' ? 190 : 150, height: 48, fill: '#080b0d', stroke: '#ff6b4a', 'stroke-opacity': 0.45 }, g); el('text', { x: -58, y: 8 }, g).textContent = `${I.id} · ${I.nombre}`; g.dataset.id = I.id; g.onmouseenter = () => resaltar(I.id); g.onfocus = () => resaltar(I.id); g.onmouseleave = () => resaltar(null); g.onclick = () => verFormula(I.id); return g; });
@@ -272,7 +281,7 @@ nodosInd.forEach((g) => { const t = g.querySelector('text'); if (t.textContent.l
 const fuentesDe = (id, acc = new Set()) => { const I = IND[id]; (I.usa || []).forEach((u) => acc.add(u)); (I.de || []).forEach((d) => { acc.add(d); fuentesDe(d, acc); }); return acc; };
 function resaltar(id) {
   const set = id ? fuentesDe(id) : null; if (set) set.add(id);
-  fils.forEach((f) => { f.el.classList.toggle('on', !!set && set.has(f.de) && set.has(f.a)); f.el.classList.toggle('off', !!set && !(set.has(f.de) && set.has(f.a))); });
+  fils.forEach((f) => { f.pulso.setAttribute('opacity', set && !(set.has(f.de) && set.has(f.a)) ? 0.06 : 0.9); f.el.classList.toggle('on', !!set && set.has(f.de) && set.has(f.a)); f.el.classList.toggle('off', !!set && !(set.has(f.de) && set.has(f.a))); });
   [...nodosCapa, ...nodosInd].forEach((g) => g.classList.toggle('on', !!set && set.has(g.dataset.id)));
 }
 function verFormula(id) {
@@ -295,11 +304,13 @@ const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.F
 const lineas = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.95 }));
 const puntos = new THREE.Points(geo, new THREE.PointsMaterial({ vertexColors: true, size: 2.2 * DPR, sizeAttenuation: false, transparent: true, opacity: 0.9 }));
 escena.add(lineas, puntos);
-const ctrl3d = new OrbitControls(cam, renderer.domElement); ctrl3d.enableDamping = true; ctrl3d.autoRotate = !pausado; ctrl3d.autoRotateSpeed = 0.35; ctrl3d.maxPolarAngle = Math.PI * 0.48; ctrl3d.minDistance = 1500; ctrl3d.maxDistance = 16000;
+const ctrl3d = new OrbitControls(cam, renderer.domElement); ctrl3d.enableDamping = true; ctrl3d.autoRotate = !pausado; ctrl3d.autoRotateSpeed = 0.9; ctrl3d.maxPolarAngle = Math.PI * 0.48; ctrl3d.minDistance = 1500; ctrl3d.maxDistance = 16000;
 cam.position.set(2600, 6200, 7600); ctrl3d.target.set(0, 0, 0);
 const MODOS = [['relieve', 'Solo relieve'], ['E', 'Exposición'], ['H', 'Presión habitacional'], ['R', 'Red expuesta'], ['V', 'Valor ecológico'], ['C', 'Convergencia'], ['inundable', 'Zona inundable'], ['retroceso', 'Años hasta el retroceso']];
 const TEXTO_REL = 'El terreno real de la isla, de 0 a {max} m, como una superficie de líneas y puntos. Elija una capa o un índice para vestir la topografía con sus valores; arrastre para girarla.';
 $('#relieve-texto').textContent = TEXTO_REL.replace('{max}', fmt(D.stats.elevMax));
+const colsBase = new Float32Array(nv * 3); let modoActual = 'relieve';
+const zMin = -GH / 2 * celdaM; const zRango = GH * celdaM;
 function pintar(modo) {
   const lum = new THREE.Vector3(-0.6, 0.7, -0.4).normalize(); let rampa = 'indice';
   for (let j = 0; j < GH; j++) for (let i = 0; i < GW; i++) {
@@ -312,14 +323,17 @@ function pintar(modo) {
     else { const c = capa[modo]; rampa = c.rampa; const t = c.val(k); rgb = t < 0 ? [50, 56, 60] : colorDe(c.rampa, t); }
     cols[v * 3] = rgb[0] / 255; cols[v * 3 + 1] = rgb[1] / 255; cols[v * 3 + 2] = rgb[2] / 255;
   }
-  geo.attributes.color.needsUpdate = true;
+  geo.attributes.color.needsUpdate = true; colsBase.set(cols); modoActual = modo;
   $('#rampa').innerHTML = rampa ? `<i style="background:${gradCSS(rampa)}"></i><div><span>bajo</span><span>${MODOS.find((m) => m[0] === modo)[1]}</span><span>alto</span></div>` : '';
   document.querySelectorAll('[data-modo3d]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.modo3d === modo)));
 }
 $('#chips').innerHTML = MODOS.map(([m, t]) => `<button class="chip" data-modo3d="${m}" aria-pressed="false">${IND[m] ? `<b>${m}</b>` : ''}${t}</button>`).join('');
 document.querySelectorAll('[data-modo3d]').forEach((b) => { b.onclick = () => pintar(b.dataset.modo3d); });
 pintar('relieve');
-function dibujar3d() { const r = cont.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return; const w = Math.max(1, r.width); const h = Math.max(1, r.height); if (renderer.domElement.width !== Math.round(w * DPR)) { renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); } ctrl3d.update(); renderer.render(escena, cam); }
+function dibujar3d(t) { const r = cont.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
+  // el relieve se levanta al entrar y un barrido de luz lo recorre de norte a sur
+  const sube = suave(intro('relieve', t, 2400)); lineas.scale.y = puntos.scale.y = Math.max(0.001, sube);
+  if (!pausado) { const zb = zMin + (((t * 0.00011) % 1.3) - 0.15) * zRango; const ancho = zRango * 0.05; for (let v = 0; v < nv; v++) { const dz = Math.abs(pos[v * 3 + 2] - zb); const k = dz < ancho ? 1 - dz / ancho : 0; const kk = k * k; cols[v * 3] = Math.min(1, colsBase[v * 3] + kk * 0.9); cols[v * 3 + 1] = Math.min(1, colsBase[v * 3 + 1] + kk * 0.45); cols[v * 3 + 2] = Math.min(1, colsBase[v * 3 + 2] + kk * 0.3); } geo.attributes.color.needsUpdate = true; } const w = Math.max(1, r.width); const h = Math.max(1, r.height); if (renderer.domElement.width !== Math.round(w * DPR)) { renderer.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); } ctrl3d.update(); renderer.render(escena, cam); }
 
 /* ================= 8. fuentes ================= */
 const FUENTES = [
@@ -332,4 +346,7 @@ const FUENTES = [
 $('#fuentes').innerHTML = FUENTES.map(([t, l]) => `<p class="rotulo" style="margin:0 0 6px">${t} <span class="dato" style="margin-left:8px">${l.length}</span></p>${l.map(([a, b]) => `<div class="fuente"><strong>${a}</strong><span>${b}</span></div>`).join('')}<div style="height:22px"></div>`).join('');
 
 /* ---------- bucle ---------- */
-(function bucle(t) { requestAnimationFrame(bucle); if (document.hidden) return; const r = campo.getBoundingClientRect(); if (r.bottom > 0) dibujarCampo(t); dibujarTr(t); dibujarTerr(t); dibujarPila(); dibujar3d(); })(performance.now());
+(function bucle(t) { requestAnimationFrame(bucle); if (document.hidden) return; const r = campo.getBoundingClientRect(); if (r.bottom > 0) dibujarCampo(t); dibujarTr(t); dibujarTerr(t); dibujarPila(); dibujar3d(t); })(performance.now());
+
+/* ---------- entrada del texto de cada sección ---------- */
+document.querySelectorAll('main > section, footer').forEach((s) => { s.querySelectorAll(':scope h1, :scope h2, :scope .capas-cab p, :scope .rel-cuerpo p, :scope .gen-cab p, :scope .rel-izq > p, :scope .chips, :scope .operadores > div, :scope .terr-cab .rotulo, :scope .portada-texto p, :scope .boton, :scope .mini, :scope .pila li, :scope .doc, :scope .fuente').forEach((e, q) => { e.classList.add('rv'); e.style.transitionDelay = `${Math.min(q, 14) * 0.06}s`; }); });
