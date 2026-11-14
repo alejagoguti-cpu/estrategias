@@ -116,7 +116,7 @@ section { position: relative; }
 .capas-cab h2 { font-size: var(--t-1); margin-top: 6px; }
 .capas-cab p { color: var(--tinta-2); max-width: 300px; }
 .pila { position: relative; display: grid; grid-template-columns: 1fr 240px; align-items: center; gap: 12px; }
-#pila-lienzo { width: 100%; height: min(86svh, 820px); display: block; }
+#pila-3d { position: relative; width: 100%; height: min(88svh, 860px); } #pila-3d canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
 .pila ol { list-style: none; margin: 0; padding: 0; }
 .pila li button { display: flex; gap: 12px; align-items: baseline; width: 100%; text-align: left; padding: 3px 0; font-size: .82rem; color: var(--tinta-2); border-top: 1px solid transparent; }
 .pila li button::before { content: ""; flex: 0 0 36px; height: 1px; background: var(--linea-media); transform: translateY(-4px); }
@@ -131,7 +131,7 @@ section { position: relative; }
 .ficha-capa dt { color: var(--tinta-3); } .ficha-capa dd { margin: 0; }
 .ficha-capa .cerrar { position: absolute; top: 12px; right: 12px; color: var(--tinta-3); }
 .ficha-capa canvas { width: 100%; height: auto; margin-top: 14px; image-rendering: pixelated; border: 1px solid var(--linea); }
-@media (max-width: 900px) { #capas { grid-template-columns: 1fr; padding: 110px 16px 60px; } .pila { grid-template-columns: 1fr; } .pila ol { columns: 2; } #pila-lienzo { height: 70svh; } }
+@media (max-width: 900px) { #capas { grid-template-columns: 1fr; padding: 110px 16px 60px; } .pila { grid-template-columns: 1fr; } .pila ol { columns: 2; } #pila-3d { height: 72svh; } }
 
 /* ---------- relaciones ---------- */
 #relaciones { padding: 100px 40px 90px; }
@@ -261,8 +261,8 @@ section { position: relative; }
 </section>
 
 <section id="capas" aria-label="Capas del territorio">
-  <div class="capas-cab"><p class="num">12</p><h2>Capas del territorio</h2><p>Cada estrato es un ráster del encuadre de la isla sobre la misma malla de 47 m. Pase el cursor para levantar su relieve; haga clic para leer su ficha.</p></div>
-  <div class="pila"><canvas id="pila-lienzo" aria-hidden="true"></canvas><ol id="pila-lista"></ol></div>
+  <div class="capas-cab"><p class="num">12</p><h2>Capas del territorio</h2><p>Cada estrato es un ráster del encuadre de la isla sobre la misma malla de 47 m. Cada capa sube donde su valor es mayor: más densidad, más altura. Pase el cursor para levantarla; haga clic para leer su ficha.</p></div>
+  <div class="pila"><div id="pila-3d" aria-label="Pila de capas en 3D"></div><ol id="pila-lista"></ol></div>
 </section>
 <aside class="ficha-capa" id="ficha-capa" aria-live="polite"></aside>
 

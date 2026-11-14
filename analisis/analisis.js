@@ -215,32 +215,71 @@ function dibujarTerr(t) {
   claves.forEach((s) => { const [a, b] = sectCelda[s]; const x = g.ox + a * g.esc; const y = g.oy + b * g.esc; const pul = 0.5 + 0.5 * Math.sin(t * 0.004); tCx.strokeStyle = `rgba(255,107,74,${0.4 + 0.4 * pul})`; tCx.lineWidth = 1.5 * DPR; tCx.beginPath(); tCx.arc(x, y, (8 + 8 * pul) * DPR, 0, 6.283); tCx.stroke(); tCx.fillStyle = '#ff6b4a'; tCx.beginPath(); tCx.arc(x, y, 4.5 * DPR, 0, 6.283); tCx.fill(); tCx.font = `500 ${12 * DPR}px "Geist Mono"`; tCx.fillStyle = s === tHover || s === tObj ? '#e8eef0' : '#a7b3b8'; tCx.fillText(NOMBRE_SECT[s].toUpperCase(), x + 12 * DPR, y + 4 * DPR); });
 }
 
-/* ================= 4. pila de capas en isométrico ================= */
-const pCv = $('#pila-lienzo'); const pCx = pCv.getContext('2d');
+/* ================= 4. pila de capas en 3D: cada ráster con altura donde su valor es mayor ================= */
 const orden = [...D.capas].reverse(); // la capa 12 arriba
 $('#pila-lista').innerHTML = orden.map((c) => `<li><button data-capa="${c.id}"><em>${c.n}</em>${c.nombre}</button></li>`).join('');
-let pHover = null; const lev = Object.fromEntries(D.capas.map((c) => [c.id, 0]));
+let pHover = null;
 document.querySelectorAll('[data-capa]').forEach((b) => { b.onmouseenter = () => { pHover = b.dataset.capa; }; b.onmouseleave = () => { pHover = null; }; b.onclick = () => abrirFicha(capa[b.dataset.capa]); });
-const isoGeom = () => {
-  const [w, h] = ajustarLienzo(pCv); const ancho = Math.min(w * 0.82, h * 0.95); const ux = [ancho / GW * 0.5 * Math.cos(Math.PI / 6) * 1.3, ancho / GW * 0.5 * 0.5 * 1.3]; const uy = [-ancho / GW * 0.5 * Math.cos(Math.PI / 6) * 1.3 * 0.62, ancho / GW * 0.5 * 0.5 * 1.3 * 0.62];
-  const gap = (h * 0.5) / D.capas.length; const top = h * 0.08; return { w, h, ux, uy, gap, x0: w * 0.5 - (ux[0] * GW + uy[0] * GH) / 2, top };
-};
-const enCapa = (g, idx, mx, my) => { const y0 = g.top + idx * g.gap - lev[orden[idx].id]; const det = g.ux[0] * g.uy[1] - g.uy[0] * g.ux[1]; const dx = mx - g.x0; const dy = my - y0; const a = (dx * g.uy[1] - dy * g.uy[0]) / det; const b = (g.ux[0] * dy - g.ux[1] * dx) / det; return a >= 0 && b >= 0 && a <= GW && b <= GH; };
-pCv.addEventListener('pointermove', (e) => { const g = isoGeom(); const r = pCv.getBoundingClientRect(); const mx = (e.clientX - r.left) * DPR; const my = (e.clientY - r.top) * DPR; let hit = null; for (let i = 0; i < orden.length; i++) if (enCapa(g, i, mx, my)) { hit = orden[i].id; break; } pHover = hit; pCv.style.cursor = hit ? 'pointer' : 'default'; });
-pCv.addEventListener('pointerleave', () => { pHover = null; });
-pCv.addEventListener('click', () => { if (pHover) abrirFicha(capa[pHover]); });
-function dibujarPila() {
-  const r = pCv.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
-  const g = isoGeom(); pCx.setTransform(1, 0, 0, 1, 0, 0); pCx.clearRect(0, 0, g.w, g.h);
-  document.querySelectorAll('[data-capa]').forEach((b) => (b.dataset.capa === pHover ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
-  for (let i = orden.length - 1; i >= 0; i--) {
-    const c = orden[i]; lev[c.id] += ((c.id === pHover ? g.gap * 2.6 : 0) - lev[c.id]) * 0.18; const ic = suave((intro('capas', performance.now(), 2600) - (orden.length - 1 - i) * 0.06) / 0.4); const flota = pausado ? 0 : Math.sin(performance.now() * 0.0016 + i * 0.7) * g.gap * 0.12; const y0 = g.top + i * g.gap - lev[c.id] - (1 - ic) * g.h * 0.6 + flota; pCx.globalAlpha = ic;
-    pCx.setTransform(g.ux[0], g.ux[1], g.uy[0], g.uy[1], g.x0, y0);
-    pCx.imageSmoothingEnabled = false; pCx.globalAlpha = ic * (pHover && c.id !== pHover ? 0.55 : 1);
-    pCx.drawImage(c.lienzo, 0, 0);
-    pCx.globalAlpha = ic; pCx.strokeStyle = c.id === pHover ? 'rgba(255,107,74,.9)' : 'rgba(214,230,236,.22)'; pCx.lineWidth = 1 / Math.hypot(g.ux[0], g.ux[1]); pCx.strokeRect(0, 0, GW, GH);
+const pCont = $('#pila-3d');
+const pRen = new THREE.WebGLRenderer({ antialias: true, alpha: true }); pRen.setPixelRatio(DPR); pCont.append(pRen.domElement);
+const pEsc = new THREE.Scene();
+pEsc.add(new THREE.AmbientLight(0xffffff, 0.75)); const pSol = new THREE.DirectionalLight(0xffffff, 0.9); pSol.position.set(-60, 120, -40); pEsc.add(pSol);
+const pCam = new THREE.OrthographicCamera(-1, 1, 1, -1, -2000, 2000);
+// recorte a la caja de la isla (con margen), para que la isla llene cada capa
+let bx0 = GW, bx1 = 0, by0 = GH, by1 = 0; for (let k = 0; k < N; k++) if (isla[k]) { const i = k % GW; const j = Math.floor(k / GW); bx0 = Math.min(bx0, i); bx1 = Math.max(bx1, i); by0 = Math.min(by0, j); by1 = Math.max(by1, j); }
+bx0 = Math.max(0, bx0 - 4); by0 = Math.max(0, by0 - 4); bx1 = Math.min(GW - 1, bx1 + 4); by1 = Math.min(GH - 1, by1 + 4);
+const BW = bx1 - bx0 + 1; const BH = by1 - by0 + 1;
+const PASO = 2; const SX = Math.ceil(BW / PASO); const SY = Math.ceil(BH / PASO);
+const SEP = 11; // separación entre capas
+const ALT_BASE = 6; const ALT_HOVER = 34; // altura del valor máximo: en reposo y levantada
+const MAR = [0.02, 0.028, 0.034];
+const capas3d = orden.map((c, i) => {
+  const geo = new THREE.PlaneGeometry(BW, BH, SX - 1, SY - 1); geo.rotateX(-Math.PI / 2);
+  const pos = geo.attributes.position; const n = pos.count; const val = new Float32Array(n); const col = new Float32Array(n * 3);
+  for (let v = 0; v < n; v++) {
+    const ix = v % SX; const iy = Math.floor(v / SX); const k = Math.min(by1, by0 + iy * PASO) * GW + Math.min(bx1, bx0 + ix * PASO);
+    let rgb; if (!isla[k]) { rgb = MAR.map((x) => x * 255); val[v] = 0; } else { const t = c.val(k); val[v] = Math.max(0, t); rgb = t < 0 ? [38, 44, 48] : colorDe(c.rampa, t); }
+    col[v * 3] = rgb[0] / 255; col[v * 3 + 1] = rgb[1] / 255; col[v * 3 + 2] = rgb[2] / 255;
   }
-  pCx.setTransform(1, 0, 0, 1, 0, 0);
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  const malla = new THREE.Mesh(geo, mat);
+  const borde = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(BW, BH).rotateX(-Math.PI / 2)), new THREE.LineBasicMaterial({ color: 0xd6e6ec, transparent: true, opacity: 0.28 }));
+  const grupo = new THREE.Group(); grupo.add(malla, borde); grupo.userData = { c, i, val, alt: ALT_BASE }; malla.userData.id = c.id;
+  pEsc.add(grupo); return grupo;
+});
+// retícula bajo la pila, como en un plano de trabajo
+const reti = new THREE.GridHelper(Math.max(BW, BH) * 1.7, 26, 0x3a454c, 0x1c2328); reti.position.y = -orden.length * SEP - 6; pEsc.add(reti);
+const aplicarAltura = (g, alt) => { const pos = g.children[0].geometry.attributes.position; const val = g.userData.val; for (let v = 0; v < pos.count; v++) pos.setY(v, val[v] * alt); pos.needsUpdate = true; g.children[0].geometry.computeVertexNormals(); };
+capas3d.forEach((g) => aplicarAltura(g, ALT_BASE));
+const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2();
+pRen.domElement.addEventListener('pointermove', (e) => { const r = pRen.domElement.getBoundingClientRect(); ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, pCam); const hit = ray.intersectObjects(capas3d.map((g) => g.children[0]))[0]; pHover = hit ? hit.object.userData.id : null; pRen.domElement.style.cursor = pHover ? 'pointer' : 'default'; });
+pRen.domElement.addEventListener('pointerleave', () => { pHover = null; });
+pRen.domElement.addEventListener('click', () => { if (pHover) abrirFicha(capa[pHover]); });
+function dibujarPila() {
+  const r = pCont.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
+  const w = Math.max(1, r.width); const h = Math.max(1, r.height);
+  if (pRen.domElement.width !== Math.round(w * DPR) || pRen.domElement.height !== Math.round(h * DPR)) pRen.setSize(w, h, false);
+  // cámara isométrica; la pila completa cabe en el cuadro
+  const alto = orden.length * SEP + BH * 0.75;
+  const mitadH = Math.max(alto * 0.66, ((BW + BH) * 0.5) / (w / h)) * 1.02;
+  pCam.left = -mitadH * (w / h); pCam.right = mitadH * (w / h); pCam.top = mitadH; pCam.bottom = -mitadH; pCam.updateProjectionMatrix();
+  const giro = pausado ? 0 : Math.sin(performance.now() * 0.00018) * 0.18;
+  const d = 600; pCam.position.set(Math.sin(Math.PI / 4 + giro) * d, d * 0.82, Math.cos(Math.PI / 4 + giro) * d); pCam.lookAt(0, -orden.length * SEP * 0.5 + 10, 0);
+  document.querySelectorAll('[data-capa]').forEach((b) => (b.dataset.capa === pHover ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
+  const ahora = performance.now(); const ia = intro('capas', ahora, 2600);
+  capas3d.forEach((g) => {
+    const { c, i } = g.userData; const sel = c.id === pHover;
+    const meta = sel ? ALT_HOVER : ALT_BASE; const nueva = g.userData.alt + (meta - g.userData.alt) * 0.14;
+    if (Math.abs(nueva - g.userData.alt) > 0.02) { g.userData.alt = nueva; aplicarAltura(g, nueva); }
+    const ic = suave((ia - (orden.length - 1 - i) * 0.06) / 0.4);
+    const flota = pausado ? 0 : Math.sin(ahora * 0.0016 + i * 0.7) * 1.1;
+    const iSel = pHover ? orden.findIndex((o) => o.id === pHover) : -1; const sube = iSel >= 0 && i < iSel ? 75 : sel ? 8 : 0; /* las capas de encima se abren como un cajón */ g.userData.sube = (g.userData.sube || 0) + (sube - (g.userData.sube || 0)) * 0.14;
+    g.position.y = -i * SEP + flota + g.userData.sube + (1 - ic) * 260;
+    g.visible = ic > 0.01; g.children[0].material.color.setScalar(pHover && !sel ? 0.4 : 1);
+    g.children[1].material.color.set(sel ? 0xff6b4a : 0xd6e6ec); g.children[1].material.opacity = ic * (sel ? 0.95 : 0.28);
+  });
+  pRen.render(pEsc, pCam);
 }
 function abrirFicha(c) {
   const f = $('#ficha-capa');
