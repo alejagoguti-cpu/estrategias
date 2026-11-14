@@ -904,30 +904,42 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       uniform sampler2D uRefl; uniform mat4 uTexMat; uniform float uReflOn; uniform sampler2D uSat; uniform vec4 uMos; uniform float uDim;
       varying vec3 vWorld;
       #include <fog_pars_fragment>
-      vec2 nm(vec2 p) { return texture2D(uNormals, p).rg * 2.0 - 1.0; }
+      // olas generadas por cálculo (sin textura que se repita: la textura en mosaico se veía como cuadrados)
+      float hash1(float x) { return fract(sin(x * 127.1) * 43758.5453); }
+      float vnoise(vec2 x) {
+        vec2 i = floor(x); vec2 f = fract(x); f = f * f * (3.0 - 2.0 * f);
+        float a = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453);
+        float b = fract(sin(dot(i + vec2(1.0, 0.0), vec2(127.1, 311.7))) * 43758.5453);
+        float c = fract(sin(dot(i + vec2(0.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
+        float d = fract(sin(dot(i + vec2(1.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
+        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+      }
       void main() {
         float dc = length(cameraPosition - vWorld);
         vec2 p = vWorld.xz;
         float lod = 1.0 - smoothstep(300.0, 3200.0, dc);
-        vec2 n2 = nm(p / 210.0 + vec2(uTime * 0.010, uTime * 0.007)) * 0.8
-                + nm(p / 73.0 + vec2(-uTime * 0.018, uTime * 0.012)) * 0.6
-                + nm(p / 19.0 + vec2(uTime * 0.032, -uTime * 0.027)) * 0.5 * lod
-                + nm(p / 6.1 + vec2(-uTime * 0.05, uTime * 0.043)) * 0.32 * lod;
-        // oleaje: dos trenes de olas largas (38 m y 23 m) que avanzan hacia la costa a su velocidad real (√(g/k)), suaves
-        vec2 d1 = normalize(vec2(-0.55, 0.83)); vec2 d2 = normalize(vec2(-0.9, 0.42));
-        float k1 = 6.2832 / 38.0; float k2 = 6.2832 / 23.0;
-        float f1 = dot(p, d1) * k1 - uTime * sqrt(9.8 * k1);
-        float f2 = dot(p, d2) * k2 - uTime * sqrt(9.8 * k2) + 1.7;
-        vec2 d3 = normalize(vec2(0.25, 1.0)); float k3 = 6.2832 / 14.0;
-        float f3 = dot(p, d3) * k3 - uTime * sqrt(9.8 * k3) + 4.1;
-        // la intensidad del oleaje cambia por zonas (no rayas perfectas) y se apaga con la distancia (evita el moiré)
-        float zona = 0.45 + 0.55 * (0.5 + 0.5 * nm(p / 1100.0 + vec2(uTime * 0.002, 0.0)).x);
-        float lodS = (1.0 - smoothstep(200.0, 1700.0, dc)) * zona;
-        vec2 ola = (d1 * cos(f1) * 0.22 + d2 * cos(f2) * 0.14 + d3 * cos(f3) * 0.09) * lodS;
-        float cresta = (sin(f1) * 0.5 + sin(f2) * 0.3 + sin(f3) * 0.2) * lodS;
-        n2 += ola;
-        float k = mix(0.12, 0.26, lod);
-        vec3 n = normalize(vec3(n2.x * k, 1.0, n2.y * k));
+        float mpx = dc * 0.0011; // metros por píxel, aproximado
+        // la fuerza del oleaje cambia por zonas, suave y sin repetirse
+        float zona = 0.6 + 0.4 * vnoise(p / 850.0 + vec2(uTime * 0.004, 0.0));
+        // oleaje: 10 trenes de olas de 8 a 70 m, con direcciones alrededor del viento del noreste y su velocidad real √(g/k).
+        // Las olas más pequeñas que unos píxeles se apagan (si no, parpadean de lejos)
+        vec2 g = vec2(0.0); float cresta = 0.0; float sTot = 0.0;
+        for (int i = 0; i < 10; i++) {
+          float fi = float(i);
+          float ang = 2.2 + (hash1(fi + 1.3) - 0.5) * 1.4;
+          vec2 dd = vec2(cos(ang), sin(ang));
+          float L = mix(8.0, 70.0, pow(hash1(fi + 7.7), 1.3));
+          float kk = 6.2832 / L;
+          float ph = dot(dd, p) * kk - uTime * sqrt(9.8 * kk) + hash1(fi + 3.1) * 6.2832;
+          float s = 0.065 * (1.0 - smoothstep(L * 0.05, L * 0.14, mpx)); // solo olas de al menos ~8 píxeles
+          g += dd * cos(ph) * s; cresta += sin(ph) * s; sTot += s;
+        }
+        g *= zona; cresta = sTot > 0.0 ? cresta / sTot * zona : 0.0;
+        // rizado fino solo cerca de la cámara
+        vec2 rizo = vec2(vnoise(p / 2.7 + vec2(uTime * 0.7, 0.0)), vnoise(p / 2.3 + vec2(3.1, -uTime * 0.6))) - 0.5;
+        g += rizo * 0.08 * (1.0 - smoothstep(60.0, 300.0, dc));
+        vec2 n2 = g * 4.0;
+        vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
         vec3 V = normalize(cameraPosition - vWorld);
         float cosT = max(dot(n, V), 0.0);
         float F = 0.02 + 0.98 * pow(1.0 - cosT, 5.0);
@@ -962,13 +974,13 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         float cercaCam = 1.0 - smoothstep(900.0, 2600.0, dc);
         float costa = (1.0 - smoothstep(40.0, 320.0, dm)) * bordeAncho * cercaCam;
         // un solo azul profundo, con variaciones suaves y grandes (no un degradé alrededor de la isla)
-        float var = 0.5 + 0.5 * nm(p / 2600.0 + vec2(uTime * 0.001, 0.0)).y;
+        float var = vnoise(p / 2600.0 + vec2(uTime * 0.001, 0.0));
         vec3 hondo = uDeep * (0.88 + 0.24 * var);
         vec3 body = mix(hondo, sat * 1.05, costa);
         // luz que atraviesa la cresta de la ola
         body *= 0.86 + 0.22 * (n2.x + n2.y) * 0.5;
         body += uShallow * 0.05 * max(0.0, n2.x + n2.y);
-        body *= 1.0 + 0.04 * cresta; // la cresta de cada ola se ve un poco más clara
+        body *= 1.0 + 0.09 * cresta; // la cresta de cada ola se ve más clara (luz que la atraviesa)
         vec3 col = mix(body, refl, clamp(F, 0.0, 1.0));
         // destellos del sol sobre las olas (finos, no un disco)
         float sd = max(dot(R, uSun), 0.0);
@@ -977,6 +989,9 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         float ws = 0.5 + 0.5 * sin(dm / 5.0 - uTime * 1.1 + n2.x * 3.0);
         float rompe = (1.0 - smoothstep(0.0, 14.0, dm)) * (0.35 + 0.65 * ws) * borde;
         col = mix(col, vec3(0.86, 0.9, 0.9), clamp(rompe * 0.45, 0.0, 0.45));
+        // espuma suave solo en las crestas más altas, cerca de la cámara
+        float blanca = smoothstep(0.68, 0.95, cresta) * (1.0 - smoothstep(200.0, 900.0, dc));
+        col = mix(col, vec3(0.84, 0.9, 0.92), blanca * 0.08);
         // en las vistas de mapa el terreno se oscurece para leer las líneas: el agua se oscurece igual (si no, la orilla brilla como neón)
         col *= mix(1.0, 0.42, uDim);
         gl_FragColor = vec4(col, 1.0);
