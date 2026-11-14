@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#040607" />
+<title>Análisis territorial · Tierra Bomba</title>
+<meta name="description" content="Lectura territorial de Tierra Bomba (Cartagena): doce capas del mismo encuadre, sus relaciones y su convergencia sobre el relieve real de la isla." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;500&family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }</script>
+<style>
+:root {
+  --campo-0: #040607; --campo-1: #080b0d; --campo-2: #0e1316;
+  --tinta-1: #e8eef0; --tinta-2: #a7b3b8; --tinta-3: #6f7c82; --tinta-4: #46505a;
+  --linea: rgb(214 230 236 / .12); --linea-media: rgb(214 230 236 / .22); --linea-fuerte: rgb(214 230 236 / .42);
+  --acento: #ff6b4a; --acento-tenue: rgb(255 107 74 / .16); --mar: #49c6e5; --mar-2: #8fe3f2;
+  --letra: "Geist", ui-sans-serif, system-ui, sans-serif; --dato: "Geist Mono", ui-monospace, monospace; --titulo: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --t-portada: clamp(2.6rem, 1.1rem + 4.6vw, 4.8rem); --t-1: clamp(2.7rem, 1.6rem + 3.4vw, 5.2rem); --t-2: clamp(1.8rem, 1.3rem + 1.4vw, 2.7rem);
+  --curva: cubic-bezier(.16, 1, .3, 1);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; background: var(--campo-0); }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--campo-0); color: var(--tinta-1); font: 400 .95rem/1.55 var(--letra); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: inherit; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; }
+h1, h2, h3 { font-family: var(--titulo); font-weight: 300; text-transform: uppercase; letter-spacing: .01em; line-height: .98; margin: 0; }
+.dato { font-family: var(--dato); }
+.rotulo { font-family: var(--dato); font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; color: var(--tinta-3); }
+.nota { font-size: .72rem; line-height: 1.5; color: var(--tinta-3); }
+::selection { background: var(--acento); color: #000; }
+
+/* ---------- cabecera ---------- */
+header { position: fixed; z-index: 30; inset: 0 0 auto 0; display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 16px 40px 14px; background: linear-gradient(var(--campo-0) 30%, transparent); }
+header .lugar { font-size: .74rem; color: var(--tinta-3); white-space: nowrap; }
+header nav { display: flex; gap: 40px; }
+header nav a { position: relative; text-decoration: none; font-size: .8rem; color: var(--tinta-2); padding: 4px 0 8px; white-space: nowrap; transition: color .18s; }
+header nav a:hover, header nav a[aria-current] { color: var(--tinta-1); }
+header nav a::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--acento); transform: scaleX(0); transform-origin: left; transition: transform .42s var(--curva); }
+header nav a[aria-current]::after { transform: scaleX(1); }
+header .fase { font-family: var(--dato); font-size: .74rem; color: var(--tinta-3); white-space: nowrap; }
+@media (max-width: 1100px) { header nav { gap: 22px; } header .fase { display: none; } }
+@media (max-width: 760px) {
+  header { flex-wrap: wrap; padding: 12px 16px 10px; gap: 6px; }
+  header nav { order: 3; width: 100%; overflow-x: auto; gap: 18px; scrollbar-width: none; }
+  header nav::-webkit-scrollbar { display: none; }
+}
+
+section { position: relative; }
+.marco { position: absolute; inset: 18px; border: 1px solid var(--linea); pointer-events: none; }
+.pausa { position: absolute; right: 40px; bottom: 26px; z-index: 5; font-size: .74rem; color: var(--tinta-3); }
+.pausa:hover { color: var(--tinta-1); }
+
+/* ---------- portada ---------- */
+#inicio { height: 100svh; min-height: 640px; overflow: hidden; }
+#campo { position: absolute; inset: 0; width: 100%; height: 100%; }
+.portada-texto { position: absolute; z-index: 3; left: clamp(16px, 5vw, 72px); top: 50%; transform: translateY(-46%); width: min(360px, 86vw); text-align: center; }
+.portada-texto h1 { font-size: var(--t-portada); }
+.portada-texto p { margin: 18px 0 30px; font-size: 1.04rem; line-height: 1.5; color: var(--tinta-1); }
+.boton { display: inline-flex; align-items: center; gap: 12px; padding: 13px 18px; border: 1px solid var(--linea-fuerte); background: rgb(4 6 7 / .55); font: 500 .8rem var(--letra); letter-spacing: .14em; text-transform: uppercase; text-decoration: none; transition: border-color .2s, background .2s; }
+.boton:hover { border-color: var(--tinta-1); background: rgb(4 6 7 / .8); }
+.ficha-esp { position: absolute; z-index: 3; border: 1px solid var(--linea-media); background: rgb(4 6 7 / .7); }
+.ficha-esp canvas { display: block; width: 100%; height: 100%; }
+.ficha-esp b { position: absolute; top: 4px; right: 6px; font: 500 .62rem var(--dato); color: var(--tinta-2); }
+.ficha-esp span { position: absolute; left: 4px; top: calc(100% + 8px); font: 500 .74rem var(--dato); letter-spacing: .12em; text-transform: uppercase; white-space: nowrap; }
+@media (max-width: 760px) { .portada-texto { top: auto; bottom: 64px; transform: none; left: 50%; translate: -50% 0; } }
+
+/* ---------- transformación ---------- */
+#transformacion { height: 330vh; }
+.pegado { position: sticky; top: 0; height: 100svh; overflow: hidden; }
+#tr-lienzo { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pestanas { position: absolute; z-index: 4; top: 86px; left: 40px; display: flex; gap: 26px; }
+.pestanas button { font-size: .8rem; color: var(--tinta-3); padding-bottom: 6px; border-bottom: 1px solid transparent; transition: color .2s, border-color .2s; }
+.pestanas button[aria-selected=true] { color: var(--tinta-1); border-color: var(--tinta-1); }
+.tr-texto { position: absolute; z-index: 4; left: 40px; bottom: 70px; width: min(520px, 86vw); }
+.tr-texto h2 { font-size: var(--t-1); }
+.tr-texto p { margin: 12px 0 0; color: var(--tinta-2); font-size: .92rem; }
+.barras { position: absolute; z-index: 4; right: 40px; bottom: 74px; width: min(420px, 86vw); }
+.barra { margin-top: 14px; }
+.barra .rotulo { color: var(--tinta-1); letter-spacing: .04em; text-transform: none; display: flex; justify-content: space-between; }
+.barra i { display: block; position: relative; height: 4px; margin-top: 6px; background: var(--linea); }
+.barra i::before { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v); background: var(--c, var(--acento)); transition: width .9s var(--curva); }
+.leyenda-tr { position: absolute; z-index: 4; right: 40px; bottom: 26px; }
+@media (max-width: 760px) { .barras { left: 16px; right: 16px; bottom: auto; top: 128px; width: auto; } .tr-texto { left: 16px; bottom: 92px; } .pestanas { left: 16px; top: 92px; } .leyenda-tr { left: 16px; right: 16px; bottom: 12px; } }
+
+/* ---------- territorio ---------- */
+#territorio { min-height: 100svh; padding: 110px 40px 60px; display: grid; grid-template-columns: minmax(0, 1fr); }
+#terr-lienzo { width: 100%; height: min(70svh, 620px); display: block; cursor: pointer; }
+.terr-cab { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 24px; }
+.terr-cab h2 { font-size: var(--t-2); }
+.miga { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: .8rem; color: var(--tinta-3); }
+.miga button { color: var(--tinta-3); } .miga button[aria-current] { color: var(--tinta-1); }
+.miga i { width: 18px; height: 1px; background: var(--linea-media); }
+.zoom { padding: 10px 18px; background: var(--tinta-1); color: #000; font: 400 1rem var(--titulo); letter-spacing: .06em; text-transform: uppercase; }
+.terr-pie { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; margin-top: 18px; }
+.terr-pie h3 { font-size: 1.35rem; }
+.terr-pie p { margin: 6px 0 0; max-width: 420px; color: var(--tinta-2); font-size: .88rem; }
+.terr-pie .nota { max-width: 560px; text-align: right; }
+@media (max-width: 760px) { #territorio { padding: 110px 16px 40px; } .terr-pie .nota { text-align: left; } }
+
+/* ---------- capas ---------- */
+#capas { padding: 120px 40px 80px; display: grid; grid-template-columns: minmax(260px, 360px) 1fr; gap: 40px; }
+.capas-cab .num { font: 300 2.4rem var(--dato); color: var(--acento); }
+.capas-cab h2 { font-size: var(--t-1); margin-top: 6px; }
+.capas-cab p { color: var(--tinta-2); max-width: 300px; }
+.pila { position: relative; display: grid; grid-template-columns: 1fr 240px; align-items: center; gap: 12px; }
+#pila-lienzo { width: 100%; height: min(86svh, 820px); display: block; }
+.pila ol { list-style: none; margin: 0; padding: 0; }
+.pila li button { display: flex; gap: 12px; align-items: baseline; width: 100%; text-align: left; padding: 3px 0; font-size: .82rem; color: var(--tinta-2); border-top: 1px solid transparent; }
+.pila li button::before { content: ""; flex: 0 0 36px; height: 1px; background: var(--linea-media); transform: translateY(-4px); }
+.pila li button em { font: 400 .74rem var(--dato); color: var(--tinta-3); font-style: normal; }
+.pila li button:hover, .pila li button[aria-current] { color: var(--tinta-1); }
+.pila li button[aria-current]::before { background: var(--acento); }
+.ficha-capa { position: fixed; z-index: 40; right: 24px; bottom: 24px; width: min(380px, calc(100vw - 32px)); padding: 20px; background: rgb(8 11 13 / .94); border: 1px solid var(--linea-media); backdrop-filter: blur(10px); display: none; }
+.ficha-capa.on { display: block; animation: sube .4s var(--curva); }
+@keyframes sube { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.ficha-capa h3 { font-size: 1.9rem; margin: 6px 26px 12px 0; }
+.ficha-capa dl { display: grid; grid-template-columns: 92px 1fr; gap: 6px 12px; margin: 0; font-size: .82rem; }
+.ficha-capa dt { color: var(--tinta-3); } .ficha-capa dd { margin: 0; }
+.ficha-capa .cerrar { position: absolute; top: 12px; right: 12px; color: var(--tinta-3); }
+.ficha-capa canvas { width: 100%; height: auto; margin-top: 14px; image-rendering: pixelated; border: 1px solid var(--linea); }
+@media (max-width: 900px) { #capas { grid-template-columns: 1fr; padding: 110px 16px 60px; } .pila { grid-template-columns: 1fr; } .pila ol { columns: 2; } #pila-lienzo { height: 70svh; } }
+
+/* ---------- relaciones ---------- */
+#relaciones { padding: 100px 40px 90px; }
+.rel-pestanas { display: flex; flex-wrap: wrap; gap: 26px; margin-bottom: 36px; }
+.rel-pestanas button { font-size: .8rem; color: var(--tinta-3); padding-bottom: 6px; border-bottom: 1px solid transparent; }
+.rel-pestanas button[aria-selected=true] { color: var(--tinta-1); border-color: var(--acento); }
+.rel-cuerpo { display: grid; grid-template-columns: minmax(260px, 380px) 1fr; gap: 48px; align-items: end; }
+.rel-cuerpo h2 { font-size: var(--t-1); }
+.rel-cuerpo p { color: var(--tinta-2); }
+.rejilla { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; }
+.mini { position: relative; border: 1px solid var(--linea-media); aspect-ratio: 145 / 258; overflow: hidden; background: #000; }
+.mini canvas { width: 100%; height: 100%; display: block; object-fit: cover; image-rendering: pixelated; transition: transform .6s var(--curva), filter .6s; }
+.mini b { position: absolute; top: 6px; left: 8px; font: 500 .7rem var(--dato); text-shadow: 0 1px 4px #000; }
+.mini span { position: absolute; left: 8px; bottom: 6px; font-size: .72rem; text-shadow: 0 1px 4px #000; }
+.mini .metodo { position: absolute; inset: auto 0 0 0; padding: 6px 8px; font: 400 .66rem var(--dato); background: rgb(4 6 7 / .85); color: var(--mar-2); transform: translateY(100%); transition: transform .4s var(--curva); }
+.modo-norm .mini .metodo { transform: none; }
+.modo-norm .mini span { display: none; }
+.modo-media .mini.peso canvas { filter: none; } .modo-media .mini:not(.peso) canvas { filter: grayscale(1) brightness(.4); }
+.modo-op .mini:not(.op) canvas { filter: grayscale(1) brightness(.35); }
+@media (max-width: 900px) { #relaciones { padding: 100px 16px 60px; } .rel-cuerpo { grid-template-columns: 1fr; } .rejilla { grid-template-columns: repeat(4, 1fr); gap: 10px; } }
+@media (max-width: 520px) { .rejilla { grid-template-columns: repeat(3, 1fr); } }
+
+/* ---------- genealogía ---------- */
+#genealogia { padding: 120px 40px 80px; scroll-margin-top: 0; }
+.gen-cab { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 30px; }
+.gen-cab h2 { font-size: var(--t-2); max-width: 560px; }
+.gen-cab p { max-width: 520px; color: var(--tinta-2); }
+.operadores { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; margin: 28px 0 10px; border-top: 1px solid var(--linea); padding-top: 14px; }
+.operadores b { font: 500 .9rem var(--dato); color: var(--acento); }
+.operadores span { display: block; margin-top: 4px; font-size: .74rem; color: var(--tinta-3); line-height: 1.45; }
+#gen-svg { width: 100%; height: auto; display: block; margin-top: 16px; }
+.gen-nodo { cursor: pointer; }
+.gen-nodo text { font-family: var(--letra); font-size: 13px; fill: var(--tinta-2); transition: fill .2s; }
+.gen-nodo .cod { font-family: var(--dato); font-size: 11px; fill: var(--tinta-3); }
+.gen-nodo.on text { fill: var(--tinta-1); }
+.gen-indice text { font-family: var(--titulo); font-size: 22px; text-transform: uppercase; fill: var(--tinta-1); letter-spacing: .02em; }
+.filamento { fill: none; stroke: var(--linea-media); stroke-width: 1; transition: stroke .3s, stroke-width .3s, opacity .3s; }
+.filamento.on { stroke: var(--acento); stroke-width: 1.6; }
+.filamento.off { opacity: .15; }
+.formula { margin-top: 20px; display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 28px; border-top: 1px solid var(--linea); padding-top: 18px; min-height: 140px; }
+.formula h3 { font-size: 1.8rem; }
+.formula code { display: block; margin: 10px 0; font: 500 1rem var(--dato); color: var(--mar-2); }
+.formula p { margin: 0; color: var(--tinta-2); font-size: .88rem; }
+.formula canvas { width: 100%; image-rendering: pixelated; border: 1px solid var(--linea); }
+@media (max-width: 900px) { #genealogia { padding: 100px 16px 60px; } .operadores { grid-template-columns: repeat(2, 1fr); } .formula { grid-template-columns: 1fr; } }
+
+/* ---------- relieve ---------- */
+#relieve { min-height: 100svh; padding: 100px 40px 40px; display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 30px; }
+.rel-izq h2 { font-size: var(--t-1); }
+.rel-izq p { color: var(--tinta-2); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid var(--linea-media); font-size: .76rem; color: var(--tinta-2); transition: border-color .2s, color .2s, background .2s; }
+.chip b { font: 500 .7rem var(--dato); color: var(--acento); }
+.chip:hover { border-color: var(--tinta-2); color: var(--tinta-1); }
+.chip[aria-pressed=true] { border-color: var(--acento); color: var(--tinta-1); background: var(--acento-tenue); }
+#relieve-3d { position: relative; min-height: 70svh; }
+#relieve-3d canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; cursor: grab; }
+#relieve-3d canvas:active { cursor: grabbing; }
+.norte { position: absolute; z-index: 2; top: 10px; right: 12px; font: 500 .74rem var(--dato); color: var(--tinta-3); text-align: center; }
+.rampa { position: absolute; z-index: 2; left: 12px; bottom: 12px; width: 220px; }
+.rampa i { display: block; height: 6px; }
+.rampa div { display: flex; justify-content: space-between; margin-top: 4px; font: 400 .66rem var(--dato); color: var(--tinta-3); }
+@media (max-width: 900px) { #relieve { grid-template-columns: 1fr; padding: 100px 16px 30px; } }
+
+/* ---------- créditos ---------- */
+#creditos { padding: 90px 40px 70px; border-top: 1px solid var(--linea); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 48px; }
+#creditos h2 { font-size: 2.4rem; }
+#creditos p { color: var(--tinta-1); }
+.tabla { display: grid; grid-template-columns: 130px 1fr; gap: 8px 16px; font-size: .86rem; margin: 14px 0 26px; }
+.tabla dt { color: var(--tinta-3); }
+.doc { display: block; padding: 16px 0; border-top: 1px solid var(--linea); text-decoration: none; }
+.doc strong { font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
+.doc em { margin-left: 8px; padding: 1px 6px; border: 1px solid var(--linea-media); font: 400 .68rem var(--dato); font-style: normal; color: var(--tinta-2); }
+.doc span { display: block; margin-top: 4px; font-size: .8rem; color: var(--tinta-2); }
+.fuente { padding: 10px 0; border-top: 1px solid var(--linea); }
+.fuente strong { font-weight: 500; } .fuente strong::before { content: "+ "; color: var(--tinta-3); }
+.fuente span { display: block; font-size: .78rem; color: var(--tinta-2); padding-left: 14px; }
+@media (max-width: 900px) { #creditos { grid-template-columns: 1fr; padding: 70px 16px 50px; } }
+</style>
+</head>
+<body>
+<header>
+  <span class="lugar">Tierra Bomba, Cartagena · encuadre isla</span>
+  <nav aria-label="Secciones">
+    <a href="#inicio">Inicio</a><a href="#transformacion">Transformación</a><a href="#territorio">Territorio</a><a href="#capas">Capas</a><a href="#relaciones">Relaciones</a><a href="#genealogia">Genealogía</a><a href="#relieve">Relieve</a>
+  </nav>
+  <span class="fase">Tercer corte · lectura territorial</span>
+</header>
+
+<main>
+<section id="inicio" aria-label="Portada">
+  <canvas id="campo" aria-hidden="true"></canvas>
+  <div class="marco"></div>
+  <div class="portada-texto">
+    <h1>Análisis territorial de Tierra Bomba</h1>
+    <p>Una lectura de las capas que transforman la isla: el mar, el suelo, la gente y las especies.</p>
+    <a class="boton" href="#transformacion">Entra <span aria-hidden="true">⌄</span></a>
+  </div>
+  <div id="fichas"></div>
+  <button class="pausa" data-pausa>Pausar movimiento</button>
+</section>
+
+<section id="transformacion" aria-label="Transformación">
+  <div class="pegado">
+    <canvas id="tr-lienzo" aria-hidden="true"></canvas>
+    <div class="pestanas" role="tablist">
+      <button role="tab" aria-selected="true" data-tr="0">Fenómenos</button>
+      <button role="tab" aria-selected="false" data-tr="1">Pérdida de suelo</button>
+      <button role="tab" aria-selected="false" data-tr="2">¿Dónde?</button>
+    </div>
+    <div class="tr-texto"><h2 id="tr-titulo"></h2><p id="tr-p"></p></div>
+    <div class="barras" id="barras"></div>
+    <p class="nota leyenda-tr" id="tr-nota"></p>
+  </div>
+</section>
+
+<section id="territorio" aria-label="Territorio">
+  <div class="terr-cab">
+    <div><p class="rotulo">Del encuadre al sector</p><h2>La isla y sus cuatro sectores</h2></div>
+    <div class="miga" id="miga"></div>
+  </div>
+  <canvas id="terr-lienzo" aria-label="Mapa de puntos de Tierra Bomba; haga clic en un sector para acercarse"></canvas>
+  <div class="terr-pie">
+    <div><h3 id="terr-nombre">La isla</h3><p id="terr-texto"></p></div>
+    <p class="nota">Puntos: celdas de 47 m de la isla, con el color de la imagen satelital (Esri World Imagery). Silueta: línea de costa © OpenStreetMap. Sectores: puntos de referencia del archivo de la tesis; construcciones por sector según el punto de referencia más cercano.</p>
+  </div>
+</section>
+
+<section id="capas" aria-label="Capas del territorio">
+  <div class="capas-cab"><p class="num">12</p><h2>Capas del territorio</h2><p>Cada estrato es un ráster del encuadre de la isla sobre la misma malla de 47 m. Pase el cursor para levantar su relieve; haga clic para leer su ficha.</p></div>
+  <div class="pila"><canvas id="pila-lienzo" aria-hidden="true"></canvas><ol id="pila-lista"></ol></div>
+</section>
+<aside class="ficha-capa" id="ficha-capa" aria-live="polite"></aside>
+
+<section id="relaciones" aria-label="Relaciones">
+  <div class="rel-pestanas" role="tablist" id="rel-pestanas">
+    <button role="tab" aria-selected="true" data-modo="">Capas</button>
+    <button role="tab" aria-selected="false" data-modo="modo-norm">Normalización</button>
+    <button role="tab" aria-selected="false" data-modo="modo-media">Media</button>
+    <button role="tab" aria-selected="false" data-modo="modo-op">⊕ y √</button>
+  </div>
+  <div class="rel-cuerpo">
+    <div><h2>De la capa a la relación</h2><p id="rel-texto"></p></div>
+    <div class="rejilla" id="rejilla"></div>
+  </div>
+</section>
+
+<section id="genealogia" aria-label="Genealogía">
+  <div class="gen-cab">
+    <h2>De 12 capas a una convergencia</h2>
+    <p>Cada filamento es una relación de esta lectura. Pase el cursor por un índice para ver qué capas lo producen; haga clic para leer su fórmula y ver su mapa.</p>
+  </div>
+  <div class="operadores">
+    <div><b>a ⊕ b</b><span>= 1 − (1 − a)(1 − b): une evidencias distintas; cualquier señal suma y su ausencia no resta.</span></div>
+    <div><b>√(a·b)</b><span>convergencia: alta solo si las dos condiciones coinciden.</span></div>
+    <div><b>máx</b><span>el mayor de los dos valores.</span></div>
+    <div><b>media</b><span>promedio de valores 0–1, con pesos iguales.</span></div>
+  </div>
+  <svg id="gen-svg" viewBox="0 0 1200 560" role="img" aria-label="Filamentos de las capas a los índices y a la convergencia"></svg>
+  <div class="formula" id="formula"></div>
+</section>
+
+<section id="relieve" aria-label="Relieve">
+  <div class="rel-izq">
+    <h2>Geografías latentes</h2>
+    <p id="relieve-texto"></p>
+    <div class="chips" id="chips"></div>
+    <p class="nota" style="margin-top:18px">Fuente del terreno: Terrain Tiles (Mapzen / AWS, Terrarium), agregado a celdas de 47 m y exagerado ×6 en vertical. En «Solo relieve», el color sale de la iluminación del noroeste y de la altura, no de un valor analítico. Arrastre para girar; rueda o pellizco para acercar.</p>
+  </div>
+  <div id="relieve-3d"><span class="norte">N<br />↑</span><div class="rampa" id="rampa"></div></div>
+</section>
+
+<footer id="creditos">
+  <div>
+    <h2>Lectura territorial</h2>
+    <p>Este análisis toma la isla de Tierra Bomba, en Cartagena, como referencia territorial, desde una mirada relacional y multiespecie. Reúne doce capas del mismo encuadre y una lectura exploratoria de cómo se combinan; no presenta resultados validados ni un índice oficial.</p>
+    <p class="rotulo" style="margin-top:28px">Autoría</p>
+    <dl class="tabla"><dt>Autoras</dt><dd>Alejandra Gómez · Ana Casas</dd><dt>Programa</dt><dd>Arquitectura y Urbanismo</dd><dt>Trabajo</dt><dd>Tesis de grado · tercer corte · 2026</dd></dl>
+    <p class="rotulo">Asistencia computacional</p>
+    <p style="font-size:.88rem;color:var(--tinta-2)">Claude Code (Anthropic): procesamiento de las capas, cálculo de los índices y desarrollo de la interfaz.</p>
+  </div>
+  <div>
+    <p class="rotulo">Documentos</p>
+    <a class="doc" href="../" ><strong>Presentación del tercer corte</strong> <em>Vista web</em><span>Erosión con datos de MIDAS e INVEMAR, vías, sintaxis espacial y plan maestro en 3D.</span></a>
+    <a class="doc" href="https://anasoficasca-code.github.io/tierrabomba/" target="_blank" rel="noopener"><strong>Red de especies de la isla</strong> <em>Vista web</em><span>436 taxones y 920 relaciones documentadas.</span></a>
+    <a class="doc" href="https://alejagoguti-cpu.github.io/tesis/#/comunidad" target="_blank" rel="noopener"><strong>Versión para la comunidad</strong> <em>Vista web</em><span>Territorio, historia, riesgos y el nuevo barrio.</span></a>
+    <a class="doc" href="capas.json"><strong>Datos de las capas</strong> <em>JSON</em><span>Malla de 145 × 258 celdas con las doce capas normalizadas, sus rangos, fuentes y métodos.</span></a>
+    <p class="rotulo" style="margin-top:26px">Licencias</p>
+    <p style="font-size:.86rem;color:var(--tinta-2)">Los datos de origen conservan sus licencias: OpenStreetMap (ODbL), Esri World Imagery (términos de Esri), Terrain Tiles (atribución Mapzen), iNaturalist (licencias de cada observación), MIDAS (Alcaldía de Cartagena).</p>
+  </div>
+  <div id="fuentes"></div>
+</footer>
+</main>
+
+<script type="module" src="analisis.js"></script>
+</body>
+</html>

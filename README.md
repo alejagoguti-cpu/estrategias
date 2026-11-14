@@ -59,3 +59,8 @@ El escenario por defecto del capítulo 3 usa las capas de cambio climático de M
 
 - Erosión: cada tramo de costa retrocede según su amenaza por erosión en MIDAS (INVEMAR 2011). INVEMAR midió en Tierra Bomba un retroceso promedio de 0,63 m/año y máximo de 3 m/año (fotografías aéreas 1994-2011; INVEMAR-MADS-Alcaldía-CDKN 2012, Lineamientos de adaptación al cambio climático para Cartagena de Indias, p. 20). Tasas usadas por clase: muy alta 3, alta 1,5, moderada 0,63, baja 0,3 m/año; los valores intermedios son una asignación de esta presentación entre el promedio y el máximo medidos.
 - Zona inundable: las capas «Inundación moderada» (escenario 2019) e «Inundación fuerte» (escenario 2040) de MIDAS (años según INVEMAR et al. 2012, p. 24). Sobre Tierra Bomba las dos coinciden (unas 246 ha) y llegan a terrenos de varios metros en el relieve usado: se muestran como amenaza por eventos, rayadas en azul, y no se cuentan como tierra perdida.
+
+
+## Análisis territorial (vista aparte)
+
+https://alejagoguti-cpu.github.io/tesis_tercer_corte/analisis/ : lectura territorial de la isla en doce capas sobre una malla de 47 m (relieve, costa, amenaza y retroceso por erosión, zona inundable de MIDAS, construcciones, sintaxis espacial, muelles, árboles y especies), sus relaciones, cinco índices exploratorios (pesos iguales, no validados) y el relieve en 3D. Las capas se generan con `codigo/scripts/capas_analisis.mjs` y quedan en `analisis/capas.json`.
