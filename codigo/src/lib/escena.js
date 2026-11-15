@@ -210,7 +210,9 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
 
   // ---------- renderer ----------
   const renderer = new THREE.WebGLRenderer({ antialias: !small, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, small ? 1.5 : 1.75));
+  let calidad = 1; // baja sola si el equipo va lento
+  const prBase = Math.min(window.devicePixelRatio, small ? 1.25 : 1.35);
+  renderer.setPixelRatio(prBase);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
@@ -799,7 +801,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     console.info('árboles detectados en la imagen satelital:', n, '· total', treeAll.length);
   }
   // Cerca de la cámara: los modelos escaneados; lejos: la misma copa simplificada (instancias ligeras)
-  const TREE_CERCA = small ? 900 : 3000; const R_CERCA = small ? 900 : 1400;
+  const TREE_CERCA = small ? 600 : 1500; const R_CERCA = small ? 900 : 1400;
   let treeCentro = [Infinity, Infinity];
   let rCorte = 0; // radio dentro del cual están los modelos completos (las copas simplificadas se apagan ahí)
   const cercanos = (cx2, cz2, anio) => {
@@ -1048,7 +1050,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         // oleaje: 10 trenes de olas de 8 a 70 m, con direcciones alrededor del viento del noreste y su velocidad real √(g/k).
         // Las olas más pequeñas que unos píxeles se apagan (si no, parpadean de lejos)
         vec2 g = vec2(0.0); float cresta = 0.0; float sTot = 0.0;
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 7; i++) {
           float fi = float(i);
           float ang = 2.2 + (hash1(fi + 1.3) - 0.5) * 1.4;
           vec2 dd = vec2(cos(ang), sin(ang));
@@ -1149,6 +1151,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     reflCam.projectionMatrix.copy(cam.projectionMatrix);
     reflTexMat.copy(BIAS).multiply(reflCam.projectionMatrix).multiply(reflCam.matrixWorldInverse);
     water.visible = false;
+    const ocultos = [treesGroup, copas, houseMesh, ctgGroup, planGroup].map((o) => [o, o.visible]); ocultos.forEach(([o]) => { o.visible = false; });
     const etqV = etiquetas.visible; etiquetas.visible = false; const rutV = rutasGroup.visible; rutasGroup.visible = false; // sin etiquetas ni rutas en el reflejo (salían duplicadas)
     sky.visible = false; // el cielo se pone en el shader (sin el disco del sol, que en el reflejo era una mancha)
     const prev = renderer.getRenderTarget();
@@ -1160,7 +1163,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     renderer.setRenderTarget(prev);
     renderer.setClearColor(rClear, ca);
     sky.visible = true;
-    etiquetas.visible = etqV; rutasGroup.visible = rutV;
+    etiquetas.visible = etqV; rutasGroup.visible = rutV; ocultos.forEach(([o, v]) => { o.visible = v; });
     water.visible = true;
   };
   const sun = new THREE.DirectionalLight(0xfff0d8, 2.6);
@@ -1171,7 +1174,8 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.mapSize.set(1536, 1536);
+    renderer.shadowMap.autoUpdate = false; // se recalcula solo cuando la cámara se mueve
     sun.shadow.camera.near = 50;
     sun.shadow.camera.far = 12000;
     sun.shadow.bias = -0.0004;
@@ -1849,7 +1853,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     const w = mount.clientWidth || window.innerWidth;
     const h = mount.clientHeight || window.innerHeight;
     renderer.setSize(w, h, false);
-    const prR = renderer.getPixelRatio() * 0.85; // el reflejo a 60 % de resolución: las olas lo deforman, no hace falta más
+    const prR = renderer.getPixelRatio() * 0.5; // el reflejo a 60 % de resolución: las olas lo deforman, no hace falta más
     reflRT.setSize(Math.max(2, Math.round(w * prR)), Math.max(2, Math.round(h * prR)));
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -1874,6 +1878,8 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   let shown = false;
   const expo = (dt, k) => 1 - Math.exp(-dt * k);
 
+  let sombraFirma = ''; let sombraCuadros = 0; let cuadro = 0;
+  let fpsT = performance.now(); let fpsN = 0;
   const tick = (now) => {
     raf = requestAnimationFrame(tick);
     if (pausado || disposed) return;
@@ -1943,6 +1949,8 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       const sc = sun.shadow.camera;
       if (Math.abs(sc.right - half) / half > 0.04) { sc.left = -half; sc.right = half; sc.top = half; sc.bottom = -half; sc.updateProjectionMatrix(); }
       sun.shadow.normalBias = ((2 * half) / sun.shadow.mapSize.x) * 1.6;
+      const firma = `${Math.round(sun.target.position.x / 8)}|${Math.round(sun.target.position.z / 8)}|${Math.round(half / 20)}|${Math.round(cur.year * 2)}|${T.modo}`;
+      if (firma !== sombraFirma || ++sombraCuadros > 90) { sombraFirma = firma; sombraCuadros = 0; renderer.shadowMap.needsUpdate = true; }
     }
     vientoT.value = t;
 
@@ -2018,7 +2026,9 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     etiquetas.children.forEach((s) => { s.material.opacity = cur.contexto; });
     waterUniforms.uTime.value = t;
     midasGroup.visible = !!T.midas;
-    renderReflejo(camera);
+    // calidad automática: si van menos de 28 cuadros por segundo, baja la resolución y luego apaga el reflejo
+    fpsN++; if (now - fpsT > 2500) { const fps = (fpsN * 1000) / (now - fpsT); fpsT = now; fpsN = 0; if (fps < 28 && calidad > 0) { calidad--; renderer.setPixelRatio(prBase * 0.75); resize(); waterUniforms.uReflOn.value = 0; } }
+    if (calidad > 0 && (cuadro++ % 2 === 0)) renderReflejo(camera);
     for (const k of PLAN_KEYS) planT[k] = (T.plan && T.plan[k]) || 0;
     actualizarPlan(dt, t, cur.escala);
     renderer.render(scene, camera);
