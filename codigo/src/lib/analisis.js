@@ -143,33 +143,34 @@ raiz.querySelectorAll('[data-capa]').forEach((b) => { b.onmouseenter = () => { p
 const pCont = $('#pila-3d');
 const pRen = new THREE.WebGLRenderer({ antialias: true, alpha: true }); pRen.setPixelRatio(DPR); pCont.append(pRen.domElement);
 const pEsc = new THREE.Scene();
-pEsc.add(new THREE.AmbientLight(0xffffff, 0.75)); const pSol = new THREE.DirectionalLight(0xffffff, 0.9); pSol.position.set(-60, 120, -40); pEsc.add(pSol);
+pEsc.add(new THREE.AmbientLight(0xffffff, 1.15)); const pSol = new THREE.DirectionalLight(0xffffff, 1.1); pSol.position.set(-60, 120, -40); pEsc.add(pSol);
 const pCam = new THREE.OrthographicCamera(-1, 1, 1, -1, -2000, 2000);
 // recorte a la caja de la isla (con margen), para que la isla llene cada capa
 let bx0 = GW, bx1 = 0, by0 = GH, by1 = 0; for (let k = 0; k < N; k++) if (isla[k]) { const i = k % GW; const j = Math.floor(k / GW); bx0 = Math.min(bx0, i); bx1 = Math.max(bx1, i); by0 = Math.min(by0, j); by1 = Math.max(by1, j); }
 bx0 = Math.max(0, bx0 - 4); by0 = Math.max(0, by0 - 4); bx1 = Math.min(GW - 1, bx1 + 4); by1 = Math.min(GH - 1, by1 + 4);
 const BW = bx1 - bx0 + 1; const BH = by1 - by0 + 1;
 const PASO = 2; const SX = Math.ceil(BW / PASO); const SY = Math.ceil(BH / PASO);
-const SEP = 11; // separación entre capas
-const ALT_BASE = 6; const ALT_HOVER = 34; // altura del valor máximo: en reposo y levantada
+const SEP = 34; // separación entre capas
+const ABANICO = 0.13; // corrimiento lateral de cada capa (fracción del ancho), para que se vean todas
+const ALT_BASE = 12; const ALT_HOVER = 40; // altura del valor máximo: en reposo y levantada
 const MAR = [0.02, 0.028, 0.034];
 const capas3d = orden.map((c, i) => {
   const geo = new THREE.PlaneGeometry(BW, BH, SX - 1, SY - 1); geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position; const n = pos.count; const val = new Float32Array(n); const col = new Float32Array(n * 3);
   for (let v = 0; v < n; v++) {
     const ix = v % SX; const iy = Math.floor(v / SX); const k = Math.min(by1, by0 + iy * PASO) * GW + Math.min(bx1, bx0 + ix * PASO);
-    let rgb; if (!isla[k]) { rgb = MAR.map((x) => x * 255); val[v] = 0; } else { const t = c.val(k); val[v] = Math.max(0, t); rgb = t < 0 ? [38, 44, 48] : colorDe(c.rampa, t); }
+    let rgb; if (!isla[k]) { rgb = MAR.map((x) => x * 255); val[v] = 0; } else { const t = c.val(k); val[v] = Math.max(0, t); rgb = t < 0 ? [58, 66, 72] : colorDe(c.rampa, Math.max(0.12, t)); }
     col[v * 3] = rgb[0] / 255; col[v * 3 + 1] = rgb[1] / 255; col[v * 3 + 2] = rgb[2] / 255;
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
   const malla = new THREE.Mesh(geo, mat);
-  const borde = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(BW, BH).rotateX(-Math.PI / 2)), new THREE.LineBasicMaterial({ color: 0xd6e6ec, transparent: true, opacity: 0.28 }));
+  const borde = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(BW, BH).rotateX(-Math.PI / 2)), new THREE.LineBasicMaterial({ color: 0xd6e6ec, transparent: true, opacity: 0.5 }));
   const grupo = new THREE.Group(); grupo.add(malla, borde); grupo.userData = { c, i, val, alt: ALT_BASE }; malla.userData.id = c.id;
   pEsc.add(grupo); return grupo;
 });
 // retícula bajo la pila, como en un plano de trabajo
-const reti = new THREE.GridHelper(Math.max(BW, BH) * 1.7, 26, 0x3a454c, 0x1c2328); reti.position.y = -orden.length * SEP - 6; pEsc.add(reti);
+// sin retícula debajo de la pila
 const aplicarAltura = (g, alt) => { const pos = g.children[0].geometry.attributes.position; const val = g.userData.val; for (let v = 0; v < pos.count; v++) pos.setY(v, val[v] * alt); pos.needsUpdate = true; g.children[0].geometry.computeVertexNormals(); };
 capas3d.forEach((g) => aplicarAltura(g, ALT_BASE));
 const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2();
@@ -181,23 +182,25 @@ function dibujarPila() {
   const w = Math.max(1, r.width); const h = Math.max(1, r.height);
   if (pRen.domElement.width !== Math.round(w * DPR) || pRen.domElement.height !== Math.round(h * DPR)) pRen.setSize(w, h, false);
   // cámara isométrica; la pila completa cabe en el cuadro
-  const alto = orden.length * SEP + BH * 0.75;
-  const mitadH = Math.max(alto * 0.66, ((BW + BH) * 0.5) / (w / h)) * 1.02;
+  const alto = orden.length * SEP * 0.8 + BH * 0.75;
+  const ancho = (BW + BH) * 0.5 + orden.length * BW * ABANICO * 0.75;
+  const mitadH = Math.max(alto * 0.62, (ancho * 0.55) / (w / h)) * 1.0;
   pCam.left = -mitadH * (w / h); pCam.right = mitadH * (w / h); pCam.top = mitadH; pCam.bottom = -mitadH; pCam.updateProjectionMatrix();
-  const giro = pausado ? 0 : Math.sin(performance.now() * 0.00018) * 0.18;
-  const d = 600; pCam.position.set(Math.sin(Math.PI / 4 + giro) * d, d * 0.82, Math.cos(Math.PI / 4 + giro) * d); pCam.lookAt(0, -orden.length * SEP * 0.5 + 10, 0);
+  const giro = pausado ? 0 : performance.now() * 0.00009;
+  const d = 600; const cy = -orden.length * SEP * 0.5 + 10; pCam.position.set(Math.sin(Math.PI / 4 + giro) * d, cy + d * 0.5, Math.cos(Math.PI / 4 + giro) * d); pCam.lookAt(0, cy, 0);
   raiz.querySelectorAll('[data-capa]').forEach((b) => (b.dataset.capa === pHover ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
   const ahora = performance.now(); const ia = intro('capas', ahora, 2600);
   capas3d.forEach((g) => {
     const { c, i } = g.userData; const sel = c.id === pHover;
-    const meta = sel ? ALT_HOVER : ALT_BASE; const nueva = g.userData.alt + (meta - g.userData.alt) * 0.14;
+    const ola = pausado || pHover ? 0 : Math.max(0, Math.sin(ahora * 0.0011 - i * 0.55)) ** 6; const meta = sel ? ALT_HOVER : ALT_BASE + ola * 22; const nueva = g.userData.alt + (meta - g.userData.alt) * 0.14;
     if (Math.abs(nueva - g.userData.alt) > 0.02) { g.userData.alt = nueva; aplicarAltura(g, nueva); }
     const ic = suave((ia - (orden.length - 1 - i) * 0.06) / 0.4);
-    const flota = pausado ? 0 : Math.sin(ahora * 0.0016 + i * 0.7) * 1.1;
+    const flota = pausado ? 0 : Math.sin(ahora * 0.0012 + i * 0.6) * 3.2 + ola * 10;
     const iSel = pHover ? orden.findIndex((o) => o.id === pHover) : -1; const sube = iSel >= 0 && i < iSel ? 75 : sel ? 8 : 0; /* las capas de encima se abren como un cajón */ g.userData.sube = (g.userData.sube || 0) + (sube - (g.userData.sube || 0)) * 0.14;
     g.position.y = -i * SEP + flota + g.userData.sube + (1 - ic) * 260;
+    g.position.x = (i - (orden.length - 1) / 2) * BW * ABANICO;
     g.visible = ic > 0.01; g.children[0].material.color.setScalar(pHover && !sel ? 0.4 : 1);
-    g.children[1].material.color.set(sel ? 0xff6b4a : 0xd6e6ec); g.children[1].material.opacity = ic * (sel ? 0.95 : 0.28);
+    g.children[1].material.color.set(sel ? 0xff6b4a : 0xd6e6ec); g.children[1].material.opacity = ic * (sel ? 0.95 : 0.45 + 0.4 * ola);
   });
   pRen.render(pEsc, pCam);
 }
