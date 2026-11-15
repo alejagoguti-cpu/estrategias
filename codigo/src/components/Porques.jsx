@@ -138,7 +138,7 @@ export default function Porques() {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="etiqueta text-arcilla">El problema, desplegado</p>
-            <h2 className="mt-4 max-w-4xl text-3xl sm:text-4xl lg:text-5xl">Del problema a lo que hay que medir.</h2>
+            <h2 className="mt-4 max-w-4xl text-2xl sm:text-3xl lg:text-4xl">Del problema a lo que hay que medir.</h2>
           </div>
           <p className="max-w-md text-sm leading-relaxed text-white/70">Entre un nivel y otro no decimos «causa»: decimos <span className="text-white">«se relaciona con»</span>, hasta que el dato lo confirme.</p>
         </div>
@@ -160,13 +160,13 @@ export default function Porques() {
                   )}
                   <button type="button" onClick={() => { setSel(i); if (window.innerWidth < 1024) setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }} aria-pressed={on}
                     className="porque-escalon group relative flex w-full items-center gap-5 text-left" style={{ paddingLeft: 'var(--sangria)' }}>
-                    <span className={`relative grid h-14 w-14 shrink-0 place-items-center rounded-full border-2 font-semibold transition-all duration-300 ${on ? 'scale-110 border-arcilla bg-arcilla text-[#0b1015]' : i === 0 ? 'border-arcilla text-arcilla' : 'border-white/30 text-white/80 group-hover:border-white'}`}>
-                      <span className="num text-lg">{i === 0 ? '●' : i}</span>
+                    <span className={`relative grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 font-semibold transition-all duration-300 ${on ? 'scale-110 border-arcilla bg-arcilla text-[#0b1015]' : i === 0 ? 'border-arcilla text-arcilla' : 'border-white/30 text-white/80 group-hover:border-white'}`}>
+                      <span className="num text-base">{i === 0 ? '●' : i}</span>
                       {on && <span className="porque-pulso absolute inset-0 rounded-full border-2 border-arcilla" />}
                     </span>
                     <span className="min-w-0">
                       {i === 0 && <span className="etiqueta block text-arcilla">Problema central</span>}
-                      <span className={`block font-semibold leading-[1.05] tracking-tight transition-colors ${i === 0 ? 'text-2xl sm:text-3xl' : 'text-lg sm:text-2xl'} ${on ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>{nv.frase}</span>
+                      <span className={`block font-semibold leading-[1.05] tracking-tight transition-colors ${i === 0 ? 'text-xl sm:text-2xl' : 'text-base sm:text-xl'} ${on ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>{nv.frase}</span>
                       {nv.erosion && <span className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-[#ff9a7a]"><i className="inline-block h-1.5 w-1.5 rounded-full bg-[#ff6b4a]" />erosión costera</span>}
                     </span>
                   </button>
@@ -187,8 +187,8 @@ export default function Porques() {
           <aside ref={panelRef} className="scroll-mt-20 lg:sticky lg:top-24 lg:self-start">
             <div key={sel} className="porque-panel rounded-[8px] border border-white/15 bg-tinta/45 p-6 sm:p-8">
               <p className="etiqueta text-arcilla">{sel === 0 ? 'Problema central' : `Nivel ${sel} · se relaciona con el anterior`}</p>
-              <p className="mt-3 text-xl font-semibold leading-tight tracking-tight sm:text-2xl">{n.frase}</p>
-              {n.sub && <p className="mt-4 border-l-2 border-arcilla pl-4 text-[15px] leading-snug text-white/85">{n.sub}</p>}
+              <p className="mt-3 text-lg font-semibold leading-tight tracking-tight sm:text-xl">{n.frase}</p>
+              {n.sub && <p className="mt-4 border-l-2 border-arcilla pl-4 text-sm leading-snug text-white/85">{n.sub}</p>}
               <p className="etiqueta mb-4 mt-7 text-white/45">Cómo se mide</p>
               {n.mide()}
             </div>

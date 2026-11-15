@@ -129,7 +129,7 @@ export function SeccionEsquema() {
     <section id="esquema" className="relative bg-papel text-tinta">
       <div className="mx-auto max-w-[1640px] px-5 lg:px-16 py-20 sm:px-10 sm:py-28">
         <p className="etiqueta text-arcilla">06 · Plan maestro · Esquema y criterios</p>
-        <h2 className="mt-4 max-w-6xl text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-8xl">El plan, en una sola planta.</h2>
+        <h2 className="mt-4 max-w-6xl text-3xl font-semibold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">El plan, en una sola planta.</h2>
         <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,34rem)_1fr]">
           <figure>
             <div className="border border-tinta/20"><EsquemaPlan /></div>

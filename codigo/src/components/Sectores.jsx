@@ -101,7 +101,7 @@ export default function Sectores() {
     <section id="sectores" className="relative bg-tinta text-papel">
       <div className="mx-auto max-w-[1760px] px-5 py-16 sm:px-10 sm:py-24 lg:px-12">
         <p className="etiqueta text-arcilla">Del encuadre al sector</p>
-        <h2 className="mt-4 text-4xl sm:text-5xl lg:text-6xl">La isla y sus cuatro sectores.</h2>
+        <h2 className="mt-4 text-3xl sm:text-4xl lg:text-5xl">La isla y sus cuatro sectores.</h2>
         <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,30rem)] lg:gap-12">
           <canvas ref={cvRef} className="block h-[72svh] min-h-[460px] w-full lg:h-[88svh]" aria-label="Mapa de puntos de Tierra Bomba con sus cuatro sectores; toca un punto rojo para acercarte" />
           <div className="flex flex-col lg:pt-2">
@@ -114,7 +114,7 @@ export default function Sectores() {
                   className="group relative w-full py-4 pl-5 pr-1 text-left">
                   <span className={`absolute left-0 top-4 h-[calc(100%-2rem)] w-[2px] transition-colors duration-300 ${on ? 'bg-arcilla' : 'bg-transparent'}`} />
                   <div className="flex items-baseline justify-between gap-3">
-                    <p className={`text-xl tracking-tight transition-colors sm:text-2xl ${on ? 'text-white' : 'text-white/60 group-hover:text-white'}`}>{t}</p>
+                    <p className={`text-lg tracking-tight transition-colors sm:text-xl ${on ? 'text-white' : 'text-white/60 group-hover:text-white'}`}>{t}</p>
                     {k !== 'isla' ? <p className="num text-[12px] text-white/45">{fmt(SECT[k].cons)} construcciones</p> : datos && <p className="num text-[12px] text-white/45">{fmt(datos.haIsla)} ha · 2.600 construcciones</p>}
                   </div>
                   {rr && (
@@ -125,9 +125,9 @@ export default function Sectores() {
                           <span className="h-full" style={{ width: `${(100 * Math.min(rr.haInu, rr.ha - rr.ha30)) / rr.ha}%`, background: 'repeating-linear-gradient(135deg, rgba(244,241,236,.55) 0 2px, transparent 2px 5px)' }} />
                         </div>
                         <dl className="mt-3 grid grid-cols-3 gap-3">
-                          <div><dd className="num text-xl text-white sm:text-2xl">{fmt(rr.ha)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">del sector</dt></div>
-                          <div><dd className="num text-xl text-[#e0917a] sm:text-2xl">{fmt(rr.ha30)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">perdidas a 30 años ({fmt((100 * rr.ha30) / rr.ha)} %)</dt></div>
-                          <div><dd className="num text-xl text-white/85 sm:text-2xl">{fmt(rr.haInu)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">en zona inundable</dt></div>
+                          <div><dd className="num text-lg text-white sm:text-xl">{fmt(rr.ha)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">del sector</dt></div>
+                          <div><dd className="num text-lg text-[#e0917a] sm:text-xl">{fmt(rr.ha30)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">perdidas a 30 años ({fmt((100 * rr.ha30) / rr.ha)} %)</dt></div>
+                          <div><dd className="num text-lg text-white/85 sm:text-xl">{fmt(rr.haInu)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">en zona inundable</dt></div>
                         </dl>
                       </div>
                     </div>

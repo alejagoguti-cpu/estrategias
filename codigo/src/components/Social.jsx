@@ -31,7 +31,7 @@ function Bloque({ n, titulo, bajada, fuente, children }) {
       <div className="grid gap-8 lg:grid-cols-[minmax(0,24rem)_1fr] lg:gap-20">
         <header>
           <p className="etiqueta text-arcilla">{n}</p>
-          <h3 className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-4xl">{titulo}</h3>
+          <h3 className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{titulo}</h3>
           {bajada && <p className="mt-3 text-sm leading-relaxed text-white/60">{bajada}</p>}
           {fuente && <p className="mt-5 border-t border-white/12 pt-3 text-[11px] leading-snug text-white/40">Fuente: {fuente}</p>}
         </header>
@@ -450,7 +450,7 @@ export default function Social() {
     <section id="social" className="relative bg-tinta text-papel">
       <div className="mx-auto max-w-[1640px] px-5 lg:px-16 py-20 sm:px-10 sm:py-28">
         <p className="etiqueta text-arcilla">02 · Lo social</p>
-        <h2 className="mt-4 max-w-6xl text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-8xl">Cómo lo viven quienes lo habitan.</h2>
+        <h2 className="mt-4 max-w-6xl text-3xl font-semibold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">Cómo lo viven quienes lo habitan.</h2>
         <p className="mt-6 max-w-3xl text-lg leading-relaxed text-white/70">
           Percepciones y datos locales reunidos de encuestas, talleres de memoria, prensa e informes oficiales. Son datos de años distintos y no describen la isla de hoy: sirven para entender qué está en juego además del suelo.
         </p>
