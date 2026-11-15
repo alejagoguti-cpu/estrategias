@@ -1279,23 +1279,24 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   ctxJson.rutas.forEach((r, ri) => {
     const pts = r.puntos.filter((_, i) => i % 3 === 0 || i === r.puntos.length - 1).map(([lo, la]) => llToXZ(lo, la));
     // pequeño desplazamiento lateral por ruta para que las que comparten corredor no se encimen
-    const off = ((ri % 5) - 2) * 9;
+    const off = ((ri % 5) - 2) * 16;
     const despl = pts.map(([px, pz], i) => { const a = pts[Math.max(0, i - 1)]; const b = pts[Math.min(pts.length - 1, i + 1)]; const dxx = b[0] - a[0]; const dzz = b[1] - a[1]; const L = Math.hypot(dxx, dzz) || 1; const k = Math.min(1, i / 6, (pts.length - 1 - i) / 6); return [px - (dzz / L) * off * k, pz + (dxx / L) * off * k]; });
     const arr = [];
     for (let i = 0; i < despl.length - 1; i++) { arr.push(despl[i][0], 2.2, despl[i][1], despl[i + 1][0], 2.2, despl[i + 1][1]); rutasPts.push(despl[i]); }
     const col = COLOR_RUTA[r.tipo] ?? 0xffffff;
     const g = new LineSegmentsGeometry(); g.setPositions(arr);
-    const halo = new LineSegments2(g, new LineMaterial({ color: col, linewidth: 9, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
-    const linea = new LineSegments2(g, new LineMaterial({ color: col, linewidth: 2.4, transparent: true, opacity: 0, depthWrite: false }));
+    const halo = new LineSegments2(g, new LineMaterial({ color: col, linewidth: 1.4, transparent: true, opacity: 0, depthWrite: false }));
+    const linea = new LineSegments2(g, new LineMaterial({ color: col, linewidth: 3, transparent: true, opacity: 0, depthWrite: false, dashed: true, dashSize: 70, gapSize: 55 }));
+    linea.computeLineDistances(); linea.material.userData.flujo = r.tipo === 'colectiva' ? 1 : 0.8;
     halo.renderOrder = 6; linea.renderOrder = 7; halo.frustumCulled = linea.frustumCulled = false;
-    halo.material.userData.k = 0.16; linea.material.userData.k = 0.95;
+    halo.material.userData.k = 0.35; linea.material.userData.k = 1;
     rutasGroup.add(halo, linea); rutaMats.push(halo.material, linea.material);
     // lanchas en movimiento: más lanchas en las rutas colectivas
     const acum = [0]; for (let i = 1; i < despl.length; i++) acum.push(acum[i - 1] + Math.hypot(despl[i][0] - despl[i - 1][0], despl[i][1] - despl[i - 1][1]));
-    const n = r.tipo === 'colectiva' ? 3 : 2;
+    const n = r.tipo === 'colectiva' ? 2 : 1;
     for (let q = 0; q < n; q++) {
-      const casco = new THREE.Mesh(cascoGeo, lanchaMat); casco.scale.set(7, 2.5, 3.2);
-      const estela = new THREE.Mesh(cascoGeo, estelaMat); estela.scale.set(26, 0.6, 6);
+      const casco = new THREE.Mesh(cascoGeo, lanchaMat); casco.scale.set(6, 2, 2.6);
+      const estela = new THREE.Mesh(cascoGeo, estelaMat); estela.scale.set(18, 0.4, 3.2);
       const gL = new THREE.Group(); gL.add(casco, estela); estela.position.x = -16; gL.renderOrder = 9;
       rutasGroup.add(gL);
       lanchasMov.push({ pts: despl, acum, largo: acum[acum.length - 1], vel: 9 + (ri % 3) * 2, fase: q / n + ri * 0.13, ida: q % 2 === 0, g: gL });
@@ -1310,17 +1311,17 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       const ang = Math.atan2(b[1] - a[1], b[0] - a[0]); L.g.rotation.y = -(L.ida ? ang : ang + Math.PI);
     });
   };
-  const beamGeo = new THREE.CylinderGeometry(1, 1, 1, 10, 1, true);
-  beamGeo.translate(0, 0.5, 0);
-  const beamMat = new THREE.MeshBasicMaterial({ color: 0xffb066, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
-  const beamMatCtg = new THREE.MeshBasicMaterial({ color: 0x8fd3ee, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+  // marcadores: punto con anillo, del tamaño de pantalla constante (antes eran columnas de luz)
+  const texMarca = (() => { const c = document.createElement('canvas'); c.width = c.height = 128; const g2 = c.getContext('2d'); g2.strokeStyle = '#fff'; g2.lineWidth = 7; g2.beginPath(); g2.arc(64, 64, 52, 0, 6.283); g2.stroke(); g2.fillStyle = '#fff'; g2.beginPath(); g2.arc(64, 64, 26, 0, 6.283); g2.fill(); const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace; return tx; })();
+  const beamMat = new THREE.SpriteMaterial({ map: texMarca, color: 0xffa060, transparent: true, opacity: 0, depthTest: false, sizeAttenuation: false });
+  const beamMatCtg = new THREE.SpriteMaterial({ map: texMarca, color: 0x8fd3ee, transparent: true, opacity: 0, depthTest: false, sizeAttenuation: false });
   const beams = [];
   const addBeam = (X, Z, tipo, mat = beamMat) => {
-    const m = new THREE.Mesh(beamGeo, mat);
-    m.position.set(X, Math.max(0, heightAtXZ(X, Z)), Z);
+    const m = new THREE.Sprite(mat);
+    m.position.set(X, Math.max(0, heightAtXZ(X, Z)) + 3, Z);
     m.userData.tipo = tipo;
     m.frustumCulled = false;
-    m.renderOrder = 8;
+    m.renderOrder = 30;
     rutasGroup.add(m);
     beams.push(m);
   };
@@ -1822,7 +1823,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       ? { pos: new THREE.Vector3(-900, 7400, 8000), look: new THREE.Vector3(-2300, 0, 300) }
       : { pos: new THREE.Vector3(500, 7800, 8400), look: new THREE.Vector3(0, 0, 300) }),
     vias: () => ({ pos: new THREE.Vector3(250 + dx(), 5700, 6700), look: new THREE.Vector3(dx(), 0, 250) }),
-    lancha: () => ({ pos: new THREE.Vector3(bc.x + bdist * 0.18 + dx() * 1.5, bdist * 0.62, bc.z + bdist * 0.92), look: new THREE.Vector3(bc.x + dx() * 1.5, 0, bc.z) }),
+    lancha: () => { const [lx, lz] = llToXZ(-75.562, 10.371); const off = window.innerWidth >= 1024 ? -3300 : 0; return { pos: new THREE.Vector3(lx + off + 1500, 14500, lz + 6800), look: new THREE.Vector3(lx + off, 0, lz) }; },
     plan_general: () => ({ pos: new THREE.Vector3(mCx + 260, 1150, mCz + 1350), look: new THREE.Vector3(mCx - 20, 0, mCz + 60) }),
     plan_meseta: () => ({ pos: new THREE.Vector3(mCx + 140, 560, mCz + 700), look: new THREE.Vector3(mCx, 20, mCz) }),
     plan_escuela: () => ({ pos: new THREE.Vector3(sX + 70, sY + 120, sZ + 190), look: new THREE.Vector3(sX, sY + 4, sZ) }),
@@ -2014,8 +2015,9 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       rutaMats.forEach((m) => { m.opacity = cur.rutas * (m.userData.k ?? 0.9); });
       beamMat.opacity = cur.rutas * 0.8; beamMatCtg.opacity = cur.rutas * 0.9;
       lanchaMat.opacity = cur.rutas; estelaMat.opacity = cur.rutas * 0.35; moverLanchas(t);
-      const h = THREE.MathUtils.clamp(dist * 0.05, 45, 700);
-      beams.forEach((b) => { const k = b.userData.tipo === 'embarque' ? 1.5 : 1; b.scale.set(h * 0.011 * k, h * k, h * 0.011 * k); });
+      const pul = 1 + 0.12 * Math.sin(t * 3);
+      beams.forEach((b) => { const k = (b.userData.tipo === 'embarque' ? 0.021 : 0.012) * pul; b.scale.set(k, k, 1); });
+      rutaMats.forEach((m) => { if (m.userData.flujo) m.dashOffset -= dt * 120 * m.userData.flujo; });
     }
 
     cur.contexto += (T.contexto - cur.contexto) * expo(dt, 2.2);
