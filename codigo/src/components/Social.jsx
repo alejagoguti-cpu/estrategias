@@ -6,7 +6,7 @@ import Red from './Red.jsx';
 // Todas las cifras son las entregadas por la autora; cada bloque cita su fuente.
 // =============================================================================
 
-const ARC = '#c86d51';
+const ARC = '#ff6b4a';
 const MAR = '#5fb3a8';
 const CIELO = '#d9c29b';
 const ARENA = '#e8e2d5';
@@ -50,7 +50,7 @@ function Apilada({ partes, alto = 'h-9', etiquetas = true }) {
         {partes.map((p, i) => (
           <div
             key={p.l}
-            className="flex items-center overflow-hidden whitespace-nowrap px-2 text-[11px] font-medium text-[#0b1015] transition-[flex-grow,opacity] duration-1000 ease-out"
+            className="flex items-center overflow-hidden whitespace-nowrap px-2 text-[11px] font-medium text-[#040607] transition-[flex-grow,opacity] duration-1000 ease-out"
             style={{ flexGrow: visto ? p.v : 0.0001, flexBasis: 0, background: p.c || [ARC, MAR, CIELO, ARENA][i % 4], transitionDelay: `${i * 120}ms`, opacity: visto ? 1 : 0.2 }}
           >
             <span className="num">{p.v}{p.suf ?? ' %'}</span>
@@ -116,8 +116,8 @@ function Dona({ partes, centro, sub, tam = 190 }) {
           );
         })}
         <g className="rotate-90" style={{ transformOrigin: '100px 100px' }}>
-          <text x="100" y="98" textAnchor="middle" fill="#f4f1ec" fontSize="30" fontWeight="600" fontFamily="Geist, sans-serif">{act ? `${act.v}${act.suf ?? ' %'}` : centro}</text>
-          <text x="100" y="122" textAnchor="middle" fill="rgba(244,241,236,.55)" fontSize="12" fontFamily="Geist, sans-serif">{act ? act.l : sub}</text>
+          <text x="100" y="98" textAnchor="middle" fill="#e8eef0" fontSize="30" fontWeight="600" fontFamily="Geist, sans-serif">{act ? `${act.v}${act.suf ?? ' %'}` : centro}</text>
+          <text x="100" y="122" textAnchor="middle" fill="rgba(232,238,240,.55)" fontSize="12" fontFamily="Geist, sans-serif">{act ? act.l : sub}</text>
         </g>
       </svg>
       <ul className="space-y-2 text-[13px]">
@@ -214,14 +214,14 @@ function Lanchas({ ida, vuelta }) {
                 </circle>
               ))}
               <text x="320" y={f.ty} textAnchor="middle" fill={f.c} fontSize="40" fontWeight="300" fontFamily="'Barlow Condensed', sans-serif" style={{ opacity: visto ? 1 : 0, transition: `opacity 1s ease ${0.8 + k * 0.3}s` }}>{f.v}</text>
-              <text x="320" y={f.ly} textAnchor="middle" fill="rgba(244,241,236,.55)" fontSize="11" fontFamily="'Geist Mono', monospace" letterSpacing="1" style={{ opacity: visto ? 1 : 0, transition: `opacity 1s ease ${1 + k * 0.3}s` }}>{`VIAJES ${f.txt.toUpperCase()}`}</text>
+              <text x="320" y={f.ly} textAnchor="middle" fill="rgba(232,238,240,.55)" fontSize="11" fontFamily="'Geist Mono', monospace" letterSpacing="1" style={{ opacity: visto ? 1 : 0, transition: `opacity 1s ease ${1 + k * 0.3}s` }}>{`VIAJES ${f.txt.toUpperCase()}`}</text>
             </g>
           );
         })}
         {[[A, 'Tierra Bomba'], [B, 'Bocagrande']].map(([p, t]) => (
           <g key={t}>
-            <circle cx={p[0]} cy={p[1]} r="7" fill="#0b1015" stroke="#f4f1ec" strokeWidth="1.5" />
-            <text x={p[0]} y={p[1] + 4} dx={p[0] < 320 ? -14 : 14} textAnchor={p[0] < 320 ? 'end' : 'start'} fill="#f4f1ec" fontSize="12" fontFamily="'Geist Mono', monospace">{t.toUpperCase()}</text>
+            <circle cx={p[0]} cy={p[1]} r="7" fill="#040607" stroke="#e8eef0" strokeWidth="1.5" />
+            <text x={p[0]} y={p[1] + 4} dx={p[0] < 320 ? -14 : 14} textAnchor={p[0] < 320 ? 'end' : 'start'} fill="#e8eef0" fontSize="12" fontFamily="'Geist Mono', monospace">{t.toUpperCase()}</text>
           </g>
         ))}
       </svg>
@@ -245,8 +245,8 @@ function Anillos({ items, total, sel, setSel }) {
           </g>
         );
       })}
-      <text x="200" y="190" textAnchor="middle" fill="#f4f1ec" fontSize="44" fontWeight="600" fontFamily="Geist, sans-serif">{items[sel].p} %</text>
-      <text x="200" y="215" textAnchor="middle" fill="rgba(244,241,236,.6)" fontSize="13" fontFamily="Geist, sans-serif">{items[sel].corto}</text>
+      <text x="200" y="190" textAnchor="middle" fill="#e8eef0" fontSize="44" fontWeight="600" fontFamily="Geist, sans-serif">{items[sel].p} %</text>
+      <text x="200" y="215" textAnchor="middle" fill="rgba(232,238,240,.6)" fontSize="13" fontFamily="Geist, sans-serif">{items[sel].corto}</text>
     </svg>
   );
 }
@@ -282,7 +282,7 @@ function Percepcion() {
             <li key={x.corto} className="border-b border-white/10">
               <button type="button" role="option" aria-selected={on} onClick={() => setSel(i)} onMouseEnter={() => window.matchMedia('(hover: hover)').matches && setSel(i)}
                 className="grid w-full grid-cols-[5.2rem_1fr] items-center gap-x-4 gap-y-1.5 py-2.5 text-left sm:grid-cols-[6.5rem_13rem_1fr]">
-                <span className="cifra text-4xl leading-none sm:text-5xl" style={{ color: on ? c : 'rgba(244,241,236,.8)' }}>{x.p}<span className="ml-0.5 text-base text-white/45">%</span></span>
+                <span className="cifra text-4xl leading-none sm:text-5xl" style={{ color: on ? c : 'rgba(232,238,240,.8)' }}>{x.p}<span className="ml-0.5 text-base text-white/45">%</span></span>
                 <span className={`text-[13px] leading-tight ${on ? 'text-white' : 'text-white/65'}`}>{x.corto}</span>
                 <span className="relative col-span-2 h-[2px] bg-white/10 sm:col-span-1">
                   <span className="absolute inset-y-0 left-0 transition-[width] duration-[1400ms] ease-out" style={{ width: visto ? `${pct}%` : 0, background: c, opacity: on ? 1 : 0.55, transitionDelay: `${i * 90}ms` }} />
@@ -376,7 +376,7 @@ function Escuela() {
       <p className="max-w-2xl text-[13px] leading-relaxed text-white/70">La sede de Punta Arena solo tiene preescolar y primaria: para cursar sexto grado los estudiantes deben cambiar de sede. El estudio de 2017 documentó docentes que viajaban en lancha desde Cartagena; el oleaje alto dificultaba su llegada.</p>
 
       <div className="border border-dashed border-white/30 p-5">
-        <p className="etiqueta text-[#e0917a]">Dato que falta</p>
+        <p className="etiqueta text-[#ff8a6a]">Dato que falta</p>
         <p className="mt-2 text-sm leading-relaxed text-white/80">
           <strong className="font-semibold text-white">¿Cuántos niños del poblado estudian en Cartagena continental?</strong> No hay una cifra pública verificada: los registros cuentan estudiantes por sede, y el aforo de lanchas cuenta pasajeros sin identificar cuántos son escolares residentes.
         </p>
@@ -405,7 +405,7 @@ function Conexiones() {
                 <path d={d} fill="none" stroke={CIELO} strokeWidth="2" pathLength="1" strokeDasharray="1" strokeDashoffset={visto ? 0 : 1} style={{ transition: `stroke-dashoffset 1.4s ease ${i * 0.2}s` }} />
                 {visto && <circle r="3.4" fill="#fff"><animateMotion dur="3.2s" begin={`${i * 0.5}s`} repeatCount="indefinite" path={d} /></circle>}
                 <circle cx="440" cy={y} r="5" fill={ARC} />
-                <text x="454" y={y + 4} fill="#f4f1ec" fontSize="14" fontFamily="Geist, system-ui, sans-serif">{DESTINOS[i]}</text>
+                <text x="454" y={y + 4} fill="#e8eef0" fontSize="14" fontFamily="Geist, system-ui, sans-serif">{DESTINOS[i]}</text>
               </g>
             );
           })}
@@ -414,7 +414,7 @@ function Conexiones() {
             {visto && <animate attributeName="opacity" values="0.5;0;0.5" dur="3.4s" repeatCount="indefinite" />}
           </circle>
           <circle cx="104" cy="150" r="20" fill={ARC} />
-          <text x="104" y="198" textAnchor="middle" fill="#f4f1ec" fontSize="14" fontWeight="600" fontFamily="Geist, system-ui, sans-serif">Tierra Bomba</text>
+          <text x="104" y="198" textAnchor="middle" fill="#e8eef0" fontSize="14" fontWeight="600" fontFamily="Geist, system-ui, sans-serif">Tierra Bomba</text>
         </svg>
       </div>
 
@@ -431,7 +431,7 @@ function Conexiones() {
             <span key={i} className="h-7 flex-1 transition-colors duration-700" style={{ background: visto && i < 4 ? ARC : 'rgba(255,255,255,0.16)', transitionDelay: `${300 + i * 90}ms` }} />
           ))}
         </div>
-        <p className="num mt-2 text-sm text-white/85"><strong className="font-semibold">13 km</strong> de vía carreteable · <span style={{ color: '#e0917a' }}>4 km intervenidos</span> en puntos críticos</p>
+        <p className="num mt-2 text-sm text-white/85"><strong className="font-semibold">13 km</strong> de vía carreteable · <span style={{ color: '#ff8a6a' }}>4 km intervenidos</span> en puntos críticos</p>
         <ul className="mt-3 flex flex-wrap gap-2">
           {['Tierra Bomba', 'Punta Arena', 'Caño del Oro', 'Bocachica'].map((p) => <li key={p} className="border border-white/25 px-2.5 py-1 text-[12px] text-white/80">{p}</li>)}
         </ul>

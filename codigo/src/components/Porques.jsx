@@ -4,7 +4,7 @@ import D from '../data/porques.json';
 // Cinco porqués: empieza con el problema central; cada clic revela el siguiente. Al tocar una tarjeta se abre
 // cómo se mide, ya calculado con los datos de la presentación (o el dato que falta, dicho como tal).
 const fmt = (n) => Math.round(n).toLocaleString('es-CO');
-const ARC = '#c86d51'; const MAR = '#5fb3a8'; const CIELO = '#8fd3ee';
+const ARC = '#ff6b4a'; const MAR = '#5fb3a8'; const CIELO = '#8fd3ee';
 
 function Barras({ datos, total, colores }) {
   const [v, setV] = useState(false);
@@ -145,7 +145,7 @@ export default function Porques() {
       {/* fondo: retícula muy tenue */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-tinta/40" aria-hidden="true" />
       <div className="relative mx-auto max-w-[1640px] px-3 py-16 sm:px-8 sm:py-24 lg:px-12">
-        <div className="rounded-[10px] border border-white/15 px-5 py-10 shadow-[0_24px_60px_-20px_rgba(0,0,0,.55)] sm:px-10 sm:py-12 lg:px-14" style={{ background: 'rgba(11,16,21,0.42)', backdropFilter: 'blur(5px) saturate(1.3)', WebkitBackdropFilter: 'blur(5px) saturate(1.3)' }}>
+        <div className="rounded-[10px] border border-white/15 px-5 py-10 shadow-[0_24px_60px_-20px_rgba(0,0,0,.55)] sm:px-10 sm:py-12 lg:px-14" style={{ background: 'rgba(8,11,13,0.42)', backdropFilter: 'blur(5px) saturate(1.3)', WebkitBackdropFilter: 'blur(5px) saturate(1.3)' }}>
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="etiqueta text-arcilla">El problema, desplegado</p>
@@ -164,14 +164,14 @@ export default function Porques() {
                   {i > 0 && (
                     <div className="porque-conector relative h-16 sm:h-20" aria-hidden="true">
                       <svg className="absolute inset-y-0 h-full" style={{ left: 'calc(var(--sangria) - 12% + 28px)', width: 'calc(12% + 0px)' }} viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <path d="M0 0 C 0 60, 100 40, 100 100" fill="none" stroke="#c86d51" strokeWidth="2" vectorEffect="non-scaling-stroke" pathLength="1" className="porque-trazo" />
+                        <path d="M0 0 C 0 60, 100 40, 100 100" fill="none" stroke="#ff6b4a" strokeWidth="2" vectorEffect="non-scaling-stroke" pathLength="1" className="porque-trazo" />
                       </svg>
                       <span className="etiqueta absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] text-white/45" style={{ left: 'calc(var(--sangria) + 52px)' }}>se relaciona con</span>
                     </div>
                   )}
                   <button type="button" onClick={() => { setSel(i); if (window.innerWidth < 1024) setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }} aria-pressed={on}
                     className="porque-escalon group relative flex w-full items-center gap-5 text-left" style={{ paddingLeft: 'var(--sangria)' }}>
-                    <span className={`relative grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 font-semibold transition-all duration-300 ${on ? 'scale-110 border-arcilla bg-arcilla text-[#0b1015]' : i === 0 ? 'border-arcilla text-arcilla' : 'border-white/30 text-white/80 group-hover:border-white'}`}>
+                    <span className={`relative grid h-11 w-11 shrink-0 place-items-center rounded-full border-2 font-semibold transition-all duration-300 ${on ? 'scale-110 border-arcilla bg-arcilla text-[#040607]' : i === 0 ? 'border-arcilla text-arcilla' : 'border-white/30 text-white/80 group-hover:border-white'}`}>
                       <span className="num text-base">{i === 0 ? '●' : i}</span>
                       {on && <span className="porque-pulso absolute inset-0 rounded-full border-2 border-arcilla" />}
                     </span>

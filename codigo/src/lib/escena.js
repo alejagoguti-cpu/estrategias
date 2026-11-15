@@ -199,13 +199,13 @@ function parchearTerreno(mat, U) {
 }
 
 const COLOR_TIPO = {
-  residential: '#f4f1ec', unclassified: '#f4f1ec', service: '#9fd3e0', track: '#9fd3e0',
-  path: '#e0917a', footway: '#e0917a', steps: '#e0917a', pedestrian: '#e0917a',
+  residential: '#e8eef0', unclassified: '#e8eef0', service: '#9fd3e0', track: '#9fd3e0',
+  path: '#ff8a6a', footway: '#ff8a6a', steps: '#ff8a6a', pedestrian: '#ff8a6a',
 };
 export const GRUPOS_TIPO = [
-  { id: 'calles', nombre: 'Calles y caminos', color: '#f4f1ec', tipos: ['residential', 'unclassified'] },
+  { id: 'calles', nombre: 'Calles y caminos', color: '#e8eef0', tipos: ['residential', 'unclassified'] },
   { id: 'servicio', nombre: 'Servicio y trochas', color: '#9fd3e0', tipos: ['service', 'track'] },
-  { id: 'senderos', nombre: 'Senderos y peatonales', color: '#e0917a', tipos: ['path', 'footway', 'steps', 'pedestrian'] },
+  { id: 'senderos', nombre: 'Senderos y peatonales', color: '#ff8a6a', tipos: ['path', 'footway', 'steps', 'pedestrian'] },
 ];
 
 export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
@@ -1747,7 +1747,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       norm = (s) => (d.comp[s] !== mayor ? -1 : clamp01(Math.pow(arr[s], 0.45)));
     }
     piezas.forEach((p, i) => {
-      if (capa === 'tipo') colorTmp.set(COLOR_TIPO[d.tipo[p.s]] || '#f4f1ec');
+      if (capa === 'tipo') colorTmp.set(COLOR_TIPO[d.tipo[p.s]] || '#e8eef0');
       else if (capa === 'riesgo') {
         const y = p.lostAt;
         const hex = y <= 10 ? '#b3261e' : y <= 20 ? '#e0453a' : y <= 30 ? '#f58b7e' : '#aeb8bd';

@@ -81,8 +81,8 @@ export default function Red({ etiqueta, titulo, centro, nodos, alFinal, textoFin
         <svg className="absolute inset-0 h-full w-full" viewBox="0 0 1000 600" preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <linearGradient id="g-red" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1000" y2="0">
-              <stop offset="0" stopColor="#c86d51" />
-              <stop offset="1" stopColor="#e0917a" />
+              <stop offset="0" stopColor="#ff6b4a" />
+              <stop offset="1" stopColor="#ff8a6a" />
             </linearGradient>
           </defs>
           {rutas.map((d, i) => {

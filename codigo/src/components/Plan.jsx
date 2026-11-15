@@ -76,7 +76,7 @@ export function EsquemaPlan() {
   return (
     <svg viewBox={`0 0 ${W.toFixed(0)} ${H.toFixed(0)}`} className="h-auto w-full" role="img" aria-label="Esquema básico en planta del plan maestro: meseta, vías, colegio, viviendas, parque ecológico y humedal">
       <rect width={W} height={H} fill="#e9e4da" />
-      <text x="10" y="22" fill="#0b1015" opacity="0.5" fontSize="13" fontFamily="Geist Mono, monospace">← COSTA OESTE</text>
+      <text x="10" y="22" fill="#040607" opacity="0.5" fontSize="13" fontFamily="Geist Mono, monospace">← COSTA OESTE</text>
       <polygon points={poli(parque)} fill="#5e9c6b" opacity="0.5" stroke="#3b7a4b" strokeWidth="1.5" />
       <polygon points={poli(hum)} fill="#4a8fbf" opacity="0.7" stroke="#2f6f9f" strokeWidth="1.2" />
       <polygon points={poli(mes)} fill="#d8ccb4" stroke="#1d6f6a" strokeWidth="2.5" />
@@ -86,11 +86,11 @@ export function EsquemaPlan() {
       {vias.map((v) => (
         <polyline key={v.id} points={poli(v.p)} fill="none" stroke="#b8791f" strokeWidth={v.id === 'anular' ? 3 : 4} strokeLinejoin="round" strokeDasharray={v.id === 'anular' ? '0' : '0'} />
       ))}
-      {casas.map(([x, y], i) => <rect key={i} x={X(x) - 5} y={Y(y) - 4} width="10" height="8" fill="#c86d51" />)}
-      <rect x={X(esc[0]) - 35} y={Y(esc[1]) - 12} width="70" height="24" fill="#0b1015" />
-      <circle cx={X(esc[0] + 52)} cy={Y(esc[1] + 14)} r="11" fill="none" stroke="#0b1015" strokeWidth="2" />
+      {casas.map(([x, y], i) => <rect key={i} x={X(x) - 5} y={Y(y) - 4} width="10" height="8" fill="#ff6b4a" />)}
+      <rect x={X(esc[0]) - 35} y={Y(esc[1]) - 12} width="70" height="24" fill="#040607" />
+      <circle cx={X(esc[0] + 52)} cy={Y(esc[1] + 14)} r="11" fill="none" stroke="#040607" strokeWidth="2" />
       {/* rótulos */}
-      <g fontFamily="Geist, sans-serif" fontSize="19" fontWeight="600" fill="#0b1015" stroke="#e9e4da" strokeWidth="4" paintOrder="stroke">
+      <g fontFamily="Geist, sans-serif" fontSize="19" fontWeight="600" fill="#040607" stroke="#e9e4da" strokeWidth="4" paintOrder="stroke">
         <text x={X(viv[0]) + 10} y={Y(viv[1]) - 14}>120 viviendas</text>
         <text x={X(esc[0]) + 42} y={Y(esc[1]) + 40}>Complejo educativo</text>
         <text x={X(mes[0][0]) + 20} y={Y(mes[0][1]) - 16}>Meseta +22 m</text>
@@ -102,14 +102,14 @@ export function EsquemaPlan() {
       </g>
       {/* norte y escala */}
       <g transform={`translate(${W - 34},40)`}>
-        <polygon points="0,-26 8,8 0,2 -8,8" fill="#0b1015" />
-        <text y="26" textAnchor="middle" fontSize="14" fontFamily="Geist Mono, monospace" fill="#0b1015">N</text>
+        <polygon points="0,-26 8,8 0,2 -8,8" fill="#040607" />
+        <text y="26" textAnchor="middle" fontSize="14" fontFamily="Geist Mono, monospace" fill="#040607">N</text>
       </g>
       <g>
-        <rect x={sx} y={sy} width="200" height="5" fill="#0b1015" />
-        <rect x={sx + 100} y={sy} width="100" height="5" fill="#e9e4da" stroke="#0b1015" strokeWidth="1" />
-        <text x={sx} y={sy - 8} fontSize="15" fontFamily="Geist Mono, monospace" fill="#0b1015">0</text>
-        <text x={sx + 200} y={sy - 8} fontSize="15" textAnchor="end" fontFamily="Geist Mono, monospace" fill="#0b1015">200 m</text>
+        <rect x={sx} y={sy} width="200" height="5" fill="#040607" />
+        <rect x={sx + 100} y={sy} width="100" height="5" fill="#e9e4da" stroke="#040607" strokeWidth="1" />
+        <text x={sx} y={sy - 8} fontSize="15" fontFamily="Geist Mono, monospace" fill="#040607">0</text>
+        <text x={sx + 200} y={sy - 8} fontSize="15" textAnchor="end" fontFamily="Geist Mono, monospace" fill="#040607">200 m</text>
       </g>
     </svg>
   );
@@ -118,8 +118,8 @@ export function EsquemaPlan() {
 export function SeccionEsquema() {
   const leyenda = [
     ['#d8ccb4', 'Meseta segura +22 m', '#1d6f6a'],
-    ['#c86d51', 'Viviendas reubicadas', null],
-    ['#0b1015', 'Complejo educativo', null],
+    ['#ff6b4a', 'Viviendas reubicadas', null],
+    ['#040607', 'Complejo educativo', null],
     ['#b8791f', 'Vías (arterial, anular, colectora)', null],
     ['#2f9a63', 'Corredores ecológicos', null],
     ['#5e9c6b', 'Parque ecológico (propuesta)', null],

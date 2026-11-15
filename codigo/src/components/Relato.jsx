@@ -6,6 +6,7 @@ import Social from './Social.jsx';
 import Sectores from './Sectores.jsx';
 import Porques from './Porques.jsx';
 import RedEspecies from './RedEspecies.jsx';
+import Lectura from './Lectura.jsx';
 import { PLAN_PASOS, planEstado } from './Plan.jsx';
 import { PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from '../lib/plan.js';
 
@@ -24,15 +25,16 @@ const NODOS_PROBLEMA = [
   { titulo: 'Fragmentación de modos de vida', sub: 'Consecuencia sociocultural', icono: 'tejido', pos: [21.5, 85], detalle: 'El desplazamiento y la transformación del territorio pueden fragmentar las relaciones y los modos de vida de la comunidad.' },
 ];
 const CAPITULOS = [
-  { id: 'portada', n: '00', nombre: 'Portada' },
-  { id: 'problema', n: '01', nombre: 'El problema' },
-  { id: 'social', n: '02', nombre: 'Lo social' },
-  { id: 'erosion', n: '03', nombre: 'Si no se frena la erosión' },
-  { id: 'vias', n: '04', nombre: 'Las vías' },
-  { id: 'sintaxis', n: '05', nombre: 'Sintaxis espacial' },
-  { id: 'plan', n: '06', nombre: 'Plan maestro' },
-  { id: 'especies', n: '07', nombre: 'Especies de la isla' },
-  { id: 'cierre', n: '08', nombre: 'Lo que sigue' },
+  { id: 'portada', n: '00', nombre: 'Portada', corto: 'Inicio' },
+  { id: 'problema', n: '01', nombre: 'El problema', corto: 'Problema' },
+  { id: 'social', n: '02', nombre: 'Lo social', corto: 'Social' },
+  { id: 'lectura', n: '02', nombre: 'Lectura territorial', corto: 'Capas' },
+  { id: 'erosion', n: '03', nombre: 'Si no se frena la erosión', corto: 'Erosión' },
+  { id: 'vias', n: '04', nombre: 'Las vías', corto: 'Vías' },
+  { id: 'sintaxis', n: '05', nombre: 'Sintaxis espacial', corto: 'Sintaxis' },
+  { id: 'plan', n: '06', nombre: 'Plan maestro', corto: 'Plan' },
+  { id: 'especies', n: '07', nombre: 'Especies de la isla', corto: 'Especies' },
+  { id: 'cierre', n: '08', nombre: 'Lo que sigue', corto: 'Cierre' },
 ];
 
 const RADIOS = [
@@ -135,24 +137,21 @@ function Ranking({ titulo, items }) {
 /* ---------- cabecera ---------- */
 function Cabecera({ cap }) {
   const actual = CAPITULOS.find((c) => c.id === cap) || CAPITULOS[0];
-  const claro = cap === 'cierre' || cap === 'esquema';
+  const ir = (e, id) => { e.preventDefault(); document.getElementById(id)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
   return (
-    <header className={`pointer-events-none fixed inset-x-0 top-0 z-30 pb-6 ${claro ? 'bg-papel/90 backdrop-blur-sm' : 'bg-gradient-to-b from-tinta/80 via-tinta/35 to-transparent'}`}>
-      <div className={`flex items-start justify-between gap-4 px-4 pt-4 sm:px-8 sm:pt-5 ${claro ? 'text-tinta/70' : 'text-white/75 [text-shadow:0_1px_12px_rgba(0,0,0,.6)]'}`}>
-        <p className="etiqueta">Tierra Bomba<span className="hidden sm:inline"> · Tercer corte</span></p>
-        <p className="etiqueta truncate text-right">
-          <span className="text-arcilla">{actual.n}</span>
-          <span className="mx-2 opacity-40">/</span>
-          {actual.nombre}
-        </p>
-      </div>
-      <div className={`mt-3 h-[2px] w-full ${claro ? 'bg-tinta/10' : 'bg-white/10'}`}>
-        <div className="progreso progreso-nativo h-full w-full bg-arcilla" />
+    <header className="fixed inset-x-0 top-0 z-30 bg-gradient-to-b from-tinta from-30% to-transparent">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1.5 px-4 pb-5 pt-3 sm:px-10 sm:pt-4">
+        <span className="whitespace-nowrap text-[.74rem] text-[var(--tinta-3)]">Tierra Bomba, Cartagena · tercer corte</span>
+        <nav aria-label="Capítulos" className="cab-nav order-3 flex w-full gap-5 overflow-x-auto lg:order-none lg:w-auto lg:gap-8 xl:gap-10">
+          {CAPITULOS.filter((c) => c.id !== 'portada').map((c) => (
+            <a key={c.id} href={`#${c.id}`} onClick={(e) => ir(e, c.id)} aria-current={c.id === actual.id ? 'true' : undefined}>{c.corto}</a>
+          ))}
+        </nav>
+        <span className="hidden whitespace-nowrap font-mono text-[.74rem] text-[var(--tinta-3)] sm:inline"><span className="text-arcilla">{actual.n}</span> / {actual.nombre}</span>
       </div>
     </header>
   );
 }
-
 /* ---------- paneles flotantes ---------- */
 const contenedorPanel =
   'vidrio fixed z-20 bottom-3 left-3 right-3 max-h-[58svh] overflow-y-auto p-4 sm:bottom-6 sm:left-8 sm:right-auto sm:max-h-[calc(100svh-7rem)] sm:w-[25rem] sm:p-5';
@@ -172,7 +171,7 @@ function PanelErosion({ stats, anio, modo, ctrl, setCtrl }) {
         ))}
       </div>
       <label className="mt-3 flex cursor-pointer items-center gap-2 text-[12px] text-white/75">
-        <input type="checkbox" checked={!!ctrl.verMidas} onChange={(e) => setCtrl((c) => ({ ...c, verMidas: e.target.checked }))} className="accent-[#c86d51]" />
+        <input type="checkbox" checked={!!ctrl.verMidas} onChange={(e) => setCtrl((c) => ({ ...c, verMidas: e.target.checked }))} className="accent-[#ff6b4a]" />
         Trazar las capas oficiales de MIDAS
       </label>
       {ctrl.verMidas && (
@@ -189,7 +188,7 @@ function PanelErosion({ stats, anio, modo, ctrl, setCtrl }) {
             <span>Agua a +{fmt(ctrl.nivel, 1)} m desde hoy</span>
             <span className="text-white/40">0,5 – 8 m</span>
           </label>
-          <input id="nivel-manual" type="range" min="0.5" max="8" step="0.5" value={ctrl.nivel} onChange={(e) => setCtrl((c) => ({ ...c, nivel: +e.target.value }))} className="mt-2 w-full accent-[#c86d51]" />
+          <input id="nivel-manual" type="range" min="0.5" max="8" step="0.5" value={ctrl.nivel} onChange={(e) => setCtrl((c) => ({ ...c, nivel: +e.target.value }))} className="mt-2 w-full accent-[#ff6b4a]" />
         </div>
       )}
       <div className="mt-3 flex items-end justify-between gap-4">
@@ -602,14 +601,14 @@ function Cierre({ api, version }) {
   }, [d, s, version]);
 
   return (
-    <section id="cierre" className="relative bg-papel text-tinta">
+    <section id="cierre" className="relative border-t border-[var(--linea)] bg-tinta text-papel">
       <div className="mx-auto max-w-[1640px] px-5 lg:px-16 py-24 sm:px-10 sm:py-32">
         <p className="etiqueta text-arcilla">08 · Lo que sigue</p>
         <h2 className="mt-4 max-w-6xl text-3xl font-semibold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">Lo que muestran los números, y lo que falta.</h2>
 
         <div className="mt-14 grid gap-12 lg:grid-cols-2">
           <div>
-            <h3 className="etiqueta text-tinta/55">Resultados calculados</h3>
+            <h3 className="etiqueta text-[var(--tinta-3)]">Resultados calculados</h3>
             <ol className="regla mt-4">
               {hallazgos.map((h, i) => (
                 <li key={i} className="regla grid grid-cols-[2.5rem_1fr] gap-3 py-4 first:border-t-0">
@@ -620,13 +619,13 @@ function Cierre({ api, version }) {
             </ol>
           </div>
           <div>
-            <h3 className="etiqueta text-tinta/55">Límites de este análisis</h3>
+            <h3 className="etiqueta text-[var(--tinta-3)]">Límites de este análisis</h3>
             <ul className="regla mt-4">
               {[
                 'La erosión se modela como un retroceso uniforme del borde más la inundación de la tierra baja con niveles medidos en Cartagena, no en la isla. El relieve (30 m de resolución) tiene varios metros de error vertical. No distingue tramos ni obras de defensa.',
                 'Las vías vienen de OpenStreetMap con cobertura parcial. La red de motos es una suposición según la etiqueta de cada vía.',
                 'La sintaxis es una reimplementación propia del método angular de depthmapX y no se comparó con su salida.',
-                'No hay una red de lanchas con datos reales: solo dos rutas esquemáticas. Lo medido es el acceso a muelles mapeados.',
+                'Las rutas de lancha unen embarcaderos documentados por el camino más corto en el agua: no son trayectorias registradas. Lo medido en la sintaxis es el acceso a los muelles mapeados.',
                 'Las alturas de las construcciones son de referencia, no medidas.',
               ].map((t) => (
                 <li key={t} className="regla py-3 leading-relaxed first:border-t-0">{t}</li>
@@ -640,7 +639,7 @@ function Cierre({ api, version }) {
             ['Versión para la comunidad', 'Territorio, historia, riesgos y el nuevo barrio, para quienes habitan la isla.', 'https://alejagoguti-cpu.github.io/tesis/#/comunidad'],
             ['Tesis completa', 'La plataforma con el marco, los módulos técnicos y el visor 3D.', 'https://alejagoguti-cpu.github.io/tesis/'],
           ].map(([t, sub, href]) => (
-            <a key={t} href={href} target="_blank" rel="noopener noreferrer" className="group block border border-tinta/20 p-6 transition-colors hover:border-tinta hover:bg-tinta hover:text-papel">
+            <a key={t} href={href} target="_blank" rel="noopener noreferrer" className="group block border border-[var(--linea-media)] p-6 transition-colors hover:border-[var(--tinta-1)] hover:bg-[var(--campo-1)]">
               <p className="etiqueta opacity-60">Enlace</p>
               <p className="mt-2 text-2xl font-semibold tracking-tight">{t} <span className="inline-block transition-transform group-hover:translate-x-1">→</span></p>
               <p className="mt-2 text-sm opacity-70">{sub}</p>
@@ -648,7 +647,7 @@ function Cierre({ api, version }) {
           ))}
         </div>
 
-        <footer className="mt-20 border-t border-tinta/20 pt-6 text-xs leading-relaxed text-tinta/60">
+        <footer className="mt-20 border-t border-[var(--linea)] pt-6 text-xs leading-relaxed text-[var(--tinta-3)]">
           <p>Alejandra Gómez · Ana Casas · Tesis de grado en Arquitectura y Urbanismo · 2026</p>
           <p className="mt-2">
             Fuentes: imagen satelital Esri World Imagery (Esri, Maxar, Earthstar Geographics y la comunidad GIS); relieve Terrain Tiles (Mapzen / AWS Open Data); línea de costa y silueta de la isla © OpenStreetMap contributors; niveles de marea, tormenta y ascenso del mar de Orejarena-Rondón, Sayol et al. (2019), Frontiers in Marine Science 6:614; vías y muelles © OpenStreetMap contributors (ODbL);
@@ -830,6 +829,7 @@ export default function Relato({ api, sinEscena }) {
 
       {/* 00 · portada */}
       <section id="portada" className="relative flex h-[100svh] min-h-[560px] items-end">
+        <div className="marco" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-tinta/85 via-tinta/35 to-transparent" />
         <div className="relative w-full px-5 pb-8 sm:px-12 sm:pb-12">
           <p className="etiqueta subir text-white/70" style={{ animationDelay: '0.15s' }}>Tesis de grado · Arquitectura y Urbanismo · Tercer corte</p>
@@ -874,6 +874,7 @@ export default function Relato({ api, sinEscena }) {
       {/* la isla y sus cuatro sectores, en puntos */}
       <Sectores />
       <Social />
+      <Lectura />
       {/* 02 · erosión (la escena la mueve el scroll) */}
       <section id="erosion" style={{ height: '520svh' }} aria-label="Simulación de la erosión a 10, 20 y 30 años" />
       {/* 03 · vías */}

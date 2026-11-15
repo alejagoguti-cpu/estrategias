@@ -85,9 +85,9 @@ export default function Sectores() {
       ctx.globalAlpha = Math.min(1, ia * 2);
       CLAVES.forEach((s) => {
         const x = g.ox + pos[s][0] * g.esc; const y = g.oy + pos[s][1] * g.esc; const pul = 0.5 + 0.5 * Math.sin(t * 0.004);
-        ctx.strokeStyle = `rgba(200,109,81,${0.4 + 0.4 * pul})`; ctx.lineWidth = 1.5 * DPR; ctx.beginPath(); ctx.arc(x, y, (8 + 9 * pul) * DPR, 0, 6.283); ctx.stroke();
-        ctx.fillStyle = '#c86d51'; ctx.beginPath(); ctx.arc(x, y, 4.5 * DPR, 0, 6.283); ctx.fill();
-        ctx.font = `600 ${15 * DPR}px "Geist Mono", monospace`; ctx.fillStyle = s === hover || s === selRef.current ? '#f4f1ec' : 'rgba(244,241,236,.6)';
+        ctx.strokeStyle = `rgba(255,107,74,${0.4 + 0.4 * pul})`; ctx.lineWidth = 1.5 * DPR; ctx.beginPath(); ctx.arc(x, y, (8 + 9 * pul) * DPR, 0, 6.283); ctx.stroke();
+        ctx.fillStyle = '#ff6b4a'; ctx.beginPath(); ctx.arc(x, y, 4.5 * DPR, 0, 6.283); ctx.fill();
+        ctx.font = `600 ${15 * DPR}px "Geist Mono", monospace`; ctx.fillStyle = s === hover || s === selRef.current ? '#e8eef0' : 'rgba(232,238,240,.6)';
         ctx.fillText(SECT[s].nombre.toUpperCase(), x + 13 * DPR, y + 4 * DPR);
       });
       ctx.globalAlpha = 1;
@@ -122,11 +122,11 @@ export default function Sectores() {
                       <div className="overflow-hidden">
                         <div className="mt-4 flex h-2 w-full overflow-hidden bg-white/12" aria-hidden="true">
                           <span className="h-full bg-arcilla" style={{ width: `${(100 * rr.ha30) / rr.ha}%` }} />
-                          <span className="h-full" style={{ width: `${(100 * Math.min(rr.haInu, rr.ha - rr.ha30)) / rr.ha}%`, background: 'repeating-linear-gradient(135deg, rgba(244,241,236,.55) 0 2px, transparent 2px 5px)' }} />
+                          <span className="h-full" style={{ width: `${(100 * Math.min(rr.haInu, rr.ha - rr.ha30)) / rr.ha}%`, background: 'repeating-linear-gradient(135deg, rgba(232,238,240,.55) 0 2px, transparent 2px 5px)' }} />
                         </div>
                         <dl className="mt-3 grid grid-cols-3 gap-3">
                           <div><dd className="cifra text-2xl text-white sm:text-3xl">{fmt(rr.ha)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">del sector</dt></div>
-                          <div><dd className="cifra text-2xl text-[#e0917a] sm:text-3xl">{fmt(rr.ha30)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">perdidas a 30 años ({fmt((100 * rr.ha30) / rr.ha)} %)</dt></div>
+                          <div><dd className="cifra text-2xl text-[#ff8a6a] sm:text-3xl">{fmt(rr.ha30)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">perdidas a 30 años ({fmt((100 * rr.ha30) / rr.ha)} %)</dt></div>
                           <div><dd className="cifra text-2xl text-white/85 sm:text-3xl">{fmt(rr.haInu)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">en zona inundable</dt></div>
                         </dl>
                       </div>
