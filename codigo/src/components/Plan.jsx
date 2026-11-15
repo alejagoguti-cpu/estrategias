@@ -154,7 +154,7 @@ export function SeccionEsquema() {
                 [`${PROGRAMA.estudiantes}`, 'estudiantes'],
                 [`${PROGRAMA.usuariosFinDeSemana.toLocaleString('es-CO')}`, 'usuarios en fin de semana'],
               ].map(([v, t]) => (
-                <div key={t}><dt className="num text-3xl font-semibold leading-none">{v}</dt><dd className="mt-1.5 text-xs text-tinta/60">{t}</dd></div>
+                <div key={t}><dt className="cifra text-[2.6rem] leading-none">{v}</dt><dd className="mt-1.5 text-xs text-tinta/60">{t}</dd></div>
               ))}
             </dl>
           </div>

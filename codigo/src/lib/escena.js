@@ -27,7 +27,7 @@ export const TASA_MAX = 3.0;
 export const TASA_CLASE = { 'Muy Alta': 3.0, Alta: 1.5, Moderada: 0.63, Baja: 0.3, 'Muy Baja': 0.15, SD: 0.63 };
 export const TASA = TASA_MEDIA; // tramos de costa sin clase en MIDAS
 export const AÑO_BASE = 2025; // «hoy» del modelo
-export const COLOR_CLASE_EROSION = { 'Muy Alta': '#ff2d2d', Alta: '#ff8c1a', Moderada: '#ffe14d', Baja: '#9be15d', 'Muy Baja': '#2ecc71', SD: '#cccccc' };
+export const COLOR_CLASE_EROSION = { 'Muy Alta': '#c8102e', Alta: '#e04a64', Moderada: '#ee8fa0', Baja: '#f5c6cf', 'Muy Baja': '#f9e3e7', SD: '#9aa0a6' };
 export const COLOR_MIDAS = { zona: '#f2cf94' };
 
 // Nivel del agua que alcanza la tierra baja en cada horizonte (años desde hoy), con valores medidos para Cartagena:
@@ -167,11 +167,11 @@ function parchearTerreno(mat, U) {
         if (gone && uMode > 0.5) discard;
         diffuseColor.rgb *= mix(1.0, 0.30, uDim);
         if (gone) {
-          vec3 band = lostAt <= 10.0 ? vec3(0.60, 0.09, 0.09) : (lostAt <= 20.0 ? vec3(0.86, 0.15, 0.15) : vec3(0.98, 0.45, 0.42));
+          vec3 band = lostAt <= 10.0 ? vec3(0.42, 0.02, 0.10) : (lostAt <= 20.0 ? vec3(0.66, 0.04, 0.16) : vec3(0.86, 0.22, 0.34));
           diffuseColor.rgb = mix(diffuseColor.rgb, band, 0.84);
         }
         float front = smoothstep(0.8, 0.0, abs(lostAt - uYear)) * step(0.001, uYear) * (1.0 - uMode) * enTierra;
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.66, 0.34), front * 0.9);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.86, 0.88), front * 0.8);
         // plan maestro: la franja que se pierde pasa de rojo a parque; meseta segura, parque central y humedal
         if (uFranja > 0.001 && uYear > 0.001 && lostAt <= 30.0) {
           float raya = step(0.5, fract((vWin.x * 1.0 + vWin.y * 1.7) * 1100.0));
@@ -1295,8 +1295,8 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     for (let i = 0; i < despl.length - 1; i++) { arr.push(despl[i][0], 2.2, despl[i][1], despl[i + 1][0], 2.2, despl[i + 1][1]); rutasPts.push(despl[i]); }
     const col = COLOR_RUTA[r.tipo] ?? 0xffffff;
     const g = new LineSegmentsGeometry(); g.setPositions(arr);
-    const halo = new LineSegments2(g, new LineMaterial({ color: col, linewidth: 1.4, transparent: true, opacity: 0, depthWrite: false }));
-    const linea = new LineSegments2(g, new LineMaterial({ color: col, linewidth: 3, transparent: true, opacity: 0, depthWrite: false, dashed: true, dashSize: 70, gapSize: 55 }));
+    const halo = new LineSegments2(g, new LineMaterial({ color: col, linewidth: 0.7, transparent: true, opacity: 0, depthWrite: false }));
+    const linea = new LineSegments2(g, new LineMaterial({ color: col, linewidth: 1.6, transparent: true, opacity: 0, depthWrite: false, dashed: true, dashSize: 60, gapSize: 50 }));
     linea.computeLineDistances(); linea.material.userData.flujo = r.tipo === 'colectiva' ? 1 : 0.8;
     halo.renderOrder = 6; linea.renderOrder = 7; halo.frustumCulled = linea.frustumCulled = false;
     halo.material.userData.k = 0.35; linea.material.userData.k = 1;
@@ -1349,7 +1349,6 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     g.shadowColor = 'rgba(0,0,0,0.85)'; g.shadowBlur = 14;
     g.fillStyle = '#ffffff';
     g.fillText(texto, 24, 50);
-    g.shadowBlur = 0; g.fillStyle = '#e0917a'; g.fillRect(24, 88, 70, 4);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, sizeAttenuation: false, opacity: 0 }));
@@ -1833,7 +1832,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       ? { pos: new THREE.Vector3(-900, 7400, 8000), look: new THREE.Vector3(-2300, 0, 300) }
       : { pos: new THREE.Vector3(500, 7800, 8400), look: new THREE.Vector3(0, 0, 300) }),
     vias: () => ({ pos: new THREE.Vector3(250 + dx(), 5700, 6700), look: new THREE.Vector3(dx(), 0, 250) }),
-    lancha: () => { const [lx, lz] = llToXZ(-75.562, 10.371); const off = window.innerWidth >= 1024 ? -3300 : 0; return { pos: new THREE.Vector3(lx + off + 1500, 14500, lz + 6800), look: new THREE.Vector3(lx + off, 0, lz) }; },
+    lancha: () => { const [lx, lz] = llToXZ(-75.562, 10.371); const off = window.innerWidth >= 1024 ? -3300 : 0; return { pos: new THREE.Vector3(lx + off + 1800, 7600, lz + 12500), look: new THREE.Vector3(lx + off, 0, lz - 1200) }; },
     plan_general: () => ({ pos: new THREE.Vector3(mCx + 260, 1150, mCz + 1350), look: new THREE.Vector3(mCx - 20, 0, mCz + 60) }),
     plan_meseta: () => ({ pos: new THREE.Vector3(mCx + 140, 560, mCz + 700), look: new THREE.Vector3(mCx, 20, mCz) }),
     plan_escuela: () => ({ pos: new THREE.Vector3(sX + 70, sY + 120, sZ + 190), look: new THREE.Vector3(sX, sY + 4, sZ) }),

@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 
 // Red de especies de la isla (aplicación aparte, embebida). Se carga solo cuando la sección se acerca a la pantalla,
 // para no frenar la carga de la escena 3D.
-const URL_RED = 'https://anasoficasca-code.github.io/tierrabomba/';
+// copia de la aplicación con colores suaves y la tipografía del sitio (lee sus datos de anasoficasca-code.github.io/tierrabomba)
+const URL_RED = `${import.meta.env.BASE_URL}especies/`;
 
 export default function RedEspecies() {
   const ref = useRef(null);
@@ -27,8 +28,8 @@ export default function RedEspecies() {
           <a href={URL_RED} target="_blank" rel="noopener noreferrer" className="ficha !h-10 !px-4 grid place-items-center">Abrir en pantalla completa ↗</a>
         </div>
       </div>
-      <div className="relative mx-auto mt-10 h-[86svh] min-h-[560px] w-full max-w-[1760px] px-3 pb-20 sm:px-8 lg:px-12 sm:pb-28">
-        <div className="relative h-full w-full overflow-hidden rounded-[6px] border border-white/15 bg-black">
+      <div className={`relative mx-auto mt-10 w-full transition-all duration-[1200ms] ease-[cubic-bezier(.16,1,.3,1)] ${lista ? 'h-[100svh] max-w-none px-0 pb-0' : 'h-[86svh] min-h-[560px] max-w-[1760px] px-3 pb-20 sm:px-8 lg:px-12 sm:pb-28'}`}>
+        <div className={`relative h-full w-full overflow-hidden bg-black transition-all duration-[1200ms] ${lista ? 'rounded-none border-0' : 'rounded-[6px] border border-white/15'}`}>
           {cargar && (
             <iframe
               src={URL_RED}

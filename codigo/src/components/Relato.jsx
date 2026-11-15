@@ -6,7 +6,7 @@ import Social from './Social.jsx';
 import Sectores from './Sectores.jsx';
 import Porques from './Porques.jsx';
 import RedEspecies from './RedEspecies.jsx';
-import { PLAN_PASOS, planEstado, SeccionEsquema } from './Plan.jsx';
+import { PLAN_PASOS, planEstado } from './Plan.jsx';
 import { PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from '../lib/plan.js';
 
 const fmt = (n, d = 0) => n.toLocaleString('es-CO', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -31,7 +31,6 @@ const CAPITULOS = [
   { id: 'vias', n: '04', nombre: 'Las vías' },
   { id: 'sintaxis', n: '05', nombre: 'Sintaxis espacial' },
   { id: 'plan', n: '06', nombre: 'Plan maestro' },
-  { id: 'esquema', n: '06', nombre: 'Esquema y criterios' },
   { id: 'especies', n: '07', nombre: 'Especies de la isla' },
   { id: 'cierre', n: '08', nombre: 'Lo que sigue' },
 ];
@@ -56,6 +55,30 @@ const PASOS = [
 const ALTO_PASO = 95; // svh por paso
 
 /* ---------- utilidades de presentación ---------- */
+/** el problema en tres frases cortas que entran una a una con el scroll */
+const FRASES_PROBLEMA = [['El mar', 'avanza.'], ['La isla', 'pierde suelo.'], ['Su gente,', 'su lugar.']];
+function FrasesProblema() {
+  const ref = useRef(null);
+  const [p, setP] = useState(0);
+  useEffect(() => {
+    const on = () => { const el = ref.current; if (!el) return; const r = el.getBoundingClientRect(); const vh = window.innerHeight; setP(clamp01((vh * 0.85 - r.top) / (r.height + vh * 0.1))); };
+    on(); window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', on);
+    return () => { window.removeEventListener('scroll', on); window.removeEventListener('resize', on); };
+  }, []);
+  return (
+    <div ref={ref} className="space-y-1 sm:space-y-2">
+      {FRASES_PROBLEMA.map(([a, b], i) => {
+        const k = clamp01((p - i * 0.22) / 0.3);
+        return (
+          <p key={a} className="problema-frase text-[clamp(2.6rem,8vw,7rem)] leading-[0.92]" style={{ opacity: 0.08 + 0.92 * k, transform: `translateY(${(1 - k) * 40}px)`, filter: `blur(${(1 - k) * 6}px)` }}>
+            <span className="text-white">{a}</span> <span className="text-arcilla">{b}</span>
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 function ScrollWords({ text, className = '' }) {
   const ref = useRef(null);
   const [p, setP] = useState(0);
@@ -183,18 +206,18 @@ function PanelErosion({ stats, anio, modo, ctrl, setCtrl }) {
 
       <div className="mt-3 grid grid-cols-2 gap-4 border-t border-white/14 pt-3">
         <div>
-          <p className="num text-3xl font-semibold leading-none text-[#ff8a7a]">{fmt(casas)}</p>
+          <p className="cifra text-[2.6rem] leading-none text-[#ef5a78]">{fmt(casas)}</p>
           <p className="mt-1.5 text-xs leading-snug text-white/65">viviendas perdidas<br />de {fmt(stats.casas.total)}</p>
         </div>
         <div>
-          <p className="num text-3xl font-semibold leading-none">{fmt(ha, ha < 10 ? 1 : 0)}</p>
+          <p className="cifra text-[2.6rem] leading-none">{fmt(ha, ha < 10 ? 1 : 0)}</p>
           <p className="mt-1.5 text-xs leading-snug text-white/65">hectáreas de costa<br />({fmt(pct, 1)} % de la isla)</p>
         </div>
       </div>
 
       {ctrl.verMidas && (
         <p className="mt-3 flex items-baseline gap-2 border-t border-white/14 pt-3 text-xs leading-snug text-white/70">
-          <span className="num text-xl font-semibold text-[#f2cf94]">{fmt(mid.casasZona)}</span>
+          <span className="cifra text-3xl text-[#f2cf94]">{fmt(mid.casasZona)}</span>
           <span>viviendas dentro de la zona inundable oficial de MIDAS ({fmt(mid.haZona, 0)} ha de la isla). Es amenaza por eventos, no tierra perdida.</span>
         </p>
       )}
@@ -219,17 +242,17 @@ function PanelErosion({ stats, anio, modo, ctrl, setCtrl }) {
           : anio === 0
             ? 'La costa actual, según la silueta oficial de la isla. Desplázate: el mar empieza a avanzar.'
             : ctrl.modelo === 'midas'
-              ? `En rojo, la tierra que se pierde por erosión: cada tramo de costa retrocede según su amenaza en MIDAS, con las tasas medidas por INVEMAR en la isla. En arena rayado, la zona inundable oficial por ascenso del nivel del mar (escenarios ${mid.años[0]} y ${mid.años[1]}). El frente naranja es la costa de ese año.`
+              ? `En rojo, la tierra que se pierde por erosión: cada tramo de costa retrocede según su amenaza en MIDAS, con las tasas medidas por INVEMAR en la isla. En arena rayado, la zona inundable oficial por ascenso del nivel del mar (escenarios ${mid.años[0]} y ${mid.años[1]}). La línea clara es la costa de ese año.`
             : ctrl.modelo === 'leva'
-              ? 'En rojo, lo que el borde que retrocede o una marea de leva alcanza, siguiendo las curvas de nivel: el oleaje trepa por la costa y entra por la tierra baja. El frente naranja es el avance de ese año.'
+              ? 'En rojo, lo que el borde que retrocede o una marea de leva alcanza, siguiendo las curvas de nivel: el oleaje trepa por la costa y entra por la tierra baja. La línea clara es el avance de ese año.'
               : ctrl.modelo === 'manual'
                 ? `Escenario manual: el agua está a +${fmt(ctrl.nivel, 1)} m desde el primer año y entra por toda la tierra baja conectada con el mar, mientras el borde sigue retrocediendo.`
                 : ctrl.modelo === 'tormenta'
-                ? 'En rojo, lo que el borde que retrocede o la marea con sobreelevación de tormenta alcanza, siguiendo las curvas de nivel. El frente naranja es el avance de ese año.'
-              : 'En rojo, la tierra que el mar ocupa por el retroceso del borde. El frente naranja es la costa de ese año.'}
+                ? 'En rojo, lo que el borde que retrocede o la marea con sobreelevación de tormenta alcanza, siguiendo las curvas de nivel. La línea clara es el avance de ese año.'
+              : 'En rojo, la tierra que el mar ocupa por el retroceso del borde. La línea clara es la costa de ese año.'}
       </p>
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/60">
-        {[['#991b1b', 'hasta 10 años'], ['#dc2626', '10 a 20'], ['#f87171', '20 a 30']].map(([c, t]) => (
+        {[['#6b0219', 'hasta 10 años'], ['#a80a29', '10 a 20'], ['#db3857', '20 a 30']].map(([c, t]) => (
           <span key={t} className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5" style={{ background: c }} />{t}</span>
         ))}
       </div>
@@ -353,8 +376,8 @@ function PanelSintaxis({ paso, datos, stats, ctrl, setCtrl, lanchas }) {
         <div className="mt-4"><Leyenda izquierda={paso.id === 'mu-dist' ? 'Lejos' : 'Poco usado'} derecha={paso.id === 'mu-dist' ? 'Cerca' : 'Más usado'} /></div>
         {paso.id === 'mu-dist' && (
           <div className="mt-4 grid grid-cols-2 gap-4 border-t border-white/14 pt-3">
-            <div><p className="num text-3xl font-semibold leading-none">{fmt(mediana)}<span className="ml-1 text-sm font-normal text-white/55">m</span></p><p className="mt-1.5 text-xs text-white/65">distancia mediana<br />a un muelle</p></div>
-            <div><p className="num text-3xl font-semibold leading-none">{fmt(maxim)}<span className="ml-1 text-sm font-normal text-white/55">m</span></p><p className="mt-1.5 text-xs text-white/65">distancia máxima<br />a un muelle</p></div>
+            <div><p className="cifra text-[2.6rem] leading-none">{fmt(mediana)}<span className="ml-1 text-sm font-normal text-white/55">m</span></p><p className="mt-1.5 text-xs text-white/65">distancia mediana<br />a un muelle</p></div>
+            <div><p className="cifra text-[2.6rem] leading-none">{fmt(maxim)}<span className="ml-1 text-sm font-normal text-white/55">m</span></p><p className="mt-1.5 text-xs text-white/65">distancia máxima<br />a un muelle</p></div>
           </div>
         )}
         <p className="mt-3 text-[11px] leading-snug text-white/45">Columnas naranjas: muelles de la isla. Columnas azules: embarcaderos de Cartagena con rutas hacia la isla. El pueblo de Tierra Bomba no tiene muelle mapeado: las lanchas llegan a su playa.</p>
@@ -418,11 +441,11 @@ function PanelSintaxis({ paso, datos, stats, ctrl, setCtrl, lanchas }) {
         </div>
         <div className="mt-4 grid grid-cols-2 gap-4 border-t border-white/14 pt-3">
           <div>
-            <p className="num text-3xl font-semibold leading-none text-[#ff8a7a]">{fmt(r.pct[y], 1)}<span className="ml-1 text-sm font-normal">%</span></p>
+            <p className="cifra text-[2.6rem] leading-none text-[#ef5a78]">{fmt(r.pct[y], 1)}<span className="ml-1 text-sm font-normal">%</span></p>
             <p className="mt-1.5 text-xs leading-snug text-white/65">de la red ({fmt(r.km_perdidos[y], 1)} de {fmt(r.km, 1)} km)<br />queda dentro de la franja</p>
           </div>
           <div>
-            <p className="num text-3xl font-semibold leading-none">{r.altosLost[y]}<span className="ml-1 text-sm font-normal text-white/55">de {r.altos}</span></p>
+            <p className="cifra text-[2.6rem] leading-none">{r.altosLost[y]}<span className="ml-1 text-sm font-normal text-white/55">de {r.altos}</span></p>
             <p className="mt-1.5 text-xs leading-snug text-white/65">ejes de mayor elección<br />(10 % superior) afectados</p>
           </div>
         </div>
@@ -483,8 +506,8 @@ function PanelPlan({ paso, idx, stats, version }) {
         La meseta (polígono de la tesis) se implanta a +{PROGRAMA.cotaM} m s.n.m., fuera del alcance de la erosión y del ascenso del mar previsto. Su borde pulsa: es el límite del suelo firme.
       </p>
       <div className="mt-4 grid grid-cols-2 gap-4 border-t border-white/14 pt-3">
-        <div><p className="num text-3xl font-semibold leading-none">{fmt(m.areaHa, 1)}<span className="ml-1 text-sm font-normal text-white/55">ha</span></p><p className="mt-1.5 text-xs text-white/65">área del polígono</p></div>
-        <div><p className="num text-3xl font-semibold leading-none">{fmt(m.min, 0)}–{fmt(m.max, 0)}<span className="ml-1 text-sm font-normal text-white/55">m</span></p><p className="mt-1.5 text-xs text-white/65">altura en el relieve usado</p></div>
+        <div><p className="cifra text-[2.6rem] leading-none">{fmt(m.areaHa, 1)}<span className="ml-1 text-sm font-normal text-white/55">ha</span></p><p className="mt-1.5 text-xs text-white/65">área del polígono</p></div>
+        <div><p className="cifra text-[2.6rem] leading-none">{fmt(m.min, 0)}–{fmt(m.max, 0)}<span className="ml-1 text-sm font-normal text-white/55">m</span></p><p className="mt-1.5 text-xs text-white/65">altura en el relieve usado</p></div>
       </div>
       <p className="mt-3 text-[11px] leading-snug text-white/45">Verificación cruzada: el relieve de esta presentación (30 m de resolución, varios metros de error) da una altura media de {fmt(m.media, 0)} m dentro de la meseta; la cota +{PROGRAMA.cotaM} m viene de la tesis y no de este modelo.</p>
     </>,
@@ -531,7 +554,7 @@ function PanelPlan({ paso, idx, stats, version }) {
       <p className="mt-3 text-[13px] leading-relaxed text-white/80">
         Retirarse a suelo firme, vivir con agua propia, moverse por una red clara y devolverle el borde al mar convertido en parque: un plan que se adapta en lugar de resistir.
       </p>
-      <p className="mt-3 text-[11px] leading-snug text-white/45">Siguiente: el esquema en planta y los criterios de diseño.</p>
+      <p className="mt-3 text-[11px] leading-snug text-white/45">Siguiente: la red de especies de la isla.</p>
     </>,
   ];
   return (
@@ -807,18 +830,26 @@ export default function Relato({ api, sinEscena }) {
 
       {/* 00 · portada */}
       <section id="portada" className="relative flex h-[100svh] min-h-[560px] items-end">
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-tinta/75 to-transparent" />
-        <div className="relative w-full px-5 pb-12 sm:px-12 sm:pb-16">
-          <p className="etiqueta subir text-white/70" style={{ animationDelay: '0.2s' }}>Tesis de grado · Arquitectura y Urbanismo · Tercer corte</p>
-          <h1 className="subir mt-4 text-[clamp(3.6rem,14vw,11.5rem)] font-semibold leading-[0.86] tracking-[-0.045em]" style={{ animationDelay: '0.35s' }}>
-            Tierra<br className="sm:hidden" /> Bomba
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-tinta/85 via-tinta/35 to-transparent" />
+        <div className="relative w-full px-5 pb-8 sm:px-12 sm:pb-12">
+          <p className="etiqueta subir text-white/70" style={{ animationDelay: '0.15s' }}>Tesis de grado · Arquitectura y Urbanismo · Tercer corte</p>
+          <h1 className="portada-titulo mt-3 text-[clamp(4.2rem,15vw,13rem)] leading-[0.84]" aria-label="Tierra Bomba">
+            {['Tierra', 'Bomba'].map((pal, pi) => (
+              <span key={pal} className="mr-[0.18em] inline-block whitespace-nowrap" aria-hidden="true">
+                {[...pal].map((l, li) => (
+                  <span key={li} className="portada-letra" style={{ animationDelay: `${0.3 + (pi * 6 + li) * 0.055}s` }}>{l}</span>
+                ))}
+              </span>
+            ))}
           </h1>
-          <div className="trazo mt-6 h-px w-24 bg-arcilla" />
-          <p className="subir mt-5 max-w-xl text-lg font-light leading-snug text-white/90 sm:text-2xl" style={{ animationDelay: '0.6s' }}>
+          <p className="subir mt-4 max-w-2xl text-lg font-light leading-snug text-white/85 sm:text-2xl" style={{ animationDelay: '1.05s' }}>
             Planificación y adaptación territorial frente a la pérdida de suelo costero
           </p>
-          <div className="subir mt-8 flex flex-wrap items-end justify-between gap-6" style={{ animationDelay: '0.8s' }}>
-            <p className="text-sm text-white/65">Alejandra Gómez · Ana Casas</p>
+          <div className="subir mt-10 flex flex-wrap items-end justify-between gap-x-10 gap-y-4" style={{ animationDelay: '1.3s' }}>
+            <div className="flex flex-wrap gap-x-10 gap-y-3">
+              <p><span className="etiqueta block text-white/45">Autoras</span><span className="text-sm text-white/90">Alejandra Gómez · Ana Casas</span></p>
+              <p><span className="etiqueta block text-white/45">Lugar</span><span className="text-sm text-white/90">Isla de Tierra Bomba, Cartagena</span></p>
+            </div>
             <p className="etiqueta flex items-center gap-3 text-white/70">Desplázate <span className="flecha inline-block">↓</span></p>
           </div>
         </div>
@@ -828,9 +859,10 @@ export default function Relato({ api, sinEscena }) {
       <section id="problema" className="relative">
         <div className="relative flex min-h-[130svh] items-center">
           <div className="absolute inset-0 bg-tinta/45" />
-          <div className="relative w-full max-w-[44rem] px-5 py-24 sm:px-12 lg:ml-[5vw]">
+          <div className="relative w-full max-w-[60rem] px-5 py-24 sm:px-12 lg:ml-[5vw]">
             <p className="etiqueta text-arcilla">01 · Formulación del problema</p>
-            <ScrollWords text={PROBLEMA} className="mt-6 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl" />
+            <div className="mt-8"><FrasesProblema /></div>
+            <p className="mt-10 max-w-xl text-sm leading-relaxed text-white/60">{PROBLEMA}</p>
             {sinEscena && <p className="mt-8 text-sm text-white/60">Este dispositivo no pudo mostrar la vista 3D; se muestra la imagen satelital y los datos.</p>}
           </div>
         </div>
@@ -851,7 +883,6 @@ export default function Relato({ api, sinEscena }) {
 
       {/* 06 · plan maestro 3D (la escena la mueve el scroll) */}
       <section id="plan" style={{ height: `${PLAN_PASOS.length * ALTO_PASO}svh` }} aria-label="Plan maestro en 3D" />
-      <SeccionEsquema />
 
       {/* zoom y exploración del mapa 3D */}
       {api && ['erosion', 'vias', 'sintaxis', 'plan'].includes(cap) && <ControlesVista api={api} explorar={explorar} setExplorar={setExplorar} panelOculto={panelOculto} setPanelOculto={setPanelOculto} />}

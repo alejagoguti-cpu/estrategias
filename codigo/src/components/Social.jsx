@@ -8,7 +8,7 @@ import Red from './Red.jsx';
 
 const ARC = '#c86d51';
 const MAR = '#5fb3a8';
-const CIELO = '#8fd3ee';
+const CIELO = '#d9c29b';
 const ARENA = '#e8e2d5';
 
 function useVisto(umbral = 0.25) {
@@ -190,36 +190,45 @@ function Areas({ a, b }) {
   );
 }
 
-/** viajes en lancha: barcos que cruzan en cada sentido, más numerosos cuanto más viajes */
+/** embarcadero: dos flujos (ida y vuelta) con grosor proporcional a los viajes y lanchas que los recorren */
 function Lanchas({ ida, vuelta }) {
   const [ref, visto] = useVisto(0.3);
-  const fila = (n, dir, color, y) => Array.from({ length: Math.round(n / 40) }, (_, i) => (
-    <g key={`${dir}${i}`}>
-      <path d="M-9 0 L9 0 L6 5 L-6 5 Z M-2 -8 L-2 0 L5 0 Z" fill={color} transform={`translate(0 ${y})`}>
-        {visto && <animateTransform attributeName="transform" type="translate" from={`${dir > 0 ? -20 : 660} ${y}`} to={`${dir > 0 ? 660 : -20} ${y}`} dur={`${9 + (i % 4)}s`} begin={`${-i * 0.73}s`} repeatCount="indefinite" />}
-      </path>
-    </g>
-  ));
+  const A = [150, 150]; const B = [490, 150];
+  const arco = (dy, inv) => (inv ? `M${B[0]} ${B[1]} C 420 ${150 + dy}, 220 ${150 + dy}, ${A[0]} ${A[1]}` : `M${A[0]} ${A[1]} C 220 ${150 + dy}, 420 ${150 + dy}, ${B[0]} ${B[1]}`);
+  const flujos = [
+    { v: ida, d: arco(-105, false), c: ARENA, ty: 54, ly: 14, txt: 'hacia Bocagrande' },
+    { v: vuelta, d: arco(105, true), c: ARC, ty: 282, ly: 298, txt: 'de vuelta a la isla' },
+  ];
   return (
     <div ref={ref}>
-      <svg viewBox="0 0 640 170" className="w-full" role="img" aria-label={`${ida} viajes de Tierra Bomba a Bocagrande y ${vuelta} de vuelta`}>
-        <defs><linearGradient id="g-agua" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#123447" /><stop offset="1" stopColor="#0b1d28" /></linearGradient></defs>
-        <rect x="0" y="20" width="640" height="130" fill="url(#g-agua)" rx="4" />
-        {Array.from({ length: 9 }, (_, i) => <path key={i} d={`M0 ${36 + i * 13} Q 160 ${32 + i * 13} 320 ${36 + i * 13} T 640 ${36 + i * 13}`} stroke="rgba(143,211,238,0.08)" fill="none" />)}
-        {fila(ida, 1, CIELO, 62)}
-        {fila(vuelta, -1, ARC, 112)}
-        <text x="8" y="14" fill="rgba(244,241,236,.6)" fontSize="12" fontFamily="Geist Mono, monospace">TIERRA BOMBA</text>
-        <text x="632" y="14" fill="rgba(244,241,236,.6)" fontSize="12" textAnchor="end" fontFamily="Geist Mono, monospace">BOCAGRANDE</text>
+      <svg viewBox="0 0 640 306" className="w-full" role="img" aria-label={`${ida} viajes de Tierra Bomba a Bocagrande y ${vuelta} de vuelta`}>
+        {flujos.map((f, k) => {
+          const w = 2 + (f.v / ida) * 9;
+          return (
+            <g key={k}>
+              <path d={f.d} fill="none" stroke={f.c} strokeOpacity="0.16" strokeWidth={w} strokeLinecap="round" />
+              <path d={f.d} fill="none" stroke={f.c} strokeWidth="1.2" pathLength="1" strokeDasharray="1" strokeDashoffset={visto ? 0 : 1} style={{ transition: `stroke-dashoffset 1.6s cubic-bezier(.16,1,.3,1) ${k * 0.3}s` }} />
+              {visto && Array.from({ length: Math.round(f.v / 70) }, (_, i) => (
+                <circle key={i} r="2.6" fill={f.c}>
+                  <animateMotion dur="5.5s" begin={`${-(i * 5.5) / Math.round(f.v / 70)}s`} repeatCount="indefinite" path={f.d} />
+                </circle>
+              ))}
+              <text x="320" y={f.ty} textAnchor="middle" fill={f.c} fontSize="40" fontWeight="300" fontFamily="'Barlow Condensed', sans-serif" style={{ opacity: visto ? 1 : 0, transition: `opacity 1s ease ${0.8 + k * 0.3}s` }}>{f.v}</text>
+              <text x="320" y={f.ly} textAnchor="middle" fill="rgba(244,241,236,.55)" fontSize="11" fontFamily="'Geist Mono', monospace" letterSpacing="1" style={{ opacity: visto ? 1 : 0, transition: `opacity 1s ease ${1 + k * 0.3}s` }}>{`VIAJES ${f.txt.toUpperCase()}`}</text>
+            </g>
+          );
+        })}
+        {[[A, 'Tierra Bomba'], [B, 'Bocagrande']].map(([p, t]) => (
+          <g key={t}>
+            <circle cx={p[0]} cy={p[1]} r="7" fill="#0b1015" stroke="#f4f1ec" strokeWidth="1.5" />
+            <text x={p[0]} y={p[1] + 4} dx={p[0] < 320 ? -14 : 14} textAnchor={p[0] < 320 ? 'end' : 'start'} fill="#f4f1ec" fontSize="12" fontFamily="'Geist Mono', monospace">{t.toUpperCase()}</text>
+          </g>
+        ))}
       </svg>
-      <div className="mt-3 grid grid-cols-2 gap-4">
-        <p><span className="num text-3xl font-semibold" style={{ color: CIELO }}><Contador valor={ida} /></span><span className="ml-2 text-[12px] text-white/60">viajes hacia Bocagrande →</span></p>
-        <p className="text-right"><span className="text-[12px] text-white/60">← de vuelta a la isla</span><span className="num ml-2 text-3xl font-semibold" style={{ color: ARC }}><Contador valor={vuelta} /></span></p>
-      </div>
-      <p className="mt-1 text-[11px] text-white/40">Cada lancha dibujada equivale a unos 40 viajes.</p>
+      <p className="mt-1 text-[11px] text-white/40">Grosor de cada flujo proporcional a los viajes; cada punto en movimiento equivale a unos 70 viajes.</p>
     </div>
   );
 }
-
 /** anillos radiales (una barra circular por percepción) */
 function Anillos({ items, total, sel, setSel }) {
   const [ref, visto] = useVisto(0.25);
@@ -263,42 +272,43 @@ function Percepcion() {
   return (
     <div ref={ref}>
       <div className="flex flex-wrap gap-x-6 gap-y-1 text-[12px] text-white/70">
-        <span className="flex items-center gap-2"><i className="inline-block h-2.5 w-2.5" style={{ background: ARC }} />Daño material y del sustento</span>
-        <span className="flex items-center gap-2"><i className="inline-block h-2.5 w-2.5" style={{ background: MAR }} />Vida comunitaria y cultural</span>
+        <span className="flex items-center gap-2"><i className="inline-block h-2 w-2 rounded-full" style={{ background: ARC }} />Daño material y del sustento</span>
+        <span className="flex items-center gap-2"><i className="inline-block h-2 w-2 rounded-full" style={{ background: MAR }} />Vida comunitaria y cultural</span>
       </div>
-
-      <div className="mt-6 grid items-center gap-8 lg:grid-cols-[minmax(0,26rem)_1fr]">
-        <Anillos items={PERCEPCION} total={TOTAL} sel={sel} setSel={setSel} />
-        <ul className="space-y-1" role="listbox" aria-label="Percepciones de la erosión">
-          {PERCEPCION.map((x, i) => (
-            <li key={x.corto}>
-              <button type="button" role="option" aria-selected={sel === i} onClick={() => setSel(i)} onMouseEnter={() => window.matchMedia('(hover: hover)').matches && setSel(i)}
-                className={`flex w-full items-center gap-3 rounded-[3px] px-2 py-1.5 text-left transition-colors ${sel === i ? 'bg-white/8' : 'hover:bg-white/5'}`}>
-                <i className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: x.g === 0 ? ARC : MAR, opacity: sel === i ? 1 : 0.6 }} />
-                <span className={`flex-1 text-[13px] leading-tight ${sel === i ? 'font-semibold text-white' : 'text-white/70'}`}>{x.corto}</span>
-                <span className="num text-[13px] text-white/85">{x.p} %</span>
+      <ul className="mt-4" role="listbox" aria-label="Percepciones de la erosión">
+        {PERCEPCION.map((x, i) => {
+          const c = x.g === 0 ? ARC : MAR; const on = sel === i; const pct = (100 * x.n) / TOTAL;
+          return (
+            <li key={x.corto} className="border-b border-white/10">
+              <button type="button" role="option" aria-selected={on} onClick={() => setSel(i)} onMouseEnter={() => window.matchMedia('(hover: hover)').matches && setSel(i)}
+                className="grid w-full grid-cols-[5.2rem_1fr] items-center gap-x-4 gap-y-1.5 py-2.5 text-left sm:grid-cols-[6.5rem_13rem_1fr]">
+                <span className="cifra text-4xl leading-none sm:text-5xl" style={{ color: on ? c : 'rgba(244,241,236,.8)' }}>{x.p}<span className="ml-0.5 text-base text-white/45">%</span></span>
+                <span className={`text-[13px] leading-tight ${on ? 'text-white' : 'text-white/65'}`}>{x.corto}</span>
+                <span className="relative col-span-2 h-[2px] bg-white/10 sm:col-span-1">
+                  <span className="absolute inset-y-0 left-0 transition-[width] duration-[1400ms] ease-out" style={{ width: visto ? `${pct}%` : 0, background: c, opacity: on ? 1 : 0.55, transitionDelay: `${i * 90}ms` }} />
+                  <span className="absolute top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full transition-[left] duration-[1400ms] ease-out" style={{ left: visto ? `${pct}%` : 0, background: c, transitionDelay: `${i * 90}ms`, boxShadow: on ? `0 0 0 4px ${c}33` : 'none' }} />
+                </span>
               </button>
             </li>
-          ))}
-        </ul>
-      </div>
+          );
+        })}
+      </ul>
       {/* 238 personas */}
-      <div className="mt-8 border-t border-white/14 pt-6">
+      <div className="mt-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <p className="max-w-xl text-base leading-snug text-white/90 sm:text-lg" key={sel}>{it.t}</p>
-          <p className="num text-right"><span className="text-4xl font-semibold leading-none" style={{ color: col }}>{it.n}</span><span className="ml-1 text-sm text-white/55">de {TOTAL} personas</span></p>
+          <p className="max-w-xl text-base leading-snug text-white/90" key={sel}>{it.t}</p>
+          <p className="text-right"><span className="cifra text-5xl leading-none" style={{ color: col }}>{it.n}</span><span className="ml-2 text-sm text-white/55">de {TOTAL} personas</span></p>
         </div>
         <div className="mt-4 grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }} aria-hidden="true">
           {Array.from({ length: TOTAL }, (_, i) => (
-            <span key={i} className="aspect-square rounded-full transition-all duration-500" style={{ background: i < it.n ? col : 'rgba(255,255,255,0.13)', transform: visto ? 'scale(1)' : 'scale(0)', transitionDelay: `${(i % COLS) * 8 + Math.floor(i / COLS) * 4}ms` }} />
+            <span key={i} className="aspect-square rounded-full transition-all duration-500" style={{ background: i < it.n ? col : 'rgba(255,255,255,0.1)', transform: visto ? 'scale(1)' : 'scale(0)', transitionDelay: `${(i % COLS) * 8 + Math.floor(i / COLS) * 4}ms` }} />
           ))}
         </div>
-        <p className="mt-3 text-[11px] text-white/40">Cada punto es una persona encuestada. Se cuentan quienes respondieron «de acuerdo» o «totalmente de acuerdo».</p>
+        <p className="mt-3 text-[11px] text-white/40">Cada punto es una persona encuestada; se cuentan quienes respondieron «de acuerdo» o «totalmente de acuerdo».</p>
       </div>
     </div>
   );
 }
-
 /* ---------------------------------------------------------------- 02.2 convivencia */
 const NODOS_VECINOS = [
   { titulo: 'Lo que valoran', sub: 'Unión entre familias', icono: 'union', pos: [20, 17], detalle: 'En talleres de memoria de la Universidad Tecnológica de Bolívar, personas mayores recordaron la unión entre familias, la pesca y el cultivo. Una participante resumió su postura: «mientras sigamos unidos y sin egoísmos, actuando como comunidad, resistiremos».' },
@@ -358,7 +368,7 @@ function Escuela() {
     <div ref={ref} className="space-y-12">
       <div>
         <p className="etiqueta text-white/50">Matrícula de referencia · Plan Anual de Contratación 2025</p>
-        <p className="num mt-2 text-6xl font-semibold leading-none"><Contador valor={886} /> <span className="text-base font-normal text-white/55">estudiantes en 42 grupos</span></p>
+        <p className="cifra mt-2 text-7xl leading-none"><Contador valor={886} /> <span className="text-base font-normal text-white/55">estudiantes en 42 grupos</span></p>
         <div className="mt-5">
           <Pictograma por={10} cols={30} grupos={[{ v: 729, l: 'Sede Tierra Bomba (34 grupos)', c: ARC }, { v: 157, l: 'Sede Punta Arena (8 grupos)', c: CIELO }]} />
         </div>
