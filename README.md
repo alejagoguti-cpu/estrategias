@@ -64,3 +64,8 @@ El escenario por defecto del capítulo 3 usa las capas de cambio climático de M
 ## Análisis territorial (vista aparte)
 
 https://alejagoguti-cpu.github.io/tesis_tercer_corte/analisis/ : lectura territorial de la isla en doce capas sobre una malla de 47 m (relieve, costa, amenaza y retroceso por erosión, zona inundable de MIDAS, construcciones, sintaxis espacial, muelles, árboles y especies), sus relaciones, cinco índices exploratorios (pesos iguales, no validados) y el relieve en 3D. Las capas se generan con `codigo/scripts/capas_analisis.mjs` y quedan en `analisis/capas.json`.
+
+
+## Muelles y rutas de lancha
+
+La vista de lanchas usa `datos/cartagena_contexto.json.gz` (generado con `codigo/scripts/contexto_cartagena.cjs`): 61.514 edificios de Cartagena del Catastro Multipropósito AMB Cartagena 2026 (repositorio alejagoguti-cpu/tesis, alturas de referencia), las masas de tierra de esa misma fuente, los muelles de OpenStreetMap de toda la bahía (`codigo/fuente/muelles_bahia_osm.json`) y 8 rutas documentadas: Hospital de Bocagrande, La Bodeguita, Bazurto y El Laguito hacia el pueblo de Tierra Bomba (estudio de transporte acuático de Cartagena 2014); La Bodeguita hacia Bocachica (estudio de 2004 citado por Revista Metro, 2026; Cartagena Explorer, 2025); y las rutas turísticas a Punta Arena y Playa Dorada (operadores, 2025-2026). Cada trazado es el camino más corto por el agua (A* sobre un ráster de tierra y agua de unos 22 m), no una derrota de navegación registrada. Caño del Oro no tiene ruta regular documentada.

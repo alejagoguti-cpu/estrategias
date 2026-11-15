@@ -269,7 +269,8 @@ function PanelVias({ stats, datos }) {
   );
 }
 
-function PanelSintaxis({ paso, datos, stats, ctrl, setCtrl }) {
+function PanelSintaxis({ paso, datos, stats, ctrl, setCtrl, lanchas }) {
+  const [rutaSel, setRutaSel] = useState(null);
   const red = paso.red ? datos[paso.red] : null;
   const mu = datos.muelles;
   const distValidas = mu.dist_m.filter((v) => v >= 0).sort((a, b) => a - b);
@@ -343,7 +344,7 @@ function PanelSintaxis({ paso, datos, stats, ctrl, setCtrl }) {
       <>
         <p className="mt-3 text-[13px] leading-relaxed text-white/80">
           {paso.id === 'mu-dist'
-            ? `Cartagena aparece al norte, con la bahía entre la ciudad y la isla. Se tomaron los ${mu.puntos.length} muelles y espolones de OpenStreetMap que quedan a menos de 120 m de la red peatonal. En color, la distancia por la red al muelle más cercano.`
+            ? `Cartagena aparece al norte con sus edificios (Catastro Multipropósito 2026), y la bahía entre la ciudad y la isla. Se tomaron los ${mu.puntos.length} muelles de OpenStreetMap que quedan a menos de 120 m de la red peatonal de la isla. En color, la distancia por la red al muelle más cercano.`
             : 'Cuántos recorridos directos, desde todos los tramos de la isla hacia un muelle, pasan por cada tramo.'}
         </p>
         <div className="mt-4"><Leyenda izquierda={paso.id === 'mu-dist' ? 'Lejos' : 'Poco usado'} derecha={paso.id === 'mu-dist' ? 'Cerca' : 'Más usado'} /></div>
@@ -353,27 +354,44 @@ function PanelSintaxis({ paso, datos, stats, ctrl, setCtrl }) {
             <div><p className="num text-3xl font-semibold leading-none">{fmt(maxim)}<span className="ml-1 text-sm font-normal text-white/55">m</span></p><p className="mt-1.5 text-xs text-white/65">distancia máxima<br />a un muelle</p></div>
           </div>
         )}
-        <p className="mt-3 text-[11px] leading-snug text-white/45">Las columnas de luz marcan los muelles mapeados. No hay otros datos de embarcaderos: faltan los que usa la comunidad.</p>
+        <p className="mt-3 text-[11px] leading-snug text-white/45">Columnas naranjas: muelles de la isla. Columnas azules: embarcaderos de Cartagena con rutas hacia la isla. El pueblo de Tierra Bomba no tiene muelle mapeado: las lanchas llegan a su playa.</p>
       </>
     );
   } else if (paso.id === 'rutas') {
+    const L = lanchas;
+    const salidas = L ? [...new Set(L.rutas.map((r) => r.de))] : [];
     cuerpo = (
       <>
         <p className="mt-3 text-[13px] leading-relaxed text-white/80">
-          Las únicas rutas de lancha del archivo son dos conexiones esquemáticas: Castillogrande a Punta Arena y La Bodeguita a Bocachica.
-          No son trayectorias registradas ni derrotas de navegación.
+          {L ? `${L.rutas.length} rutas documentadas desde ${salidas.length} embarcaderos de Cartagena. Cada línea va por el agua, del embarcadero al punto de llegada, y las lanchas la recorren. Toca una ruta para ver su fuente.` : 'Cargando rutas…'}
         </p>
-        <ul className="mt-4 space-y-2 border-t border-white/14 pt-3 text-[13px]">
-          {datos.rutas_lanchas.map((r) => (
-            <li key={r.id} className="flex items-center gap-3"><i className="inline-block h-px w-6 border-t border-dashed border-[#8fd3ee]" /><span>{r.nombre}</span></li>
-          ))}
-        </ul>
-        <p className="mt-4 text-[13px] leading-relaxed text-white/80">
-          Con dos líneas no hay red que analizar. Por eso el análisis de lanchas se hizo sobre el acceso a los muelles. Para una sintaxis marítima propia hace falta levantar las rutas reales. Las columnas de luz marcan los muelles de OpenStreetMap y los extremos de cada ruta.
+        {L && (
+          <ul className="mt-3 space-y-1 border-t border-white/14 pt-3 text-[12.5px]">
+            {L.rutas.map((r) => (
+              <li key={r.id}>
+                <button type="button" onClick={() => setRutaSel(rutaSel === r.id ? null : r.id)} className={`flex w-full items-start gap-2.5 rounded-[3px] px-1.5 py-1 text-left ${rutaSel === r.id ? 'bg-white/10' : 'hover:bg-white/5'}`}>
+                  <i className="mt-[7px] inline-block h-[3px] w-5 shrink-0 rounded-full" style={{ background: r.tipo === 'colectiva' ? '#8fd3ee' : '#f2c27b' }} />
+                  <span className="flex-1 leading-snug">{r.nombre}<span className="num ml-1.5 text-white/45">{fmt(r.km, 1)} km</span></span>
+                </button>
+                {rutaSel === r.id && (
+                  <div className="mb-1 ml-8 mt-1 text-[11.5px] leading-snug text-white/65">
+                    <p>{r.pasajeros}</p>
+                    <p className="mt-1 text-white/45">Fuente: {r.fuente}</p>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/60">
+          <span className="flex items-center gap-1.5"><i className="inline-block h-[3px] w-5 rounded-full bg-[#8fd3ee]" />Colectiva (residentes)</span>
+          <span className="flex items-center gap-1.5"><i className="inline-block h-[3px] w-5 rounded-full bg-[#f2c27b]" />Turística (pasadías)</span>
+        </div>
+        <p className="mt-3 text-[11px] leading-snug text-white/45">
+          Rutas: estudio de transporte acuático de Cartagena (2014), estudio de 2004 citado por Revista Metro (2026) y guías de operadores (2025-2026). No hay un registro oficial de trayectorias: el trazado es el camino más corto por el agua entre embarcadero y llegada, no una derrota de navegación. Caño del Oro no tiene ruta regular documentada; los estudios de 2004 y 2018 proponen muelle y rutas allí. Embarcaderos de Cartagena: La Bodeguita y Los Pegasos (OpenStreetMap); Hospital de Bocagrande, El Laguito y Bazurto, ubicación aproximada.
         </p>
       </>
-    );
-  } else if (paso.id === 'riesgo') {
+    );  } else if (paso.id === 'riesgo') {
     const r = stats.riesgoRed[ctrl.redRiesgo];
     const y = ctrl.anioRiesgo;
     cuerpo = (
@@ -855,7 +873,7 @@ export default function Relato({ api, sinEscena }) {
       {api && !panelOculto && cap === 'vias' && <PanelVias stats={stats} datos={datos} />}
       {api && cap === 'sintaxis' && (
         <>
-          {!panelOculto && <PanelSintaxis paso={PASOS[pasoIdx]} datos={datos} stats={stats} ctrl={ctrl} setCtrl={setCtrl} />}
+          {!panelOculto && <PanelSintaxis paso={PASOS[pasoIdx]} datos={datos} stats={stats} ctrl={ctrl} setCtrl={setCtrl} lanchas={api.lanchas} />}
           <Indice activo={pasoIdx} onIr={irAPaso} />
         </>
       )}

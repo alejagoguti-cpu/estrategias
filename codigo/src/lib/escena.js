@@ -222,7 +222,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   let disposed = false;
 
   // ---------- carga de datos ----------
-  const TOTAL = 15;
+  const TOTAL = 16;
   let hechas = 0;
   const track = (p) => p.then((r) => { hechas++; onProgreso(0.6 * (hechas / TOTAL), 'Descargando la isla'); return r; });
   const jsonOf = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u); return r.json(); });
@@ -236,7 +236,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     return JSON.parse(new TextDecoder().decode(u8));
   };
 
-  const [satImg, maskImg, patchImg, geoRef, veg, construcciones, sintaxis, normalsImg, cartagenaMascaraImg, midasJson, ...demImgs] = await Promise.all([
+  const [satImg, maskImg, patchImg, geoRef, veg, construcciones, sintaxis, normalsImg, cartagenaMascaraImg, midasJson, ctxJson, ...demImgs] = await Promise.all([
     track(loadImg(`${BASE}assets/texturas/sat_base.jpg`)),
     track(loadImg(`${BASE}datos/isla_mascara_osm.png`)),
     track(loadImg(`${BASE}assets/texturas/tierrabomba_satelite.jpg`)),
@@ -247,6 +247,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     track(loadImg(`${BASE}datos/water_normals_fine.jpg`)),
     track(loadImg(`${BASE}datos/cartagena_mascara.png`)),
     track(jsonOf(`${BASE}datos/midas_tierrabomba.json`)),
+    track(gunzipJSON(`${BASE}datos/cartagena_contexto.json.gz`)),
     track(loadImg(`${BASE}datos/elevacion/1187_1929.png`)),
     track(loadImg(`${BASE}datos/elevacion/1188_1929.png`)),
     track(loadImg(`${BASE}datos/elevacion/1187_1930.png`)),
@@ -933,6 +934,11 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     map: terrainMat.map, alphaMap: ctxMask, roughness: 1, metalness: 0, transparent: true, opacity: 0, alphaTest: 0.02,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
   });
+  // la imagen se desvanece hacia sus bordes: debajo quedan el suelo y los edificios de Cartagena (sin corte recto)
+  ctxMat.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <alphamap_fragment>', '#include <alphamap_fragment>\n vec2 eC = min(vAlphaMapUv, 1.0 - vAlphaMapUv); diffuseColor.a *= smoothstep(0.0, 0.07, min(eC.x, eC.y));');
+  };
+  ctxMat.customProgramCacheKey = () => 'ctx-borde';
   const contexto = new THREE.Mesh(ctxGeo, ctxMat);
   contexto.visible = false;
   contexto.renderOrder = 1;
@@ -1143,6 +1149,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     reflCam.projectionMatrix.copy(cam.projectionMatrix);
     reflTexMat.copy(BIAS).multiply(reflCam.projectionMatrix).multiply(reflCam.matrixWorldInverse);
     water.visible = false;
+    const etqV = etiquetas.visible; etiquetas.visible = false; const rutV = rutasGroup.visible; rutasGroup.visible = false; // sin etiquetas ni rutas en el reflejo (salían duplicadas)
     sky.visible = false; // el cielo se pone en el shader (sin el disco del sol, que en el reflejo era una mancha)
     const prev = renderer.getRenderTarget();
     renderer.getClearColor(rClear); const ca = renderer.getClearAlpha();
@@ -1153,6 +1160,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     renderer.setRenderTarget(prev);
     renderer.setClearColor(rClear, ca);
     sky.visible = true;
+    etiquetas.visible = etqV; rutasGroup.visible = rutV;
     water.visible = true;
   };
   const sun = new THREE.DirectionalLight(0xfff0d8, 2.6);
@@ -1253,39 +1261,59 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   };
   const riesgoRed = calcularRiesgo();
 
-  // ---------- muelles y rutas esquemáticas de lanchas ----------
+  // ---------- lanchas: rutas documentadas trazadas por el agua, con lanchas que las recorren ----------
   const rutasGroup = new THREE.Group();
   rutasGroup.visible = false;
   scene.add(rutasGroup);
   const rutaMats = [];
   const rutasPts = [];
-  for (const r of sintaxis.rutas_lanchas) {
+  const COLOR_RUTA = { colectiva: 0x8fd3ee, turística: 0xf2c27b };
+  const lanchasMov = []; // { pts: [[x,z]...], acum: [...], largo, vel, fase, mesh }
+  const cascoGeo = new THREE.SphereGeometry(1, 10, 8);
+  const lanchaMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0 });
+  const estelaMat = new THREE.MeshBasicMaterial({ color: 0xbfe9ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+  ctxJson.rutas.forEach((r, ri) => {
+    const pts = r.puntos.filter((_, i) => i % 3 === 0 || i === r.puntos.length - 1).map(([lo, la]) => llToXZ(lo, la));
+    // pequeño desplazamiento lateral por ruta para que las que comparten corredor no se encimen
+    const off = ((ri % 5) - 2) * 9;
+    const despl = pts.map(([px, pz], i) => { const a = pts[Math.max(0, i - 1)]; const b = pts[Math.min(pts.length - 1, i + 1)]; const dxx = b[0] - a[0]; const dzz = b[1] - a[1]; const L = Math.hypot(dxx, dzz) || 1; const k = Math.min(1, i / 6, (pts.length - 1 - i) / 6); return [px - (dzz / L) * off * k, pz + (dxx / L) * off * k]; });
     const arr = [];
-    for (let i = 0; i < r.puntos.length - 1; i++) {
-      const [lon1, lat1] = r.puntos[i];
-      const [lon2, lat2] = r.puntos[i + 1];
-      const [ax, az] = llToXZ(lon1, lat1);
-      const [bx, bz] = llToXZ(lon2, lat2);
-      arr.push(ax, 3, az, bx, 3, bz);
-      rutasPts.push([ax, az]);
+    for (let i = 0; i < despl.length - 1; i++) { arr.push(despl[i][0], 2.2, despl[i][1], despl[i + 1][0], 2.2, despl[i + 1][1]); rutasPts.push(despl[i]); }
+    const col = COLOR_RUTA[r.tipo] ?? 0xffffff;
+    const g = new LineSegmentsGeometry(); g.setPositions(arr);
+    const halo = new LineSegments2(g, new LineMaterial({ color: col, linewidth: 9, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const linea = new LineSegments2(g, new LineMaterial({ color: col, linewidth: 2.4, transparent: true, opacity: 0, depthWrite: false }));
+    halo.renderOrder = 6; linea.renderOrder = 7; halo.frustumCulled = linea.frustumCulled = false;
+    halo.material.userData.k = 0.16; linea.material.userData.k = 0.95;
+    rutasGroup.add(halo, linea); rutaMats.push(halo.material, linea.material);
+    // lanchas en movimiento: más lanchas en las rutas colectivas
+    const acum = [0]; for (let i = 1; i < despl.length; i++) acum.push(acum[i - 1] + Math.hypot(despl[i][0] - despl[i - 1][0], despl[i][1] - despl[i - 1][1]));
+    const n = r.tipo === 'colectiva' ? 3 : 2;
+    for (let q = 0; q < n; q++) {
+      const casco = new THREE.Mesh(cascoGeo, lanchaMat); casco.scale.set(7, 2.5, 3.2);
+      const estela = new THREE.Mesh(cascoGeo, estelaMat); estela.scale.set(26, 0.6, 6);
+      const gL = new THREE.Group(); gL.add(casco, estela); estela.position.x = -16; gL.renderOrder = 9;
+      rutasGroup.add(gL);
+      lanchasMov.push({ pts: despl, acum, largo: acum[acum.length - 1], vel: 9 + (ri % 3) * 2, fase: q / n + ri * 0.13, ida: q % 2 === 0, g: gL });
     }
-    const g = new LineSegmentsGeometry();
-    g.setPositions(arr);
-    const m = new LineMaterial({ color: 0x8fd3ee, linewidth: 2.6, transparent: true, opacity: 0, dashed: true, dashSize: 170, gapSize: 130, depthWrite: false });
-    const ln = new LineSegments2(g, m);
-    ln.computeLineDistances();
-    ln.frustumCulled = false;
-    ln.renderOrder = 7;
-    rutasGroup.add(ln);
-    rutaMats.push(m);
-  }
+  });
+  const moverLanchas = (t) => {
+    lanchasMov.forEach((L) => {
+      let s = ((t * L.vel) / L.largo + L.fase) % 1; if (!L.ida) s = 1 - s;
+      const d = s * L.largo; let i = 1; while (i < L.acum.length - 1 && L.acum[i] < d) i++;
+      const a = L.pts[i - 1]; const b = L.pts[i]; const f = (d - L.acum[i - 1]) / Math.max(1e-6, L.acum[i] - L.acum[i - 1]);
+      L.g.position.set(a[0] + (b[0] - a[0]) * f, 2.6, a[1] + (b[1] - a[1]) * f);
+      const ang = Math.atan2(b[1] - a[1], b[0] - a[0]); L.g.rotation.y = -(L.ida ? ang : ang + Math.PI);
+    });
+  };
   const beamGeo = new THREE.CylinderGeometry(1, 1, 1, 10, 1, true);
   beamGeo.translate(0, 0.5, 0);
   const beamMat = new THREE.MeshBasicMaterial({ color: 0xffb066, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
+  const beamMatCtg = new THREE.MeshBasicMaterial({ color: 0x8fd3ee, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide });
   const beams = [];
-  const addBeam = (X, Z, tipo) => {
-    const m = new THREE.Mesh(beamGeo, beamMat);
-    m.position.set(X, heightAtXZ(X, Z), Z);
+  const addBeam = (X, Z, tipo, mat = beamMat) => {
+    const m = new THREE.Mesh(beamGeo, mat);
+    m.position.set(X, Math.max(0, heightAtXZ(X, Z)), Z);
     m.userData.tipo = tipo;
     m.frustumCulled = false;
     m.renderOrder = 8;
@@ -1294,10 +1322,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   };
   const muelles = sintaxis.muelles;
   muelles.puntos.forEach((p) => { const [X, Z] = llToXZ(p.lon, p.lat); addBeam(X, Z, 'muelle'); });
-  for (const r of sintaxis.rutas_lanchas) {
-    for (const idxp of [0, r.puntos.length - 1]) { const [X, Z] = llToXZ(...r.puntos[idxp]); addBeam(X, Z, 'embarque'); }
-  }
-
+  Object.values(ctxJson.muelles).forEach((m) => { const [X, Z] = llToXZ(m.lon, m.lat); addBeam(X, Z, 'embarque', m.lado === 'cartagena' ? beamMatCtg : beamMat); });
   // etiquetas de contexto (Cartagena, Bocagrande, Tierra Bomba)
   try { await document.fonts.load('600 40px \"Space Grotesk\"'); } catch { /* sin fuente: usa la del sistema */ }
   const etiqueta = (texto, X, Z, alto = 30) => {
@@ -1324,9 +1349,43 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   {
     const [cX, cZ] = llToXZ(-75.5506, 10.4204);
     const [bX, bZ] = llToXZ(-75.5597, 10.3939);
-    etiquetas.add(etiqueta('Cartagena', cX + 120, cZ - 160, 40), etiqueta('Bocagrande · Castillogrande', bX + 120, bZ - 60, 40), etiqueta('Tierra Bomba', vx - 700, vz - 200, 120));
+    etiquetas.add(etiqueta('Cartagena', cX + 900, cZ - 1500, 60), etiqueta('Tierra Bomba', vx - 1300, vz + 900, 120));
+    // nombre de cada embarcadero (Cartagena) y de cada llegada principal (isla)
+    const CLAVES_ETQ = ['bodeguita', 'hospital', 'laguito', 'bazurto', 'tbPueblo', 'playaDorada', 'puntaArena', 'bocachica'];
+    const CORTO = { bodeguita: 'La Bodeguita', hospital: 'Hospital de Bocagrande', laguito: 'El Laguito', bazurto: 'Bazurto', tbPueblo: 'Tierra Bomba (pueblo)', playaDorada: 'Playa Dorada', puntaArena: 'Punta Arena', bocachica: 'Bocachica' };
+    CLAVES_ETQ.forEach((k) => { const m = ctxJson.muelles[k]; if (!m) return; const [X, Z] = llToXZ(m.lon, m.lat); const sp = etiqueta(CORTO[k], X + 30, Z, 30); sp.scale.multiplyScalar(0.62); sp.userData.muelle = true; etiquetas.add(sp); });
   }
   scene.add(etiquetas);
+
+  // ---------- contexto de Cartagena: suelo (masas de tierra) y edificios del Catastro Multipropósito 2026 ----------
+  const ctgGroup = new THREE.Group(); ctgGroup.visible = false; scene.add(ctgGroup);
+  const sueloMat = new THREE.MeshStandardMaterial({ color: 0x5a5a48, roughness: 1, metalness: 0, transparent: true, opacity: 0, depthWrite: true });
+  {
+    const shapes = [];
+    ctxJson.tierras.forEach((ring) => {
+      let sx = 0; let sy = 0; ring.forEach(([lo, la]) => { sx += lo; sy += la; }); sx /= ring.length; sy /= ring.length;
+      if (sy < 10.388 && sx < -75.536) return; // Tierra Bomba ya está modelada
+      const pts = ring.map(([lo, la]) => { const [X, Z] = llToXZ(lo, la); return new THREE.Vector2(X, -Z); });
+      shapes.push(new THREE.Shape(pts));
+    });
+    const geo = new THREE.ShapeGeometry(shapes); geo.rotateX(-Math.PI / 2); geo.translate(0, 0.5, 0);
+    const suelo = new THREE.Mesh(geo, sueloMat); suelo.renderOrder = 0; suelo.receiveShadow = false;
+    ctgGroup.add(suelo);
+  }
+  const edMat = new THREE.MeshStandardMaterial({ color: 0xe9e3d6, roughness: 0.85, metalness: 0, transparent: true, opacity: 0 });
+  const edGeo = new THREE.BoxGeometry(1, 1, 1); edGeo.translate(0, 0.5, 0);
+  const edificios = new THREE.InstancedMesh(edGeo, edMat, ctxJson.edificios.length);
+  {
+    const m4 = new THREE.Matrix4(); const q = new THREE.Quaternion(); const s = new THREE.Vector3(); const p = new THREE.Vector3(); const up = new THREE.Vector3(0, 1, 0); const c = new THREE.Color();
+    ctxJson.edificios.forEach(([lo, la, w, d, ang, h, alto], k) => {
+      const [X, Z] = llToXZ(lo, la);
+      q.setFromAxisAngle(up, ang); s.set(w, Math.max(3, h) * 1.3, d); p.set(X, 1, Z); m4.compose(p, q, s); edificios.setMatrixAt(k, m4);
+      const v = alto ? 0.95 : 0.78 + ((k * 2654435761) % 1000) / 1000 * 0.16; c.setRGB(v, v * 0.98, v * 0.93); edificios.setColorAt(k, c);
+    });
+    edificios.instanceMatrix.needsUpdate = true; edificios.instanceColor.needsUpdate = true;
+  }
+  edificios.frustumCulled = false;
+  ctgGroup.add(edificios);
 
   // ===========================================================================
   // ---------- plan maestro 3D (geometría de la tesis; parque y humedal: propuesta) ----------
@@ -1742,6 +1801,8 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   const bb = new THREE.Box3();
   rutasPts.forEach(([x, z]) => bb.expandByPoint(new THREE.Vector3(x, 0, z)));
   muelles.puntos.forEach((p) => { const [x, z] = llToXZ(p.lon, p.lat); bb.expandByPoint(new THREE.Vector3(x, 0, z)); });
+  // contexto suficiente de Cartagena: centro histórico, La Popa y Manga dentro del encuadre
+  [[-75.548, 10.432], [-75.52, 10.425], [-75.515, 10.398]].forEach(([lo, la]) => { const [x, z] = llToXZ(lo, la); bb.expandByPoint(new THREE.Vector3(x, 0, z)); });
   const bc = bb.getCenter(new THREE.Vector3());
   const bs = bb.getSize(new THREE.Vector3());
   const bdist = Math.max(bs.x, bs.z) * 1.05 + 2500;
@@ -1942,14 +2003,16 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     cur.rutas += (T.rutas - cur.rutas) * expo(dt, 3);
     rutasGroup.visible = cur.rutas > 0.01;
     if (rutasGroup.visible) {
-      rutaMats.forEach((m) => { m.opacity = cur.rutas * 0.9; });
-      beamMat.opacity = cur.rutas * 0.8;
+      rutaMats.forEach((m) => { m.opacity = cur.rutas * (m.userData.k ?? 0.9); });
+      beamMat.opacity = cur.rutas * 0.8; beamMatCtg.opacity = cur.rutas * 0.9;
+      lanchaMat.opacity = cur.rutas; estelaMat.opacity = cur.rutas * 0.35; moverLanchas(t);
       const h = THREE.MathUtils.clamp(dist * 0.05, 45, 700);
       beams.forEach((b) => { const k = b.userData.tipo === 'embarque' ? 1.5 : 1; b.scale.set(h * 0.011 * k, h * k, h * 0.011 * k); });
     }
 
     cur.contexto += (T.contexto - cur.contexto) * expo(dt, 2.2);
     contexto.visible = cur.contexto > 0.01;
+    ctgGroup.visible = cur.contexto > 0.01; sueloMat.opacity = cur.contexto; edMat.opacity = cur.contexto; edMat.transparent = cur.contexto < 0.99; sueloMat.transparent = cur.contexto < 0.99;
     ctxMat.opacity = cur.contexto;
     etiquetas.visible = cur.contexto > 0.05;
     etiquetas.children.forEach((s) => { s.material.opacity = cur.contexto; });
@@ -1971,6 +2034,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   return {
     stats,
     datos: sintaxis,
+    lanchas: { rutas: ctxJson.rutas, muelles: ctxJson.muelles, edificios: ctxJson.edificios.length },
     set(parcial) {
       if (parcial.cam && parcial.cam !== T.cam) resetVista();
       Object.assign(T, parcial);
