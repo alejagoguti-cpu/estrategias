@@ -2,30 +2,29 @@ import React, { useEffect, useRef, useState } from 'react';
 import D from '../data/porques.json';
 
 // El problema hasta la raíz, como diagrama: el problema arriba, tres ramas que bajan con «¿por qué?»
-// y una raíz común abajo. Cada nodo: pocas palabras y una cifra. Al tocarlo se abre una línea y su fuente.
+// y una raíz común abajo. Cada nodo es un problema en una frase; al tocarlo se abre lo que lo muestra y su fuente.
 const fmt = (n) => Math.round(n).toLocaleString('es-CO');
 
 const RAMAS = [
   { titulo: 'El borde', nodos: [
-    { n: '891', l: 'casas se pierden', d: 'Construcciones en la franja que el mar alcanza en 30 años.', f: 'Modelo de esta presentación (INVEMAR, MIDAS).' },
-    { n: '3 m', l: 'por año avanza el mar', d: 'Retroceso medido en la isla: de 0,63 a 3 m por año (1994–2011).', f: 'INVEMAR-MADS-Alcaldía-CDKN (2012).' },
-    { n: fmt(D.p3.bajo5), l: 'casas a menos de 5 m', d: 'El pueblo está en la parte más baja, junto al agua.', f: 'Terrain Tiles y archivo de la tesis.' },
-    { n: 'Orilla', l: 'de ella se vive', d: 'Pesca, lanchas y turismo de playa: el trabajo está en el borde.', f: 'Cartagena Cómo Vamos (2022).' },
+    { t: 'Las casas del borde se deterioran y se pierden', d: '891 de 2.600 construcciones quedan en la franja que el mar alcanza en 30 años.', f: 'Modelo de esta presentación (INVEMAR, MIDAS).' },
+    { t: 'El mar avanza sobre una costa sin protección', d: 'Retroceso medido de 0,63 a 3 m por año entre 1994 y 2011.', f: 'INVEMAR-MADS-Alcaldía-CDKN (2012).' },
+    { t: 'El pueblo creció en la parte más baja, pegado al agua', d: `${fmt(D.p3.bajo5)} construcciones a menos de 5 m sobre el mar.`, f: 'Terrain Tiles y archivo de la tesis.' },
+    { t: 'La economía de la isla depende de la orilla', d: 'Se vive de la pesca, las lanchas y el turismo de playa.', f: 'Cartagena Cómo Vamos (2022).' },
   ] },
   { titulo: 'La tierra', nodos: [
-    { n: fmt(D.p3.enMeseta), l: 'casas en la parte alta', d: 'La meseta, sobre +22 m, es segura frente al mar y está casi vacía.', f: 'Polígono de la meseta y archivo de la tesis.' },
-    { n: '1.080 ha', l: 'son de particulares', d: 'La parte alta no es de quienes viven en la isla (además, Armada 261 ha y Nación 176 ha).', f: 'Incoder, Res. 4192 de 2015 (Semana, Dejusticia).' },
-    { n: '379 ha', l: 'del pueblo, del Distrito', d: 'Ni el suelo donde está el poblado es de la comunidad.', f: 'Res. 4192 de 2015; Dejusticia.' },
-    { n: 'Sin título', l: 'colectivo', d: 'El Consejo Comunitario pide 2.039 ha; depende de que el Distrito done su predio, y no lo ha hecho.', f: 'Dejusticia; Publimetro (2023).' },
+    { t: 'Nadie se traslada a la parte alta, que es segura', d: `${fmt(D.p3.enMeseta)} construcciones en la meseta, sobre +22 m.`, f: 'Polígono de la meseta y archivo de la tesis.' },
+    { t: 'La tierra alta no es de la comunidad', d: 'Unas 1.080 ha son de particulares; 261 ha de la Armada y 176 ha de la Nación.', f: 'Incoder, Res. 4192 de 2015 (Semana, Dejusticia).' },
+    { t: 'Ni el suelo del pueblo es de quienes lo habitan', d: 'Las 379 ha del poblado quedaron a nombre del Distrito.', f: 'Res. 4192 de 2015; Dejusticia.' },
+    { t: 'La tenencia de la tierra no está resuelta', d: 'El Consejo Comunitario pide título colectivo de 2.039 ha; depende de que el Distrito done su predio.', f: 'Dejusticia; Publimetro (2023).' },
   ] },
   { titulo: 'Cartagena', nodos: [
-    { n: '614', l: 'viajes en un día a Bocagrande', d: 'En 13 horas, desde un solo embarcadero; 407 de vuelta.', f: 'Estudio de transporte acuático (2014).' },
-    { n: '0', l: 'acueductos', d: 'El agua llega en bongos; no hay alcantarillado ni ambulancia acuática.', f: 'Alcaldía de Cartagena; El Universal.' },
-    { n: '96,7 %', l: 'en pobreza', d: 'Casi no hay empleo ni ingresos en la isla.', f: 'Cartagena Cómo Vamos (2019–2020).' },
-    { n: 'Afuera', l: 'se decide', d: 'Agua, muelles y suelo se deciden en Cartagena y Bogotá; el acueducto espera aprobación del Ministerio desde 2024.', f: 'El Universal (2024); POT de Cartagena (2001).' },
+    { t: 'La isla depende de Cartagena para casi todo', d: '614 viajes en un día desde la isla a Bocagrande, en un solo embarcadero (2014).', f: 'Estudio de transporte acuático (2014).' },
+    { t: 'Faltan en la isla el agua, la salud y el estudio completo', d: 'Sin acueducto ni alcantarillado; el agua llega en bongos. Sin ambulancia acuática.', f: 'Alcaldía de Cartagena; El Universal.' },
+    { t: 'No hay empleo ni ingresos propios', d: '96,7 % de la población en pobreza.', f: 'Cartagena Cómo Vamos (2019–2020).' },
+    { t: 'Las decisiones y la inversión vienen de afuera', d: 'Agua, muelles y suelo se deciden en Cartagena y Bogotá; el acueducto espera aprobación desde 2024.', f: 'El Universal (2024); POT de Cartagena (2001).' },
   ] },
 ];
-
 function useVisto(ref, umbral = 0.2) {
   const [v, setV] = useState(false);
   useEffect(() => {
@@ -48,9 +47,9 @@ function Nodo({ x, i, ri, on, alTocar, visto }) {
       )}
       <button type="button" onClick={alTocar} aria-expanded={on}
         className={`w-full max-w-[17rem] border px-4 py-3 text-center transition-colors ${raiz ? 'border-arcilla bg-[rgb(255_107_74/.1)]' : on ? 'border-[var(--tinta-2)] bg-[var(--campo-1)]' : 'border-[var(--linea-media)] bg-[rgb(8_11_13/.5)] hover:border-[var(--tinta-2)]'}`}>
-        <span className={`cifra block text-[2.3rem] leading-none ${raiz ? 'text-arcilla' : 'text-white'}`}>{x.n}</span>
-        <span className="mt-1 block text-[13px] text-[var(--tinta-2)]">{x.l}</span>
-        {on && <span className="mt-2 block border-t border-[var(--linea)] pt-2 text-left text-[12px] leading-snug text-white/85">{x.d}<span className="mt-1 block text-[10.5px] text-[var(--tinta-3)]">{x.f}</span></span>}
+        {raiz && <span className="etiqueta mb-1 block text-[9.5px] text-arcilla">Problema de raíz</span>}
+        <span className={`block text-[15px] font-medium leading-snug ${raiz ? 'text-white' : 'text-white/90'}`}>{x.t}</span>
+        {on && <span className="mt-2 block border-t border-[var(--linea)] pt-2 text-left text-[12px] leading-snug text-white/70"><span className="etiqueta mb-1 block text-[9px] text-[var(--tinta-3)]">Lo que lo muestra</span>{x.d}<span className="mt-1 block text-[10.5px] text-[var(--tinta-3)]">{x.f}</span></span>}
       </button>
     </li>
   );
@@ -94,8 +93,8 @@ export default function Porques() {
             ))}
           </svg>
           <div className="mx-auto mt-12 max-w-xl border border-arcilla px-6 py-6 text-center lg:mt-0" style={{ background: 'rgb(255 107 74 / .12)', opacity: visto ? 1 : 0, transform: `translateY(${visto ? 0 : 16}px)`, transition: 'opacity 1s ease 3.1s, transform 1s cubic-bezier(.16,1,.3,1) 3.1s' }}>
-            <p className="etiqueta text-arcilla">Raíz</p>
-            <p className="mt-2 text-2xl leading-tight sm:text-3xl" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 300, textTransform: 'uppercase' }}>Sin tierra propia ni servicios propios</p>
+            <p className="etiqueta text-arcilla">Raíz común</p>
+            <p className="mt-2 text-2xl leading-tight sm:text-3xl" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 300, textTransform: 'uppercase' }}>La comunidad no controla su suelo ni sus servicios</p>
           </div>
         </div>
       </div>
