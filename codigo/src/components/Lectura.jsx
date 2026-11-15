@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import '../analisis.css';
 
 // 02 · Lectura territorial: las secciones de /analisis/ dentro de la presentación
@@ -6,18 +6,25 @@ import '../analisis.css';
 // solo cuando el bloque se acerca a la pantalla.
 export default function Lectura() {
   const ref = useRef(null);
+  const [lista, setLista] = useState(false);
   useEffect(() => {
     const el = ref.current; if (!el) return undefined;
-    let parar = null; let cancelado = false;
-    const io = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return; io.disconnect();
-      import('../lib/analisis.js').then(({ iniciarAnalisis }) => iniciarAnalisis(el, import.meta.env.BASE_URL)).then((f) => { if (cancelado) f?.(); else parar = f; }).catch((err) => console.error('lectura territorial', err));
-    }, { rootMargin: '900px 0px' });
+    let parar = null; let cancelado = false; let empezado = false; let t = 0;
+    // se empieza a cargar en segundo plano poco después de abrir la página (o antes, si el bloque se acerca)
+    const empezar = () => {
+      if (empezado) return; empezado = true; io.disconnect(); clearTimeout(t);
+      import('../lib/analisis.js').then(({ iniciarAnalisis }) => iniciarAnalisis(el, import.meta.env.BASE_URL))
+        .then((f) => { if (cancelado) f?.(); else { parar = f; setLista(true); } })
+        .catch((err) => console.error('lectura territorial', err));
+    };
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) empezar(); }, { rootMargin: '2500px 0px' });
     io.observe(el);
-    return () => { cancelado = true; io.disconnect(); parar?.(); };
+    const alCargar = () => { t = setTimeout(() => (window.requestIdleCallback ? requestIdleCallback(empezar, { timeout: 3000 }) : empezar()), 3500); };
+    if (document.readyState === 'complete') alCargar(); else window.addEventListener('load', alCargar, { once: true });
+    return () => { cancelado = true; io.disconnect(); clearTimeout(t); window.removeEventListener('load', alCargar); parar?.(); };
   }, []);
   return (
-    <div id="lectura" ref={ref} className="an">
+    <div id="lectura" ref={ref} className={`an ${lista ? 'an-lista' : ''}`}>
       <section id="lectura-cab" className="an-cab">
         <p className="rotulo"><span className="text-arcilla">02</span> · Lectura territorial</p>
         <h2>Quince capas del mismo encuadre</h2>
@@ -39,7 +46,7 @@ export default function Lectura() {
 
       <section id="capas" aria-label="Capas del territorio">
         <div className="capas-cab"><p className="num">15</p><h2>Capas del territorio</h2><p>Cada estrato es un ráster del encuadre de la isla sobre la misma malla de 47 m; las tres de arriba vienen de los modelos de Rhino de la tesis (economía y turismo, síntesis de picos, drenaje). Cada capa sube donde su valor es mayor: más densidad, más altura. Pase el cursor para levantarla; haga clic para leer su ficha.</p></div>
-        <div className="pila"><div id="pila-3d" aria-label="Pila de capas en 3D" /><ol id="pila-lista" /></div>
+        <div className="pila"><div id="pila-3d" aria-label="Pila de capas en 3D"><p className="an-cargando">Cargando las capas…</p></div><ol id="pila-lista" /></div>
       </section>
       <aside className="ficha-capa" id="ficha-capa" aria-live="polite" />
 

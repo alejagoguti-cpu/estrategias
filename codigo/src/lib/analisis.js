@@ -180,15 +180,18 @@ pRen.domElement.addEventListener('pointerleave', () => { pHover = null; });
 pRen.domElement.addEventListener('click', () => { if (pHover) abrirFicha(capa[pHover]); });
 function dibujarPila() {
   const r = pCont.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
-  const w = Math.max(1, r.width); const h = Math.max(1, r.height);
-  if (pRen.domElement.width !== Math.round(w * DPR) || pRen.domElement.height !== Math.round(h * DPR)) pRen.setSize(w, h, false);
+  // el lienzo mide lo que la pantalla (queda fijo mientras se baja) y dibuja solo la parte visible de la pila:
+  // un lienzo del alto de toda la pila pasaba el tamaño máximo de la tarjeta gráfica y no se dibujaba nada
+  const w = Math.max(1, r.width); const h = Math.max(1, r.height); const vh = Math.max(1, Math.min(innerHeight, h));
+  if (pRen.domElement.width !== Math.round(w * DPR) || pRen.domElement.height !== Math.round(vh * DPR)) pRen.setSize(w, vh, false);
   // cámara isométrica; la pila completa cabe en el cuadro
   const alto = (orden.length - 1) * SEP * Math.cos(ELEV) + BW * Math.sin(ELEV) + ALT_HOVER + 40;
   // la pila llena el ancho de su columna; el bloque se alarga lo necesario para que quepan todas las capas
   const altoPx = Math.round(w * alto / (BH * 1.06));
   if (Math.abs(pCont.offsetHeight - altoPx) > 2) pCont.style.height = `${altoPx}px`;
   const mitadH = Math.max(alto * 0.5, (BH * 0.53) / (w / h));
-  pCam.left = -mitadH * (w / h); pCam.right = mitadH * (w / h); pCam.top = mitadH; pCam.bottom = -mitadH; pCam.updateProjectionMatrix();
+  pCam.left = -mitadH * (w / h); pCam.right = mitadH * (w / h); pCam.top = mitadH; pCam.bottom = -mitadH;
+  const offY = Math.max(0, Math.min(h - vh, -r.top)); pCam.setViewOffset(w, h, 0, offY, w, vh);
   
   const d = 900; const cy = -((orden.length - 1) * SEP) / 2 + 20; pCam.position.set(Math.cos(ELEV) * d, cy + Math.sin(ELEV) * d, 0); pCam.lookAt(0, cy, 0);
   raiz.querySelectorAll('[data-capa]').forEach((b) => (b.dataset.capa === pHover ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
