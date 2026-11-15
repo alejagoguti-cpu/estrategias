@@ -31,7 +31,7 @@ export default function Tramas() {
   const [paso, setPaso] = useState(-1);
   useEffect(() => {
     let vivo = true; const el = ref.current; if (!el) return undefined;
-    const io = new IntersectionObserver(([e]) => { if (!e.isIntersecting) return; io.disconnect(); fetch(`${BASE}datos/tramas.json`).then((r) => r.json()).then((d) => { if (vivo) setDatos(d); }); }, { rootMargin: '1500px 0px' });
+    const io = new IntersectionObserver(([e]) => { if (!e.isIntersecting) return; io.disconnect(); fetch(`${BASE}datos/tramas.json`).then((r) => r.json()).then((d) => { if (vivo) setDatos(d); }); }, { rootMargin: '0px 0px 600% 0px' });
     io.observe(el); return () => { vivo = false; io.disconnect(); };
   }, []);
 
