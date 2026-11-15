@@ -626,12 +626,36 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
 
   const maxTex = renderer.capabilities.maxTextureSize;
   const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-  const textureFrom = (img, maxSide) => {
+  // vías de OpenStreetMap pintadas como caminos de arena sobre la imagen: ancho según el tipo, borde irregular
+  const ANCHO_VIA = { residential: 6, unclassified: 5, service: 4, track: 3.5, path: 1.8, footway: 1.8, steps: 1.6, pedestrian: 2.5 };
+  const pintarVias = (ctx, aPx, mPorPx, escala) => {
+    const P = sintaxis.peatonal;
+    let sem = 7; const rnd = () => { sem = (sem * 16807) % 2147483647; return sem / 2147483647; };
+    const pasadas = [
+      { k: 1.45, col: 'rgba(120,100,70,0.22)' }, // borde sucio
+      { k: 1.0, col: 'rgba(198,176,134,0.78)' }, // arena
+      { k: 0.55, col: 'rgba(226,210,176,0.45)' }, // centro pisado, más claro
+    ];
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    for (const pas of pasadas) {
+      ctx.strokeStyle = pas.col;
+      P.coords.forEach(([a, b, c2, d], s) => {
+        const w = Math.max(0.8, ((ANCHO_VIA[P.tipo[s]] || 3) / mPorPx) * escala * pas.k);
+        const [x0, y0] = aPx(a, b); const [x1, y1] = aPx(c2, d);
+        const L = Math.hypot(x1 - x0, y1 - y0); const n = Math.max(1, Math.ceil(L / Math.max(2, w * 1.5)));
+        ctx.beginPath(); ctx.moveTo(x0, y0);
+        for (let k = 1; k <= n; k++) { const t = k / n; const j = k < n ? (rnd() - 0.5) * w * 0.35 : 0; ctx.lineTo(x0 + (x1 - x0) * t + j * (-(y1 - y0) / (L || 1)), y0 + (y1 - y0) * t + j * ((x1 - x0) / (L || 1))); }
+        ctx.lineWidth = w * (0.85 + rnd() * 0.3); ctx.stroke();
+      });
+    }
+  };
+  const textureFrom = (img, maxSide, vias = null) => {
     const sc = Math.min(1, maxSide / Math.max(img.width, img.height));
     const c = document.createElement('canvas');
     c.width = Math.round(img.width * sc);
     c.height = Math.round(img.height * sc);
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    if (vias) vias(c.getContext('2d'), sc);
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
     t.anisotropy = aniso;
@@ -664,7 +688,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     uPlan: { value: planTex }, uPlanAmt: { value: new THREE.Vector3(0, 0, 0) }, uFranja: { value: 0 }, uTime: { value: 0 },
     uLost: { value: lostTex }, uYear: { value: 0 }, uMode: { value: 0 }, uDim: { value: 0 }, uMidasOn: { value: 0 },
   };
-  const terrainMat = new THREE.MeshStandardMaterial({ map: textureFrom(satImg, maxTex), roughness: 1, metalness: 0 });
+  const terrainMat = new THREE.MeshStandardMaterial({ map: textureFrom(satImg, maxTex, (ctx, sc) => pintarVias(ctx, (lon, lat) => { const [tx, ty] = lonLatToTile(lon, lat); return [(tx - MOSAICO.x0) * 256 * sc, (ty - MOSAICO.y0) * 256 * sc]; }, mpp, sc)), roughness: 1, metalness: 0 });
   parchearTerreno(terrainMat, U);
   const terrain = new THREE.Mesh(geo, terrainMat);
 
@@ -707,7 +731,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   pgeo.setAttribute('aWin', new THREE.BufferAttribute(pwin, 2));
   pgeo.setIndex(pidx);
   pgeo.computeVertexNormals();
-  const patchMat = new THREE.MeshStandardMaterial({ map: textureFrom(patchImg, maxTex), roughness: 1, metalness: 0 });
+  const patchMat = new THREE.MeshStandardMaterial({ map: textureFrom(patchImg, maxTex, (ctx, sc) => pintarVias(ctx, (lon, lat) => { const [tx, ty] = lonLatToTile(lon, lat); return [(tx * 8 - PM.x0) * 256 * sc, (ty * 8 - PM.y0) * 256 * sc]; }, mpp / 8, sc)), roughness: 1, metalness: 0 });
   parchearTerreno(patchMat, U);
   const patch = new THREE.Mesh(pgeo, patchMat);
 
@@ -733,8 +757,6 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     const d = distAt(X, Z);
     return { X, Z, i, size, dense, d, lostAt: d < 0 ? -1 : lostAtXZ(X, Z), dc: Math.hypot(X - vx, Z - vz) };
   }).filter((t) => t.d > 0)
-    .sort((a, b) => a.dc - b.dc)
-    .slice(0, small ? 700 : 1800)
     .map((t) => ({
       x: t.X, y: heightAtXZ(t.X, t.Z) + 0.4, z: t.Z,
       rot: ((Math.imul(t.i + 7, 40503) >>> 0) % 628) / 100,
@@ -742,8 +764,70 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       tone: ((Math.imul(t.i + 3, 69069) >>> 0) % 100) / 100,
       lostAt: t.lostAt,
     }));
-  let treesGroup = instanciarArboles(especies, treeAll, 60);
+  // Resto de la isla: copas detectadas en la imagen satelital (Esri, ~4,7 m/px) como máximos locales de verdor
+  // sobre vegetación oscura. Fuera del recuadro donde ya hay detección fina (vegetacion.json). No se inventan posiciones.
+  {
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const cx = cv.getContext('2d', { willReadFrequently: true });
+    cx.drawImage(satImg, VENTANA.left, VENTANA.top, W, H, 0, 0, W, H);
+    const d = cx.getImageData(0, 0, W, H).data;
+    const verde = new Float32Array(W * H);
+    for (let i = 0; i < W * H; i++) {
+      if (!land[i]) continue;
+      const r = d[i * 4]; const g = d[i * 4 + 1]; const b = d[i * 4 + 2]; const lum = (r + g + b) / 3;
+      const exg = (2 * g - r - b) / (r + g + b + 1);
+      if (lum < 125 && exg > 0.04) verde[i] = exg * (1.2 - lum / 160);
+    }
+    const p18 = (px, py) => { const tx = tx0 + ((px + 0.5) / W) * (tx1 - tx0); const ty = ty0 + ((py + 0.5) / H) * (ty1 - ty0); return [tx * 8 - PM.x0, ty * 8 - PM.y0]; };
+    const R = 2; let n = 0;
+    for (let py = R; py < H - R; py += 2) {
+      for (let px = R; px < W - R; px += 2) {
+        const i = py * W + px; const v = verde[i]; if (v <= 0.03) continue;
+        let max = true;
+        for (let dy = -R; dy <= R && max; dy++) for (let dx = -R; dx <= R; dx++) if ((dx || dy) && verde[i + dy * W + dx] > v) { max = false; break; }
+        if (!max) continue;
+        const [a, b] = p18(px, py); if (a > 0 && b > 0 && a < tile18 && b < tile18) continue; // ya cubierto por la detección fina
+        if (distM[i] < 6) continue;
+        const X = (((px + 0.5) / W) * (tx1 - tx0) + tx0 - txc) * mpt; const Z = (((py + 0.5) / H) * (ty1 - ty0) + ty0 - tyc) * mpt;
+        const h = (Math.imul(i + 11, 2654435761) >>> 0) / 4294967296;
+        treeAll.push({ x: X, y: heightAtXZ(X, Z) + 0.4, z: Z, rot: h * 6.28, height: 8.5 * (0.9 + Math.min(0.6, v * 2.2)) * 1.35, tone: (h * 7.3) % 1, lostAt: lostAtXZ(X, Z) });
+        n++;
+      }
+    }
+    console.info('árboles detectados en la imagen satelital:', n, '· total', treeAll.length);
+  }
+  // Cerca de la cámara: los modelos escaneados; lejos: la misma copa simplificada (instancias ligeras)
+  const TREE_CERCA = small ? 900 : 2600; const R_CERCA = small ? 900 : 1400;
+  let treeCentro = [Infinity, Infinity];
+  let rCorte = 0; // radio dentro del cual están los modelos completos (las copas simplificadas se apagan ahí)
+  const cercanos = (cx2, cz2, anio) => {
+    const l = treeAll.filter((tr) => (anio < 0 || tr.lostAt > anio) && Math.abs(tr.x - cx2) < R_CERCA && Math.abs(tr.z - cz2) < R_CERCA)
+      .map((tr) => [tr, (tr.x - cx2) ** 2 + (tr.z - cz2) ** 2]).sort((a, b) => a[1] - b[1]);
+    const sel = l.slice(0, TREE_CERCA);
+    rCorte = sel.length < l.length ? Math.sqrt(sel[sel.length - 1][1]) : R_CERCA;
+    return sel.map((e) => e[0]);
+  };
+  let treesGroup = instanciarArboles(especies, cercanos(vx, vz, -1), 60);
+  treeCentro = [vx, vz];
   let treesYear = -1;
+  const copaGeo = new THREE.IcosahedronGeometry(0.5, 1); copaGeo.scale(1, 0.75, 1); copaGeo.translate(0, 0.62, 0);
+  const copaMat = new THREE.MeshStandardMaterial({ color: 0x3f5a2a, roughness: 0.95, metalness: 0 });
+  const uLejos = { uCentro: { value: new THREE.Vector2(vx, vz) }, uR: { value: 0 } };
+  copaMat.onBeforeCompile = (sh) => {
+    sh.uniforms.uCentro = uLejos.uCentro; sh.uniforms.uR = uLejos.uR; sh.uniforms.uYear = U.uYear; sh.uniforms.uMode = U.uMode;
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec2 uCentro; uniform float uR; uniform float uYear; uniform float uMode; attribute float aLost;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\n vec2 pI = instanceMatrix[3].xz;\n if (length(pI - uCentro) < uR || (uMode > 0.5 && uYear > 0.001 && aLost <= uYear)) transformed *= 0.0;');
+  };
+  copaMat.customProgramCacheKey = () => 'copa-lejos';
+  const copas = new THREE.InstancedMesh(copaGeo, copaMat, treeAll.length);
+  {
+    const m4 = new THREE.Matrix4(); const q = new THREE.Quaternion(); const s = new THREE.Vector3(); const p = new THREE.Vector3(); const c = new THREE.Color(); const up = new THREE.Vector3(0, 1, 0);
+    const aLost = new Float32Array(treeAll.length);
+    treeAll.forEach((t, k) => { q.setFromAxisAngle(up, t.rot); s.set(t.height * 0.62, t.height, t.height * 0.62); p.set(t.x, t.y, t.z); m4.compose(p, q, s); copas.setMatrixAt(k, m4); const v = 0.8 + t.tone * 0.4; c.setRGB(v * 0.9, v, v * 0.78); copas.setColorAt(k, c); aLost[k] = t.lostAt < 0 ? 999 : t.lostAt; });
+    copaGeo.setAttribute('aLost', new THREE.InstancedBufferAttribute(aLost, 1));
+    copas.instanceMatrix.needsUpdate = true; copas.instanceColor.needsUpdate = true;
+  }
+  copas.frustumCulled = false;
 
   // ---------- construcciones ----------
   onProgreso(0.84, 'Colocando las construcciones');
@@ -824,7 +908,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   // ---------- escena, cielo, mar, luces ----------
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(0x9fc6d4, 0.000011);
-  scene.add(terrain, patch, houseMesh, treesGroup, contexto);
+  scene.add(terrain, patch, houseMesh, treesGroup, copas, contexto);
   const sky = new Sky();
   sky.scale.setScalar(450000);
   const su = sky.material.uniforms;
@@ -841,7 +925,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   normals.repeat.set(900, 900);
   normals.needsUpdate = true;
   // distancia del mar a la costa (m), a 1/4 de resolución: aguas someras turquesa, espuma en la orilla y agua profunda lejos
-  const SH = 4;
+  const SH = 2; // mapa de la orilla a ~9 m: la espuma sigue la costa sin escalones
   const sw = Math.ceil(W / SH); const sh2 = Math.ceil(H / SH);
   const marArr = new Uint8Array(W * H);
   for (let i = 0; i < W * H; i++) marArr[i] = land[i] ? 0 : 1;
@@ -906,13 +990,15 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       #include <fog_pars_fragment>
       // olas generadas por cálculo (sin textura que se repita: la textura en mosaico se veía como cuadrados)
       float hash1(float x) { return fract(sin(x * 127.1) * 43758.5453); }
-      float vnoise(vec2 x) {
-        vec2 i = floor(x); vec2 f = fract(x); f = f * f * (3.0 - 2.0 * f);
-        float a = fract(sin(dot(i, vec2(127.1, 311.7))) * 43758.5453);
-        float b = fract(sin(dot(i + vec2(1.0, 0.0), vec2(127.1, 311.7))) * 43758.5453);
-        float c = fract(sin(dot(i + vec2(0.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
-        float d = fract(sin(dot(i + vec2(1.0, 1.0), vec2(127.1, 311.7))) * 43758.5453);
-        return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+      // ruido continuo hecho con ondas en varias direcciones: no tiene cuadrícula (el ruido de valores dejaba cuadraditos)
+      float ondas(vec2 x) {
+        float s = 0.0;
+        s += sin(dot(x, vec2(0.83, 0.56)) * 1.0 + 1.3);
+        s += sin(dot(x, vec2(-0.47, 0.88)) * 1.37 + 4.1);
+        s += sin(dot(x, vec2(0.21, -0.98)) * 1.91 + 2.2);
+        s += sin(dot(x, vec2(-0.95, -0.31)) * 2.63 + 0.7);
+        s += sin(dot(x, vec2(0.64, -0.77)) * 3.47 + 5.3);
+        return 0.5 + 0.5 * s / 5.0;
       }
       void main() {
         float dc = length(cameraPosition - vWorld);
@@ -920,7 +1006,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         float lod = 1.0 - smoothstep(300.0, 3200.0, dc);
         float mpx = dc * 0.0011; // metros por píxel, aproximado
         // la fuerza del oleaje cambia por zonas, suave y sin repetirse
-        float zona = 0.6 + 0.4 * vnoise(p / 850.0 + vec2(uTime * 0.004, 0.0));
+        float zona = 0.55 + 0.45 * ondas(p / 260.0 + vec2(uTime * 0.012, 0.0));
         // oleaje: 10 trenes de olas de 8 a 70 m, con direcciones alrededor del viento del noreste y su velocidad real √(g/k).
         // Las olas más pequeñas que unos píxeles se apagan (si no, parpadean de lejos)
         vec2 g = vec2(0.0); float cresta = 0.0; float sTot = 0.0;
@@ -936,8 +1022,8 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         }
         g *= zona; cresta = sTot > 0.0 ? cresta / sTot * zona : 0.0;
         // rizado fino solo cerca de la cámara
-        vec2 rizo = vec2(vnoise(p / 2.7 + vec2(uTime * 0.7, 0.0)), vnoise(p / 2.3 + vec2(3.1, -uTime * 0.6))) - 0.5;
-        g += rizo * 0.08 * (1.0 - smoothstep(60.0, 300.0, dc));
+        vec2 rizo = vec2(ondas(p / 0.9 + vec2(uTime * 1.6, 0.0)), ondas(p.yx / 0.75 + vec2(3.1, -uTime * 1.4))) - 0.5;
+        g += rizo * 0.07 * (1.0 - smoothstep(40.0, 220.0, dc));
         vec2 n2 = g * 4.0;
         vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
         vec3 V = normalize(cameraPosition - vWorld);
@@ -971,10 +1057,10 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         // (antes lo hacía en una franja ancha y se veía un corte recto en el lado oeste)
         float bordeAncho = smoothstep(0.0, 0.008, min(eb.x, eb.y)) * inWin;
         // el color de la foto junto a la costa solo de cerca (de lejos se leía como un halo alrededor de la isla)
-        float cercaCam = 1.0 - smoothstep(900.0, 2600.0, dc);
+        float cercaCam = mix(0.32, 1.0, 1.0 - smoothstep(900.0, 2600.0, dc)); // de lejos queda un borde un poco más claro
         float costa = (1.0 - smoothstep(40.0, 320.0, dm)) * bordeAncho * cercaCam;
         // un solo azul profundo, con variaciones suaves y grandes (no un degradé alrededor de la isla)
-        float var = vnoise(p / 2600.0 + vec2(uTime * 0.001, 0.0));
+        float var = ondas(p / 900.0 + vec2(uTime * 0.003, 0.0));
         vec3 hondo = uDeep * (0.88 + 0.24 * var);
         vec3 body = mix(hondo, sat * 1.05, costa);
         // luz que atraviesa la cresta de la ola
@@ -1668,7 +1754,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     const w = mount.clientWidth || window.innerWidth;
     const h = mount.clientHeight || window.innerHeight;
     renderer.setSize(w, h, false);
-    const prR = renderer.getPixelRatio() * 0.6; // el reflejo a 60 % de resolución: las olas lo deforman, no hace falta más
+    const prR = renderer.getPixelRatio() * 0.85; // el reflejo a 60 % de resolución: las olas lo deforman, no hace falta más
     reflRT.setSize(Math.max(2, Math.round(w * prR)), Math.max(2, Math.round(h * prR)));
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -1776,19 +1862,22 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     if (houseMesh.visible && key !== houseKey) { houseKey = key; updateHouses(yk, T.modo, cur.escala); }
 
     // árboles
+    // árboles: modelos escaneados alrededor del punto que mira la cámara; copas simplificadas en el resto de la isla
     treesGroup.visible = dist < 3500 && cur.casas > 0.5;
-    if (T.modo === 'despues' && treesGroup.visible && Math.round(cur.year) !== treesYear) {
-      treesYear = Math.round(cur.year);
-      scene.remove(treesGroup);
-      treesGroup.traverse((o) => { if (o.isInstancedMesh) o.dispose(); });
-      treesGroup = instanciarArboles(especies, treeAll.filter((tr) => tr.lostAt > cur.year), 60);
-      scene.add(treesGroup);
-    } else if (T.modo !== 'despues' && treesYear !== -1) {
-      treesYear = -1;
-      scene.remove(treesGroup);
-      treesGroup.traverse((o) => { if (o.isInstancedMesh) o.dispose(); });
-      treesGroup = instanciarArboles(especies, treeAll, 60);
-      scene.add(treesGroup);
+    copas.visible = dist < 12000 && cur.casas > 0.5;
+    {
+      const lx = camLook.x + vi.px; const lz = camLook.z + vi.pz;
+      const anioT = T.modo === 'despues' ? Math.round(cur.year) : -1;
+      if (treesGroup.visible && (Math.hypot(lx - treeCentro[0], lz - treeCentro[1]) > R_CERCA * 0.35 || anioT !== treesYear)) {
+        treesYear = anioT; treeCentro = [lx, lz];
+        scene.remove(treesGroup);
+        treesGroup.traverse((o) => { if (o.isInstancedMesh) o.dispose(); });
+        treesGroup = instanciarArboles(especies, cercanos(lx, lz, anioT), 60);
+        scene.add(treesGroup);
+      }
+      // las copas simplificadas se apagan donde ya están los modelos (si los modelos se ven)
+      uLejos.uCentro.value.set(treeCentro[0], treeCentro[1]);
+      uLejos.uR.value = treesGroup.visible ? rCorte : 0;
     }
 
     // vías

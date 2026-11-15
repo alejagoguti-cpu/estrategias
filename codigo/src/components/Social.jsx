@@ -81,6 +81,166 @@ function BarraSimple({ etiqueta, valor, max, texto, color = ARC, destacado = fal
   );
 }
 
+/* ---------------------------------------------------------------- gráficos animados */
+/** número que cuenta hasta su valor al entrar en pantalla */
+function Contador({ valor, dec = 0, dur = 1400, suf = '' }) {
+  const [ref, visto] = useVisto(0.4);
+  const [v, setV] = useState(0);
+  useEffect(() => {
+    if (!visto) return undefined;
+    let raf = 0; const t0 = performance.now();
+    const paso = (t) => { const p = Math.min(1, (t - t0) / dur); setV(valor * (1 - (1 - p) ** 3)); if (p < 1) raf = requestAnimationFrame(paso); };
+    raf = requestAnimationFrame(paso); return () => cancelAnimationFrame(raf);
+  }, [visto, valor, dur]);
+  return <span ref={ref}>{v.toLocaleString('es-CO', { minimumFractionDigits: dec, maximumFractionDigits: dec })}{suf}</span>;
+}
+
+/** dona animada: partes [{v, l, c}] */
+function Dona({ partes, centro, sub, tam = 190 }) {
+  const [ref, visto] = useVisto(0.35);
+  const [h, setH] = useState(null);
+  const tot = partes.reduce((s, p) => s + p.v, 0); const R = 70; const C = 2 * Math.PI * R;
+  let acc = 0;
+  const act = h !== null ? partes[h] : null;
+  return (
+    <div ref={ref} className="flex flex-wrap items-center gap-6">
+      <svg viewBox="0 0 200 200" width={tam} height={tam} className="shrink-0 -rotate-90" role="img" aria-label={partes.map((p) => `${p.l} ${p.v}`).join(', ')}>
+        <circle cx="100" cy="100" r={R} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="26" />
+        {partes.map((p, i) => {
+          const largo = (p.v / tot) * C; const off = acc; acc += largo;
+          return (
+            <circle key={p.l} cx="100" cy="100" r={R} fill="none" stroke={p.c} strokeWidth={h === i ? 32 : 26}
+              strokeDasharray={`${visto ? Math.max(0, largo - 2) : 0} ${C}`} strokeDashoffset={-off}
+              style={{ transition: `stroke-dasharray 1.2s cubic-bezier(.16,1,.3,1) ${i * 0.18}s, stroke-width .25s`, cursor: 'pointer', opacity: h === null || h === i ? 1 : 0.4 }}
+              onMouseEnter={() => setH(i)} onMouseLeave={() => setH(null)} onClick={() => setH(h === i ? null : i)} />
+          );
+        })}
+        <g className="rotate-90" style={{ transformOrigin: '100px 100px' }}>
+          <text x="100" y="98" textAnchor="middle" fill="#f4f1ec" fontSize="30" fontWeight="600" fontFamily="Space Grotesk, sans-serif">{act ? `${act.v}${act.suf ?? ' %'}` : centro}</text>
+          <text x="100" y="122" textAnchor="middle" fill="rgba(244,241,236,.55)" fontSize="12" fontFamily="Space Grotesk, sans-serif">{act ? act.l : sub}</text>
+        </g>
+      </svg>
+      <ul className="space-y-2 text-[13px]">
+        {partes.map((p, i) => (
+          <li key={p.l} className="flex cursor-pointer items-center gap-2.5" onMouseEnter={() => setH(i)} onMouseLeave={() => setH(null)} style={{ opacity: h === null || h === i ? 1 : 0.5 }}>
+            <i className="inline-block h-3 w-3 rounded-full" style={{ background: p.c }} />
+            <span className="text-white/80">{p.l}</span>
+            <span className="num ml-auto pl-4 font-semibold">{p.v}{p.suf ?? ' %'}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** pictograma: un ícono por cada `por` unidades, coloreado por grupos */
+function Pictograma({ grupos, por, icono = 'persona', cols = 25 }) {
+  const [ref, visto] = useVisto(0.25);
+  const celdas = []; grupos.forEach((g, gi) => { for (let i = 0; i < Math.round(g.v / por); i++) celdas.push(gi); });
+  const P = icono === 'persona' ? 'M12 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 15v-7a5 5 0 0 1 10 0v7z' : 'M3 21V9l9-6 9 6v12z';
+  return (
+    <div ref={ref}>
+      <div className="grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }} aria-hidden="true">
+        {celdas.map((g, i) => (
+          <svg key={i} viewBox="0 0 24 24" className="w-full transition-all duration-500" style={{ opacity: visto ? 1 : 0, transform: `translateY(${visto ? 0 : 8}px)`, transitionDelay: `${i * 9}ms` }}>
+            <path d={P} fill={grupos[g].c} />
+          </svg>
+        ))}
+      </div>
+      <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-white/70">
+        {grupos.map((g) => <li key={g.l} className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5" style={{ background: g.c }} />{g.l} · <span className="num font-semibold text-white">{g.v}</span></li>)}
+      </ul>
+      <p className="mt-1 text-[11px] text-white/40">Cada figura equivale a {por} {icono === 'persona' ? 'estudiantes' : 'unidades'}.</p>
+    </div>
+  );
+}
+
+/** columnas verticales que suben, con su valor contando */
+function Columnas({ datos, max, unidad = ' %' }) {
+  const [ref, visto] = useVisto(0.35);
+  return (
+    <div ref={ref} className="flex h-56 items-end gap-6 border-b border-white/20 sm:gap-10">
+      {datos.map((d, i) => (
+        <div key={d.l} className="flex h-full w-20 flex-col items-center justify-end sm:w-28">
+          <p className="num mb-2 text-2xl font-semibold" style={{ color: d.c }}><Contador valor={d.v} dec={1} />{unidad}</p>
+          <div className="w-full rounded-t-[3px] transition-[height] duration-[1300ms] ease-out" style={{ height: visto ? `${(d.v / max) * 78}%` : '0%', background: `linear-gradient(to top, ${d.c}55, ${d.c})`, transitionDelay: `${i * 180}ms` }} />
+          <p className="mt-2 text-center text-[11px] leading-tight text-white/65">{d.l}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** áreas comparadas como cuadrados proporcionales */
+function Areas({ a, b }) {
+  const [ref, visto] = useVisto(0.35);
+  const lado = (v) => Math.sqrt(v / b.v) * 100;
+  return (
+    <div ref={ref} className="flex items-end gap-8">
+      {[a, b].map((x, i) => (
+        <div key={x.l} className="flex flex-col items-start">
+          <div className="relative" style={{ width: `${lado(x.v) * 1.6}px`, height: `${lado(x.v) * 1.6}px` }}>
+            <div className="absolute bottom-0 left-0 rounded-[2px] transition-all duration-[1200ms] ease-out" style={{ width: visto ? '100%' : '0%', height: visto ? '100%' : '0%', background: x.c, transitionDelay: `${i * 350}ms` }} />
+          </div>
+          <p className="num mt-2 text-xl font-semibold"><Contador valor={x.v} /> m²</p>
+          <p className="text-[12px] text-white/60">{x.l}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** viajes en lancha: barcos que cruzan en cada sentido, más numerosos cuanto más viajes */
+function Lanchas({ ida, vuelta }) {
+  const [ref, visto] = useVisto(0.3);
+  const fila = (n, dir, color, y) => Array.from({ length: Math.round(n / 40) }, (_, i) => (
+    <g key={`${dir}${i}`}>
+      <path d="M-9 0 L9 0 L6 5 L-6 5 Z M-2 -8 L-2 0 L5 0 Z" fill={color} transform={`translate(0 ${y})`}>
+        {visto && <animateTransform attributeName="transform" type="translate" from={`${dir > 0 ? -20 : 660} ${y}`} to={`${dir > 0 ? 660 : -20} ${y}`} dur={`${9 + (i % 4)}s`} begin={`${-i * 0.73}s`} repeatCount="indefinite" />}
+      </path>
+    </g>
+  ));
+  return (
+    <div ref={ref}>
+      <svg viewBox="0 0 640 170" className="w-full" role="img" aria-label={`${ida} viajes de Tierra Bomba a Bocagrande y ${vuelta} de vuelta`}>
+        <defs><linearGradient id="g-agua" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#123447" /><stop offset="1" stopColor="#0b1d28" /></linearGradient></defs>
+        <rect x="0" y="20" width="640" height="130" fill="url(#g-agua)" rx="4" />
+        {Array.from({ length: 9 }, (_, i) => <path key={i} d={`M0 ${36 + i * 13} Q 160 ${32 + i * 13} 320 ${36 + i * 13} T 640 ${36 + i * 13}`} stroke="rgba(143,211,238,0.08)" fill="none" />)}
+        {fila(ida, 1, CIELO, 62)}
+        {fila(vuelta, -1, ARC, 112)}
+        <text x="8" y="14" fill="rgba(244,241,236,.6)" fontSize="12" fontFamily="JetBrains Mono, monospace">TIERRA BOMBA</text>
+        <text x="632" y="14" fill="rgba(244,241,236,.6)" fontSize="12" textAnchor="end" fontFamily="JetBrains Mono, monospace">BOCAGRANDE</text>
+      </svg>
+      <div className="mt-3 grid grid-cols-2 gap-4">
+        <p><span className="num text-3xl font-semibold" style={{ color: CIELO }}><Contador valor={ida} /></span><span className="ml-2 text-[12px] text-white/60">viajes hacia Bocagrande →</span></p>
+        <p className="text-right"><span className="text-[12px] text-white/60">← de vuelta a la isla</span><span className="num ml-2 text-3xl font-semibold" style={{ color: ARC }}><Contador valor={vuelta} /></span></p>
+      </div>
+      <p className="mt-1 text-[11px] text-white/40">Cada lancha dibujada equivale a unos 40 viajes.</p>
+    </div>
+  );
+}
+
+/** anillos radiales (una barra circular por percepción) */
+function Anillos({ items, total, sel, setSel }) {
+  const [ref, visto] = useVisto(0.25);
+  return (
+    <svg ref={ref} viewBox="0 0 400 400" className="w-full max-w-[26rem]" role="img" aria-label="Porcentaje de acuerdo con cada percepción">
+      {items.map((x, i) => {
+        const r = 186 - i * 19; const C = 2 * Math.PI * r; const frac = (x.n / total) * 0.75; const col = x.g === 0 ? ARC : MAR;
+        return (
+          <g key={x.corto} onMouseEnter={() => setSel(i)} onClick={() => setSel(i)} style={{ cursor: 'pointer' }}>
+            <circle cx="200" cy="200" r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="13" strokeDasharray={`${C * 0.75} ${C}`} transform="rotate(135 200 200)" />
+            <circle cx="200" cy="200" r={r} fill="none" stroke={col} strokeWidth={sel === i ? 15 : 11} strokeLinecap="round"
+              strokeDasharray={`${visto ? C * frac : 0} ${C}`} transform="rotate(135 200 200)"
+              style={{ transition: `stroke-dasharray 1.4s cubic-bezier(.16,1,.3,1) ${i * 0.1}s, stroke-width .25s`, opacity: sel === i ? 1 : 0.62 }} />
+          </g>
+        );
+      })}
+      <text x="200" y="190" textAnchor="middle" fill="#f4f1ec" fontSize="44" fontWeight="600" fontFamily="Space Grotesk, sans-serif">{items[sel].p} %</text>
+      <text x="200" y="215" textAnchor="middle" fill="rgba(244,241,236,.6)" fontSize="13" fontFamily="Space Grotesk, sans-serif">{items[sel].corto}</text>
+    </svg>
+  );
+}
 /* ---------------------------------------------------------------- 02.1 percepción */
 const PERCEPCION = [
   { corto: 'Casas, iglesia y calles', t: 'La erosión había afectado gravemente las casas, la iglesia y las calles.', n: 215, p: '90,3', g: 0 },
@@ -107,27 +267,21 @@ function Percepcion() {
         <span className="flex items-center gap-2"><i className="inline-block h-2.5 w-2.5" style={{ background: MAR }} />Vida comunitaria y cultural</span>
       </div>
 
-      <ul className="mt-5 space-y-1" role="listbox" aria-label="Percepciones de la erosión">
-        {PERCEPCION.map((x, i) => (
-          <li key={x.corto}>
-            <button
-              type="button"
-              role="option"
-              aria-selected={sel === i}
-              onClick={() => setSel(i)}
-              onMouseEnter={() => window.matchMedia('(hover: hover)').matches && setSel(i)}
-              className={`grid w-full grid-cols-[7.6rem_1fr_3.3rem] items-center gap-3 rounded-[3px] px-2 py-1.5 text-left transition-colors sm:grid-cols-[11rem_1fr_3.6rem] ${sel === i ? 'bg-white/8' : 'hover:bg-white/5'}`}
-            >
-              <span className={`text-[13px] leading-tight ${sel === i ? 'font-semibold text-white' : 'text-white/70'}`}>{x.corto}</span>
-              <span className="h-3.5 bg-white/8">
-                <span className="block h-full transition-[width] duration-[1100ms] ease-out" style={{ width: visto ? `${(x.n / TOTAL) * 100}%` : 0, background: x.g === 0 ? ARC : MAR, transitionDelay: `${i * 90}ms`, opacity: sel === i ? 1 : 0.7 }} />
-              </span>
-              <span className="num text-right text-[13px] text-white/85">{x.p} %</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-
+      <div className="mt-6 grid items-center gap-8 lg:grid-cols-[minmax(0,26rem)_1fr]">
+        <Anillos items={PERCEPCION} total={TOTAL} sel={sel} setSel={setSel} />
+        <ul className="space-y-1" role="listbox" aria-label="Percepciones de la erosión">
+          {PERCEPCION.map((x, i) => (
+            <li key={x.corto}>
+              <button type="button" role="option" aria-selected={sel === i} onClick={() => setSel(i)} onMouseEnter={() => window.matchMedia('(hover: hover)').matches && setSel(i)}
+                className={`flex w-full items-center gap-3 rounded-[3px] px-2 py-1.5 text-left transition-colors ${sel === i ? 'bg-white/8' : 'hover:bg-white/5'}`}>
+                <i className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: x.g === 0 ? ARC : MAR, opacity: sel === i ? 1 : 0.6 }} />
+                <span className={`flex-1 text-[13px] leading-tight ${sel === i ? 'font-semibold text-white' : 'text-white/70'}`}>{x.corto}</span>
+                <span className="num text-[13px] text-white/85">{x.p} %</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
       {/* 238 personas */}
       <div className="mt-8 border-t border-white/14 pt-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -136,7 +290,7 @@ function Percepcion() {
         </div>
         <div className="mt-4 grid gap-[3px]" style={{ gridTemplateColumns: `repeat(${COLS}, minmax(0, 1fr))` }} aria-hidden="true">
           {Array.from({ length: TOTAL }, (_, i) => (
-            <span key={i} className="aspect-square rounded-full transition-colors duration-500" style={{ background: i < it.n ? col : 'rgba(255,255,255,0.13)', transitionDelay: `${(i % COLS) * 8 + Math.floor(i / COLS) * 4}ms` }} />
+            <span key={i} className="aspect-square rounded-full transition-all duration-500" style={{ background: i < it.n ? col : 'rgba(255,255,255,0.13)', transform: visto ? 'scale(1)' : 'scale(0)', transitionDelay: `${(i % COLS) * 8 + Math.floor(i / COLS) * 4}ms` }} />
           ))}
         </div>
         <p className="mt-3 text-[11px] text-white/40">Cada punto es una persona encuestada. Se cuentan quienes respondieron «de acuerdo» o «totalmente de acuerdo».</p>
@@ -205,43 +359,30 @@ function Escuela() {
     <div ref={ref} className="space-y-12">
       <div>
         <p className="etiqueta text-white/50">Matrícula de referencia · Plan Anual de Contratación 2025</p>
-        <p className="num mt-2 text-5xl font-semibold leading-none">886 <span className="text-base font-normal text-white/55">estudiantes en 42 grupos</span></p>
-        <div className="mt-4">
-          <Apilada
-            alto="h-11"
-            partes={[
-              { v: 729, l: 'Sede Tierra Bomba · 34 grupos', c: ARC, suf: '' },
-              { v: 157, l: 'Sede Punta Arena · 8 grupos', c: CIELO, suf: '' },
-            ]}
-          />
+        <p className="num mt-2 text-6xl font-semibold leading-none"><Contador valor={886} /> <span className="text-base font-normal text-white/55">estudiantes en 42 grupos</span></p>
+        <div className="mt-5">
+          <Pictograma por={10} cols={30} grupos={[{ v: 729, l: 'Sede Tierra Bomba (34 grupos)', c: ARC }, { v: 157, l: 'Sede Punta Arena (8 grupos)', c: CIELO }]} />
         </div>
       </div>
-
       <div>
         <p className="etiqueta text-white/50">Quiénes estudiaban en Tierra Bomba · matrícula reportada en 2022</p>
-        <div className="mt-4 space-y-5">
-          <div><p className="mb-1.5 text-[13px] text-white/70">Por sexo</p><Apilada alto="h-8" partes={[{ v: 46, l: 'Mujeres', c: ARC }, { v: 54, l: 'Hombres', c: ARENA }]} /></div>
-          <div><p className="mb-1.5 text-[13px] text-white/70">Por nivel (porcentajes redondeados)</p><Apilada alto="h-8" partes={[{ v: 8, l: 'Preescolar', c: CIELO }, { v: 43, l: 'Primaria', c: ARC }, { v: 35, l: 'Secundaria', c: MAR }, { v: 13, l: 'Media', c: ARENA }]} /></div>
-          <div>
-            <p className="mb-1.5 text-[13px] text-white/70">Sede de Punta Arena, por nivel</p>
-            <Apilada alto="h-8" partes={[{ v: 15, l: 'Preescolar', c: CIELO }, { v: 85, l: 'Primaria', c: ARC }]} />
-            <p className="mt-2 text-[12px] leading-snug text-white/60">Para cursar sexto grado, los estudiantes de Punta Arena tenían que cambiar de sede.</p>
+        <div className="mt-5 grid gap-10 md:grid-cols-2">
+          <div><p className="mb-3 text-[13px] text-white/70">Por sexo</p><Dona tam={170} centro="2022" sub="matrícula" partes={[{ v: 46, l: 'Mujeres', c: ARC }, { v: 54, l: 'Hombres', c: ARENA }]} /></div>
+          <div><p className="mb-3 text-[13px] text-white/70">Por nivel (porcentajes redondeados)</p><Dona tam={170} centro="4" sub="niveles" partes={[{ v: 8, l: 'Preescolar', c: CIELO }, { v: 43, l: 'Primaria', c: ARC }, { v: 35, l: 'Secundaria', c: MAR }, { v: 13, l: 'Media', c: ARENA }]} /></div>
+          <div className="md:col-span-2">
+            <p className="mb-3 text-[13px] text-white/70">Sede de Punta Arena, por nivel</p>
+            <Dona tam={150} centro="Punta" sub="Arena" partes={[{ v: 15, l: 'Preescolar', c: CIELO }, { v: 85, l: 'Primaria', c: ARC }]} />
+            <p className="mt-3 text-[12px] leading-snug text-white/60">Para cursar sexto grado, los estudiantes de Punta Arena tenían que cambiar de sede.</p>
           </div>
         </div>
       </div>
-
       <div>
         <p className="etiqueta text-white/50">Deserción durante el año escolar · I.E. de Tierra Bomba</p>
-        <div className="mt-4 space-y-2.5">
-          <BarraSimple etiqueta="Tierra Bomba 2019" valor={2.6} max={4.2} texto="2,6 %" />
-          <BarraSimple etiqueta="Tierra Bomba 2022" valor={0.9} max={4.2} texto="0,9 %" color={MAR} destacado />
-          <BarraSimple etiqueta="Promedio distrital 2022" valor={3.9} max={4.2} texto="3,9 %" color="rgba(255,255,255,0.45)" />
-        </div>
+        <div className="mt-6"><Columnas max={4.2} datos={[{ v: 2.6, l: 'Tierra Bomba 2019', c: ARC }, { v: 0.9, l: 'Tierra Bomba 2022', c: MAR }, { v: 3.9, l: 'Promedio distrital 2022', c: '#9aa7b4' }]} /></div>
       </div>
-
       <div>
         <p className="etiqueta text-white/50">¿Había un deterioro educativo asociado a la erosión? · 238 habitantes encuestados</p>
-        <div className="mt-4"><Apilada alto="h-8" partes={[{ v: 47.9, l: 'Lo percibía', c: ARC }, { v: 52.1, l: 'En desacuerdo', c: 'rgba(255,255,255,0.4)' }]} /></div>
+        <div className="mt-4"><Dona tam={170} centro="238" sub="encuestados" partes={[{ v: 47.9, l: 'Lo percibía', c: ARC }, { v: 52.1, l: 'En desacuerdo', c: 'rgba(255,255,255,0.35)' }]} /></div>
         <p className="mt-2 text-[12px] leading-snug text-white/60">El estudio de 2017 documentó docentes que viajaban en lancha desde Cartagena; el oleaje alto dificultaba su llegada.</p>
       </div>
 
@@ -290,22 +431,13 @@ function Conexiones() {
 
       <div>
         <p className="etiqueta text-white/50">Embarcadero del Hospital de Bocagrande · 13 horas, de 6:00 a. m. a 7:00 p. m. · aforo de mayo de 2014</p>
-        <div className="mt-4 space-y-3">
-          <BarraSimple etiqueta="Tierra Bomba → Bocagrande" valor={614} max={614} texto="614" color={CIELO} destacado />
-          <BarraSimple etiqueta="Bocagrande → Tierra Bomba" valor={407} max={614} texto="407" color={ARC} />
-        </div>
-        <p className="mt-2 text-[12px] text-white/55">Viajes de pasajeros registrados en cada sentido.</p>
+        <div className="mt-4"><Lanchas ida={614} vuelta={407} /></div>
       </div>
-
       <div>
         <p className="etiqueta text-white/50">Centro de Salud de Tierra Bomba · renovado en 2022</p>
-        <div className="mt-4 space-y-3">
-          <BarraSimple etiqueta="Área en uso, antes" valor={84} max={253} texto="84 m²" color="rgba(255,255,255,0.45)" />
-          <BarraSimple etiqueta="Área en uso, después" valor={253} max={253} texto="253 m²" color={MAR} destacado />
-        </div>
-        <p className="mb-1.5 mt-5 text-[13px] text-white/70">Capacidad anunciada: 170 servicios semanales</p>
-        <Apilada alto="h-8" partes={[{ v: 72, l: 'Medicina general', c: MAR, suf: '' }, { v: 48, l: 'Odontología y vacunación', c: CIELO, suf: '' }, { v: 50, l: 'Toma de muestras', c: ARENA, suf: '' }]} />
-        <p className="mt-2 text-[12px] leading-snug text-white/60">Habitantes también reportaron viajes en lancha a Bocagrande para recibir atención médica.</p>
+        <div className="mt-5"><Areas a={{ v: 84, l: 'Área en uso, antes', c: 'rgba(255,255,255,0.4)' }} b={{ v: 253, l: 'Área en uso, después (2022)', c: MAR }} /></div>
+        <p className="mb-3 mt-8 text-[13px] text-white/70">Capacidad anunciada: 170 servicios semanales</p>
+        <Dona tam={170} centro="170" sub="servicios / semana" partes={[{ v: 72, l: 'Medicina general', c: MAR, suf: '' }, { v: 48, l: 'Odontología y vacunación', c: CIELO, suf: '' }, { v: 50, l: 'Toma de muestras', c: ARENA, suf: '' }]} />        <p className="mt-2 text-[12px] leading-snug text-white/60">Habitantes también reportaron viajes en lancha a Bocagrande para recibir atención médica.</p>
       </div>
 
       <div>

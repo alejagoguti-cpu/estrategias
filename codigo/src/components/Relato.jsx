@@ -3,6 +3,7 @@ import { gradienteCSS } from '../lib/paleta.js';
 import { GRUPOS_TIPO, TASA_MEDIA, TASA_MAX, TASA_CLASE, AÑO_BASE, COLOR_CLASE_EROSION, COLOR_MIDAS, nivelModelo, RUNUP_M, OLEAJE } from '../lib/escena.js';
 import Red from './Red.jsx';
 import Social from './Social.jsx';
+import Sectores from './Sectores.jsx';
 import { PLAN_PASOS, planEstado, SeccionEsquema } from './Plan.jsx';
 import { PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from '../lib/plan.js';
 
@@ -825,6 +826,8 @@ export default function Relato({ api, sinEscena }) {
       </section>
 
       {/* 02 · lo social */}
+      {/* la isla y sus cuatro sectores, en puntos */}
+      <Sectores />
       <Social />
       {/* 02 · erosión (la escena la mueve el scroll) */}
       <section id="erosion" style={{ height: '520svh' }} aria-label="Simulación de la erosión a 10, 20 y 30 años" />

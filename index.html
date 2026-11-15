@@ -10,10 +10,38 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="./app/index-DIMfNUKS.js"></script>
-    <link rel="stylesheet" crossorigin href="./app/index-C6VAZj8x.css">
+    <!-- lo pesado se pide en paralelo desde el primer instante, sin esperar al código -->
+    <link rel="preload" as="image" href="./assets/texturas/portada.webp" fetchpriority="high" />
+    <link rel="preload" as="image" href="./assets/texturas/sat_base.jpg" />
+    <link rel="preload" as="image" href="./assets/texturas/tierrabomba_satelite.jpg" />
+    <link rel="preload" as="fetch" href="./datos/sintaxis.json" crossorigin />
+    <link rel="preload" as="fetch" href="./datos/midas_tierrabomba.json" crossorigin />
+    <link rel="preload" as="fetch" href="./datos/construcciones_tierra_bomba.json.gz" crossorigin />
+    <style>
+      #pre { position: fixed; inset: 0; z-index: 60; overflow: hidden; background: #0b1015; transition: opacity 1.4s ease; }
+      #pre.fuera { opacity: 0; pointer-events: none; }
+      #pre img { position: absolute; inset: -4%; width: 108%; height: 108%; -o-object-fit: cover; object-fit: cover; animation: kb 22s ease-in-out infinite alternate; }
+      @keyframes kb { from { transform: scale(1) translate(0, 0); } to { transform: scale(1.12) translate(-2.5%, 1.5%); } }
+      #pre .velo { position: absolute; inset: 0; background: linear-gradient(to top, rgba(11,16,21,.92), rgba(11,16,21,.15) 55%, rgba(11,16,21,.35)); }
+      #pre .ola { position: absolute; inset: 0; background: repeating-linear-gradient(100deg, rgba(255,255,255,0) 0 38px, rgba(255,255,255,.05) 40px, rgba(255,255,255,0) 44px); background-size: 200% 100%; animation: ola 6s linear infinite; mix-blend-mode: screen; -webkit-mask: linear-gradient(90deg, #000 0 32%, transparent 48%); mask: linear-gradient(90deg, #000 0 32%, transparent 48%); }
+      @keyframes ola { to { background-position: -400px 0; } }
+      #pre .txt { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 20px 34px; color: #f4f1ec; font-family: 'Space Grotesk', system-ui, sans-serif; }
+      @media (min-width: 640px) { #pre .txt { padding: 0 48px 52px; } }
+      #pre h1 { margin: 0; font-size: clamp(3.4rem, 13vw, 10.5rem); font-weight: 600; line-height: .86; letter-spacing: -.045em; }
+      #pre p { margin: 18px 0 0; font: 500 .68rem/1.4 'JetBrains Mono', monospace; letter-spacing: .14em; text-transform: uppercase; color: rgba(244,241,236,.7); }
+      #pre .barra { margin-top: 12px; height: 1px; max-width: 28rem; background: rgba(255,255,255,.15); overflow: hidden; }
+      #pre .barra i { display: block; height: 100%; width: 3%; background: #c86d51; transition: width .5s ease; }
+      @media (prefers-reduced-motion: reduce) { #pre img, #pre .ola { animation: none; } }
+    </style>
+    <script type="module" crossorigin src="./app/index-Bf6lshW0.js"></script>
+    <link rel="stylesheet" crossorigin href="./app/index-Cug9-x3S.css">
   </head>
   <body>
+    <div id="pre" aria-hidden="true">
+      <img src="./assets/texturas/portada.webp" alt="" fetchpriority="high" />
+      <div class="ola"></div><div class="velo"></div>
+      <div class="txt"><h1>Tierra Bomba</h1><p id="pre-msg">Preparando la isla</p><div class="barra"><i id="pre-barra"></i></div></div>
+    </div>
     <div id="root"></div>
   </body>
 </html>

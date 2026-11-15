@@ -29,16 +29,18 @@ export default function App() {
   useEffect(() => {
     let cancelado = false;
     let escena = null;
-    crearEscena(mountRef.current, { onProgreso: (p, msg) => setProg({ p, msg }) })
+    crearEscena(mountRef.current, { onProgreso: (p, msg) => { setProg({ p, msg }); const m = document.getElementById('pre-msg'); const b = document.getElementById('pre-barra'); if (m) m.textContent = msg; if (b) b.style.width = `${Math.round(p * 100)}%`; } })
       .then((e) => {
         if (cancelado) { e?.dispose(); return; }
         escena = e;
         if (window.location.search.includes('debug')) window.__escena = e;
         setApi(e);
+        const pre = document.getElementById('pre'); if (pre) { pre.classList.add('fuera'); setTimeout(() => pre.remove(), 1600); }
       })
       .catch((err) => {
         console.warn('Escena 3D no disponible:', err);
         if (!cancelado) setError(true);
+        const pre = document.getElementById('pre'); if (pre) { pre.classList.add('fuera'); setTimeout(() => pre.remove(), 1600); }
       });
     return () => { cancelado = true; escena?.dispose(); };
   }, []);
@@ -53,7 +55,7 @@ export default function App() {
           className="fixed inset-0 z-0 h-full w-full object-cover opacity-60"
         />
       )}
-      <Cargando prog={prog} visible={!api && !error} />
+      {/* la pantalla de carga con imagen está en index.html: aparece antes de que cargue el código */}
       <Relato api={api} sinEscena={error} />
     </>
   );
