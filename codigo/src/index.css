@@ -213,3 +213,10 @@ body { color: var(--tinta-1); font-family: 'Geist', ui-sans-serif, system-ui, sa
 .visto .rv, .rv.visto { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .rv { opacity: 1; transform: none; transition: none; } }
 h2.etiqueta, h3.etiqueta { font-family: 'Geist Mono', ui-monospace, monospace !important; font-weight: 400 !important; font-size: .72rem; letter-spacing: .1em !important; line-height: 1.4 !important; }
+
+/* barras de desplazamiento casi invisibles (página y paneles) */
+html, * { scrollbar-width: thin; scrollbar-color: rgb(214 230 236 / .1) transparent; }
+::-webkit-scrollbar { width: 5px; height: 5px; background: transparent; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgb(214 230 236 / .1); border-radius: 0; }
+::-webkit-scrollbar-thumb:hover { background: rgb(214 230 236 / .25); }
