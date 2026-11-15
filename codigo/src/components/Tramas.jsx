@@ -37,7 +37,7 @@ function profundidad(u, v, lum) {
 }
 
 // anclas (u, v) dentro de la foto donde quedan las parejas ya vistas
-const ANCLAS = [[0.17, 0.5], [0.36, 0.42], [0.6, 0.47], [0.82, 0.4], [0.27, 0.66], [0.5, 0.6], [0.72, 0.64], [0.9, 0.56]];
+const ANCLAS = [[0.42, 0.12], [0.6, 0.08], [0.78, 0.13], [0.93, 0.2], [0.42, 0.86], [0.6, 0.9], [0.78, 0.86], [0.93, 0.78]];
 
 export default function Tramas() {
   const ref = useRef(null); const cvRef = useRef(null); const glRef = useRef(null);
@@ -67,7 +67,7 @@ export default function Tramas() {
     const uniformes = { uT: { value: 0 }, uTam: { value: 2.2 * Math.min(DPR, 1.5) }, uAlfa: { value: 0 } };
     cargarImg(`${FOTOS}manglar.webp`).then((img) => {
       if (!vivo) return;
-      const W = 420; const H = Math.round(W * img.height / img.width); aspFoto = img.width / img.height;
+      const W = 640; const H = Math.round(W * img.height / img.width); aspFoto = img.width / img.height;
       const c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d', { willReadFrequently: true }); x.drawImage(img, 0, 0, W, H);
       const d = x.getImageData(0, 0, W, H).data;
       const pos = []; const col = []; const fase = [];
@@ -87,8 +87,8 @@ export default function Tramas() {
         vertexShader: `uniform float uT; uniform float uTam; attribute float aFase; varying vec3 vC; varying float vA;
           void main(){ vec3 p = position; p.x += sin(uT*0.6 + aFase + p.y*0.4) * 0.002 * -p.z; p.y += cos(uT*0.5 + aFase) * 0.0015 * -p.z;
             vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv;
-            float dist = -mv.z; gl_PointSize = clamp(uTam * 22.0 / dist, 1.0, 9.0);
-            vC = color; vA = clamp(1.6 - dist / 30.0, 0.15, 1.0) * (0.82 + 0.18 * sin(uT * 1.5 + aFase)); }`,
+            float dist = -mv.z; gl_PointSize = clamp(uTam * 30.0 / dist, 1.3, 7.0);
+            vC = color; vA = clamp(1.9 - dist / 34.0, 0.45, 1.0) * (0.85 + 0.15 * sin(uT * 1.5 + aFase)); }`,
         fragmentShader: `uniform float uAlfa; varying vec3 vC; varying float vA;
           void main(){ vec2 q = gl_PointCoord - 0.5; float r = length(q); if (r > 0.5) discard; gl_FragColor = vec4(vC, vA * uAlfa * smoothstep(0.5, 0.2, r)); }`,
       });
@@ -164,7 +164,7 @@ export default function Tramas() {
       const gw = gl.clientWidth; const gh = gl.clientHeight;
       if (gl.width !== Math.round(gw * ren.getPixelRatio()) || gl.height !== Math.round(gh * ren.getPixelRatio())) { ren.setSize(gw, gh, false); cam.aspect = gw / gh; cam.updateProjectionMatrix(); }
       const avance = clamp01((p - p0 * 0.55) / (1 - p0 * 0.55));
-      cam.position.set(Math.sin(t * 0.00018) * 0.35, Math.sin(t * 0.00023) * 0.12, 0.4 - avance * 8);
+      cam.position.set(Math.sin(t * 0.00018) * 0.35, Math.sin(t * 0.00023) * 0.12, 0.4 - avance * 3.2);
       cam.lookAt(cam.position.x * 1.4 + Math.sin(t * 0.00012) * 0.3, cam.position.y - 0.25, cam.position.z - 10);
       uniformes.uT.value = t * 0.001; uniformes.uAlfa.value = bosque;
       if (bosque > 0.01) ren.render(escena, cam); else ren.clear();
@@ -194,7 +194,8 @@ export default function Tramas() {
       for (let q = 0; q < Math.min(s, N); q++) {
         const A = anclas3d[q % Math.max(1, anclas3d.length)]; if (!A) continue;
         v3.copy(A).project(cam); if (v3.z > 1) continue;
-        const X = (v3.x * 0.5 + 0.5) * w; const Y = (-v3.y * 0.5 + 0.5) * h; enPantalla.push([X, Y]);
+        const X = (v3.x * 0.5 + 0.5) * w; const Y = (-v3.y * 0.5 + 0.5) * h;
+        if (!movil && (X < w * 0.36 || (Y > h * 0.22 && Y < h * 0.78))) continue; // lejos del texto y de la pareja actual enPantalla.push([X, Y]);
         const pr = datos.pares[q];
         recuadro(X - Lp * 1.12, Y - Lp / 2, Lp, ret[pr.a.tid], 1, null, null, t, 0.95 * bosque);
         recuadro(X + Lp * 0.12, Y - Lp / 2, Lp, ret[pr.b.tid], 1, null, null, t, 0.95 * bosque);
