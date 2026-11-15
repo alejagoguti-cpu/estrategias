@@ -580,9 +580,9 @@ function Cierre({ api, version }) {
 
   return (
     <section id="cierre" className="relative bg-papel text-tinta">
-      <div className="mx-auto max-w-6xl px-5 py-24 sm:px-10 sm:py-32">
+      <div className="mx-auto max-w-[1640px] px-5 lg:px-16 py-24 sm:px-10 sm:py-32">
         <p className="etiqueta text-arcilla">08 · Lo que sigue</p>
-        <h2 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">Lo que muestran los números, y lo que falta.</h2>
+        <h2 className="mt-4 max-w-6xl text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-8xl">Lo que muestran los números, y lo que falta.</h2>
 
         <div className="mt-14 grid gap-12 lg:grid-cols-2">
           <div>

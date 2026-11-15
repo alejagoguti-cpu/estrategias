@@ -57,8 +57,8 @@ export default function Sectores() {
     if (!datos) return undefined;
     const cv = cvRef.current; const ctx = cv.getContext('2d'); const DPR = Math.min(window.devicePixelRatio || 1, 2);
     const { GW, GH, N, isla, sat, pos, sector } = datos;
-    const marcos = { isla: { cx: GW / 2, cy: GH / 2, ancho: GW * 0.86 } };
-    CLAVES.forEach((s) => { marcos[s] = { cx: pos[s][0], cy: pos[s][1], ancho: 46 }; });
+    const marcos = { isla: { cx: GW / 2, cy: GH / 2, ancho: GW * 0.78 } };
+    CLAVES.forEach((s) => { marcos[s] = { cx: pos[s][0], cy: pos[s][1], ancho: 40 }; });
     const cam = { ...marcos.isla }; let hover = null; let visto = 0; let raf = 0;
     const io = new IntersectionObserver(([e]) => { if (e.isIntersecting && !visto) visto = performance.now(); }, { threshold: 0.2 }); io.observe(cv);
     const geom = () => { const r = cv.getBoundingClientRect(); const w = Math.round(r.width * DPR); const h = Math.round(r.height * DPR); if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; } const esc = Math.min(w / cam.ancho, h / (cam.ancho * GH / GW)); return { w, h, esc, ox: w / 2 - cam.cx * esc, oy: h / 2 - cam.cy * esc }; };
@@ -87,7 +87,7 @@ export default function Sectores() {
         const x = g.ox + pos[s][0] * g.esc; const y = g.oy + pos[s][1] * g.esc; const pul = 0.5 + 0.5 * Math.sin(t * 0.004);
         ctx.strokeStyle = `rgba(200,109,81,${0.4 + 0.4 * pul})`; ctx.lineWidth = 1.5 * DPR; ctx.beginPath(); ctx.arc(x, y, (8 + 9 * pul) * DPR, 0, 6.283); ctx.stroke();
         ctx.fillStyle = '#c86d51'; ctx.beginPath(); ctx.arc(x, y, 4.5 * DPR, 0, 6.283); ctx.fill();
-        ctx.font = `500 ${12 * DPR}px "JetBrains Mono", monospace`; ctx.fillStyle = s === hover || s === selRef.current ? '#f4f1ec' : 'rgba(244,241,236,.6)';
+        ctx.font = `600 ${15 * DPR}px "JetBrains Mono", monospace`; ctx.fillStyle = s === hover || s === selRef.current ? '#f4f1ec' : 'rgba(244,241,236,.6)';
         ctx.fillText(SECT[s].nombre.toUpperCase(), x + 13 * DPR, y + 4 * DPR);
       });
       ctx.globalAlpha = 1;
@@ -99,37 +99,39 @@ export default function Sectores() {
   const r = datos && sel !== 'isla' ? datos.res[CLAVES.indexOf(sel)] : null;
   return (
     <section id="sectores" className="relative bg-tinta text-papel">
-      <div className="mx-auto max-w-6xl px-5 py-20 sm:px-10 sm:py-28">
-        <div className="flex flex-wrap items-end justify-between gap-6">
-          <div>
-            <p className="etiqueta text-arcilla">Del encuadre al sector</p>
-            <h2 className="mt-4 text-4xl font-semibold leading-[1.04] tracking-tight sm:text-6xl">La isla y sus cuatro sectores.</h2>
-          </div>
-          <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Sector">
-            {[['isla', 'La isla'], ...CLAVES.map((k) => [k, SECT[k].nombre])].map(([k, t]) => (
-              <button key={k} type="button" className="ficha" aria-pressed={sel === k} onClick={() => setSel(k)}>{t}</button>
-            ))}
+      <div className="mx-auto max-w-[1760px] px-5 py-16 sm:px-10 sm:py-24 lg:px-12">
+        <p className="etiqueta text-arcilla">Del encuadre al sector</p>
+        <h2 className="mt-4 text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-8xl">La isla y sus cuatro sectores.</h2>
+        <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,30rem)] lg:gap-12">
+          <canvas ref={cvRef} className="block h-[72svh] min-h-[460px] w-full lg:h-[88svh]" aria-label="Mapa de puntos de Tierra Bomba con sus cuatro sectores; toca un punto rojo para acercarte" />
+          <div className="flex flex-col gap-3">
+            {[['isla', 'La isla', null], ...CLAVES.map((k) => [k, SECT[k].nombre, datos ? datos.res[CLAVES.indexOf(k)] : null])].map(([k, t, rr]) => {
+              const on = sel === k;
+              return (
+                <button key={k} type="button" onClick={() => setSel(k)} aria-pressed={on}
+                  className={`rounded-[6px] border p-5 text-left transition-all duration-300 ${on ? 'border-arcilla bg-arcilla/12 shadow-[0_18px_50px_-24px_rgba(200,109,81,.7)]' : 'border-white/12 bg-white/[0.03] hover:border-white/35'}`}>
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className={`font-semibold tracking-tight ${on ? 'text-3xl' : 'text-2xl'} transition-all`}>{t}</p>
+                    {k !== 'isla' && <p className="num text-sm text-white/55">{fmt(SECT[k].cons)} construcciones</p>}
+                  </div>
+                  {k === 'isla' && datos && <p className="mt-2 text-sm text-white/65">{fmt(datos.haIsla)} ha de tierra emergida · 2.600 construcciones</p>}
+                  {rr && (
+                    <div className={`grid transition-[grid-template-rows] duration-500 ${on ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                      <div className="overflow-hidden">
+                        <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-white/15 pt-4">
+                          <div><dd className="num text-3xl font-semibold lg:text-4xl">{fmt(rr.ha)}</dd><dt className="mt-1 text-[11px] text-white/55">ha del sector</dt></div>
+                          <div><dd className="num text-3xl font-semibold text-[#ff8a7a] lg:text-4xl">{fmt(rr.ha30)}</dd><dt className="mt-1 text-[11px] text-white/55">ha perdidas a 30 años ({fmt((100 * rr.ha30) / rr.ha)} %)</dt></div>
+                          <div><dd className="num text-3xl font-semibold text-[#8cc4ff] lg:text-4xl">{fmt(rr.haInu)}</dd><dt className="mt-1 text-[11px] text-white/55">ha en zona inundable</dt></div>
+                        </dl>
+                      </div>
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+            <p className="mt-2 text-[11px] leading-snug text-white/40">Puntos: celdas de 47 m con el color de la imagen satelital (Esri World Imagery); costa © OpenStreetMap. Sector de cada celda: el punto de referencia más cercano del archivo de la tesis. Pérdida a 30 años: retroceso por tramo con tasas de INVEMAR; zona inundable: MIDAS.</p>
           </div>
         </div>
-        <canvas ref={cvRef} className="mt-8 block h-[62svh] min-h-[420px] w-full" aria-label="Mapa de puntos de Tierra Bomba con sus cuatro sectores; toca un punto rojo para acercarte" />
-        <div className="mt-6 grid gap-6 border-t border-white/15 pt-6 sm:grid-cols-[1fr_auto]">
-          <div>
-            <h3 className="text-2xl font-semibold tracking-tight">{sel === 'isla' ? 'La isla' : SECT[sel].nombre}</h3>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/70">
-              {!datos ? 'Cargando la isla…' : sel === 'isla'
-                ? `${fmt(datos.haIsla)} ha de tierra emergida y 2.600 construcciones repartidas en cuatro sectores. Toca un punto para acercarte.`
-                : `${fmt(SECT[sel].cons)} construcciones del archivo de la tesis en ${fmt(r.ha)} ha. A 30 años se pierden ${fmt(r.ha30)} ha (${fmt((100 * r.ha30) / r.ha)} %) y ${fmt(r.haInu)} ha están en la zona inundable oficial de MIDAS.`}
-            </p>
-          </div>
-          {r && (
-            <dl className="grid grid-cols-3 gap-6 text-right">
-              <div><dt className="text-[11px] text-white/50">construcciones</dt><dd className="num text-3xl font-semibold">{fmt(SECT[sel].cons)}</dd></div>
-              <div><dt className="text-[11px] text-white/50">ha perdidas a 30 años</dt><dd className="num text-3xl font-semibold text-[#ff8a7a]">{fmt(r.ha30)}</dd></div>
-              <div><dt className="text-[11px] text-white/50">ha inundables</dt><dd className="num text-3xl font-semibold text-[#8cc4ff]">{fmt(r.haInu)}</dd></div>
-            </dl>
-          )}
-        </div>
-        <p className="mt-4 text-[11px] leading-snug text-white/40">Puntos: celdas de 47 m de la isla con el color de la imagen satelital (Esri World Imagery); costa © OpenStreetMap. Sector de cada celda: el punto de referencia más cercano del archivo de la tesis. Pérdida a 30 años: retroceso por tramo con tasas de INVEMAR; zona inundable: MIDAS.</p>
       </div>
     </section>
   );

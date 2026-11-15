@@ -73,7 +73,7 @@ export default function Red({ etiqueta, titulo, centro, nodos, alFinal, textoFin
   });
 
   return (
-    <div className="mx-auto w-full max-w-5xl">
+    <div className="mx-auto w-full max-w-[1500px]">
       {etiqueta && <p className="etiqueta text-arcilla">{etiqueta}</p>}
       {titulo && <h3 className="mt-3 max-w-2xl text-3xl font-semibold leading-[1.05] tracking-tight sm:text-5xl">{titulo}</h3>}
 

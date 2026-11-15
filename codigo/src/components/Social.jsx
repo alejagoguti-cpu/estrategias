@@ -28,10 +28,10 @@ function Bloque({ n, titulo, bajada, fuente, children }) {
   const [ref, visto] = useVisto(0.12);
   return (
     <section ref={ref} className={`border-t border-white/18 py-16 sm:py-24 transition-all duration-1000 ${visto ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}>
-      <div className="grid gap-8 lg:grid-cols-[minmax(0,17rem)_1fr] lg:gap-16">
+      <div className="grid gap-8 lg:grid-cols-[minmax(0,24rem)_1fr] lg:gap-20">
         <header>
           <p className="etiqueta text-arcilla">{n}</p>
-          <h3 className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{titulo}</h3>
+          <h3 className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-4xl">{titulo}</h3>
           {bajada && <p className="mt-3 text-sm leading-relaxed text-white/60">{bajada}</p>}
           {fuente && <p className="mt-5 border-t border-white/12 pt-3 text-[11px] leading-snug text-white/40">Fuente: {fuente}</p>}
         </header>
@@ -253,7 +253,7 @@ const PERCEPCION = [
   { corto: 'Transmisión de saberes', t: 'La erosión dificultaba que una generación transmitiera sus saberes a la siguiente.', n: 57, p: '23,9', g: 1 },
 ];
 const TOTAL = 238;
-const COLS = 34;
+const COLS = 60;
 
 function Percepcion() {
   const [sel, setSel] = useState(0);
@@ -483,10 +483,10 @@ const FUENTES = [
 export default function Social() {
   return (
     <section id="social" className="relative bg-tinta text-papel">
-      <div className="mx-auto max-w-6xl px-5 py-20 sm:px-10 sm:py-28">
+      <div className="mx-auto max-w-[1640px] px-5 lg:px-16 py-20 sm:px-10 sm:py-28">
         <p className="etiqueta text-arcilla">02 · Lo social</p>
-        <h2 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.04] tracking-tight sm:text-6xl">Cómo lo viven quienes lo habitan.</h2>
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/70">
+        <h2 className="mt-4 max-w-6xl text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-8xl">Cómo lo viven quienes lo habitan.</h2>
+        <p className="mt-6 max-w-3xl text-lg leading-relaxed text-white/70">
           Percepciones y datos locales reunidos de encuestas, talleres de memoria, prensa e informes oficiales. Son datos de años distintos y no describen la isla de hoy: sirven para entender qué está en juego además del suelo.
         </p>
 

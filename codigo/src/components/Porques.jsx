@@ -132,12 +132,12 @@ export default function Porques() {
 
   return (
     <section id="porques" className="relative bg-tinta text-papel">
-      <div className="mx-auto max-w-5xl px-5 py-20 sm:px-10 sm:py-28">
+      <div className="mx-auto max-w-[1640px] px-5 lg:px-16 py-20 sm:px-10 sm:py-28">
         <p className="etiqueta text-arcilla">Cinco porqués</p>
-        <h2 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.04] tracking-tight sm:text-6xl">Del problema a lo que hay que medir.</h2>
-        <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/65">Entre un porqué y otro no decimos «causa»: decimos «se relaciona con», hasta que el dato lo confirme. Toca una tarjeta para ver cómo se mide.</p>
+        <h2 className="mt-4 max-w-6xl text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-8xl">Del problema a lo que hay que medir.</h2>
+        <p className="mt-5 max-w-3xl text-lg leading-relaxed text-white/65">Entre un porqué y otro no decimos «causa»: decimos «se relaciona con», hasta que el dato lo confirme. Toca una tarjeta para ver cómo se mide.</p>
 
-        <div className="relative mt-14 lg:grid lg:grid-cols-[1fr_15rem] lg:gap-10">
+        <div className="relative mt-14 lg:grid lg:grid-cols-[1fr_22rem] lg:gap-14">
           <ol className="relative">
             {NIVELES.slice(0, vistos).map((n, i) => {
               const ab = abierto === i;
@@ -155,7 +155,7 @@ export default function Porques() {
                     <div className="flex items-start gap-4">
                       <span className="num mt-1 text-sm text-arcilla">{i === 0 ? '·' : String(i).padStart(2, '0')}</span>
                       <div className="min-w-0 flex-1">
-                        <p className="text-2xl font-semibold leading-tight tracking-tight sm:text-4xl">{n.frase}</p>
+                        <p className="text-2xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">{n.frase}</p>
                         {n.sub && <p className="mt-2 text-sm text-white/60">{n.sub}</p>}
                         {n.erosion && <p className="mt-3 inline-flex items-center gap-2 text-[11px] text-[#ff9a7a] lg:hidden"><i className="inline-block h-2 w-2 rounded-full bg-[#ff6b4a]" />se relaciona con la erosión costera</p>}
                       </div>
