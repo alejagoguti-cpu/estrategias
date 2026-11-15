@@ -1053,27 +1053,27 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         float lod = 1.0 - smoothstep(300.0, 3200.0, dc);
         float mpx = dc * 0.0011; // metros por píxel, aproximado
         // la fuerza del oleaje cambia por zonas, suave y sin repetirse
-        float zona = 0.55 + 0.45 * ondas(p / 420.0 + vec2(uTime * 0.01, 0.0));
-        // oleaje: 10 trenes de olas de 8 a 70 m, con direcciones alrededor del viento del noreste y su velocidad real √(g/k).
+        float zona = 0.55 + 0.45 * ondas(p / 700.0 + vec2(uTime * 0.008, 0.0));
+        // oleaje: 10 trenes de olas de 26 a 210 m, con direcciones alrededor del viento del noreste y su velocidad real √(g/k).
         // Las olas más pequeñas que unos píxeles se apagan (si no, parpadean de lejos)
         vec2 g = vec2(0.0); float cresta = 0.0; float sTot = 0.0;
         for (int i = 0; i < 7; i++) {
           float fi = float(i);
           float ang = 2.2 + (hash1(fi + 1.3) - 0.5) * 1.4;
           vec2 dd = vec2(cos(ang), sin(ang));
-          float L = mix(14.0, 120.0, pow(hash1(fi + 7.7), 1.3));
+          float L = mix(26.0, 210.0, pow(hash1(fi + 7.7), 1.3));
           float kk = 6.2832 / L;
           float ph = dot(dd, p) * kk - uTime * sqrt(9.8 * kk) + hash1(fi + 3.1) * 6.2832;
-          float s = 0.065 * (1.0 - smoothstep(L * 0.05, L * 0.14, mpx)); // solo olas de al menos ~8 píxeles
+          float s = 0.042 * (1.0 - smoothstep(L * 0.05, L * 0.14, mpx)); // solo olas de al menos ~8 píxeles
           g += dd * cos(ph) * s; cresta += sin(ph) * s; sTot += s;
         }
         g *= zona; cresta = sTot > 0.0 ? cresta / sTot * zona : 0.0;
         // rizado fino solo cerca de la cámara
-        vec2 rizo = vec2(ondas(p / 1.8 + vec2(uTime * 1.1, 0.0)), ondas(p.yx / 1.5 + vec2(3.1, -uTime * 1.0))) - 0.5;
-        g += rizo * 0.07 * (1.0 - smoothstep(40.0, 220.0, dc));
+        vec2 rizo = vec2(ondas(p / 3.4 + vec2(uTime * 0.8, 0.0)), ondas(p.yx / 2.8 + vec2(3.1, -uTime * 0.7))) - 0.5;
+        g += rizo * 0.045 * (1.0 - smoothstep(40.0, 220.0, dc));
         vec2 n2 = g * 4.0;
         // pendiente acotada: con olas muy inclinadas el reflejo rasante del cielo daba rayas blancas vistas desde arriba
-        vec2 gc = g * 0.55; float lg = length(gc); if (lg > 0.09) gc *= 0.09 / lg;
+        vec2 gc = g * 0.55; float lg = length(gc); if (lg > 0.065) gc *= 0.065 / lg;
         vec3 n = normalize(vec3(-gc.x, 1.0, -gc.y));
         vec3 V = normalize(cameraPosition - vWorld);
         float cosT = max(dot(n, V), 0.0);
@@ -1336,12 +1336,12 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   muelles.puntos.forEach((p) => { const [X, Z] = llToXZ(p.lon, p.lat); addBeam(X, Z, 'muelle'); });
   Object.values(ctxJson.muelles).forEach((m) => { const [X, Z] = llToXZ(m.lon, m.lat); addBeam(X, Z, 'embarque', m.lado === 'cartagena' ? beamMatCtg : beamMat); });
   // etiquetas de contexto (Cartagena, Bocagrande, Tierra Bomba)
-  try { await document.fonts.load('600 40px \"Space Grotesk\"'); } catch { /* sin fuente: usa la del sistema */ }
+  try { await document.fonts.load('600 40px \"Geist\"'); } catch { /* sin fuente: usa la del sistema */ }
   const etiqueta = (texto, X, Z, alto = 30) => {
     const c = document.createElement('canvas');
     c.width = 640; c.height = 110;
     const g = c.getContext('2d');
-    g.font = '600 44px \"Space Grotesk\", system-ui, sans-serif';
+    g.font = '600 44px \"Geist\", system-ui, sans-serif';
     g.textBaseline = 'middle';
     g.shadowColor = 'rgba(0,0,0,0.85)'; g.shadowBlur = 14;
     g.fillStyle = '#ffffff';

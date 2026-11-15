@@ -14,7 +14,7 @@ body {
   margin: 0;
   background: var(--tinta);
   color: var(--papel);
-  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-family: 'Geist', system-ui, sans-serif;
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
@@ -22,7 +22,7 @@ body {
 ::selection { background: var(--arcilla); color: #fff; }
 
 .etiqueta {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: 'Geist Mono', ui-monospace, monospace;
   font-size: 0.68rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -43,7 +43,7 @@ body {
 }
 
 .ficha {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-family: 'Geist Mono', ui-monospace, monospace;
   font-size: 0.7rem;
   letter-spacing: 0.04em;
   height: 2rem;
@@ -139,3 +139,12 @@ body {
 .porque-siguiente { animation: porque-llama 2.4s ease-in-out infinite; }
 @keyframes porque-llama { 0%,100% { box-shadow: 0 0 0 0 rgba(200,109,81,0); } 50% { box-shadow: 0 0 0 8px rgba(200,109,81,.18); } }
 @media (max-width: 1023px) { .porque-escalon, .porque-conector { --sangria: 0% !important; } .porque-conector svg { left: 28px !important; width: 2px !important; } }
+
+/* tipografía de títulos igual a /analisis/: Barlow Condensed fina en mayúsculas */
+h1, h2, h3 {
+  font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif !important;
+  font-weight: 300 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.01em !important;
+  line-height: 0.98 !important;
+}

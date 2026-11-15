@@ -87,7 +87,7 @@ export default function Sectores() {
         const x = g.ox + pos[s][0] * g.esc; const y = g.oy + pos[s][1] * g.esc; const pul = 0.5 + 0.5 * Math.sin(t * 0.004);
         ctx.strokeStyle = `rgba(200,109,81,${0.4 + 0.4 * pul})`; ctx.lineWidth = 1.5 * DPR; ctx.beginPath(); ctx.arc(x, y, (8 + 9 * pul) * DPR, 0, 6.283); ctx.stroke();
         ctx.fillStyle = '#c86d51'; ctx.beginPath(); ctx.arc(x, y, 4.5 * DPR, 0, 6.283); ctx.fill();
-        ctx.font = `600 ${15 * DPR}px "JetBrains Mono", monospace`; ctx.fillStyle = s === hover || s === selRef.current ? '#f4f1ec' : 'rgba(244,241,236,.6)';
+        ctx.font = `600 ${15 * DPR}px "Geist Mono", monospace`; ctx.fillStyle = s === hover || s === selRef.current ? '#f4f1ec' : 'rgba(244,241,236,.6)';
         ctx.fillText(SECT[s].nombre.toUpperCase(), x + 13 * DPR, y + 4 * DPR);
       });
       ctx.globalAlpha = 1;

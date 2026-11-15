@@ -116,8 +116,8 @@ function Dona({ partes, centro, sub, tam = 190 }) {
           );
         })}
         <g className="rotate-90" style={{ transformOrigin: '100px 100px' }}>
-          <text x="100" y="98" textAnchor="middle" fill="#f4f1ec" fontSize="30" fontWeight="600" fontFamily="Space Grotesk, sans-serif">{act ? `${act.v}${act.suf ?? ' %'}` : centro}</text>
-          <text x="100" y="122" textAnchor="middle" fill="rgba(244,241,236,.55)" fontSize="12" fontFamily="Space Grotesk, sans-serif">{act ? act.l : sub}</text>
+          <text x="100" y="98" textAnchor="middle" fill="#f4f1ec" fontSize="30" fontWeight="600" fontFamily="Geist, sans-serif">{act ? `${act.v}${act.suf ?? ' %'}` : centro}</text>
+          <text x="100" y="122" textAnchor="middle" fill="rgba(244,241,236,.55)" fontSize="12" fontFamily="Geist, sans-serif">{act ? act.l : sub}</text>
         </g>
       </svg>
       <ul className="space-y-2 text-[13px]">
@@ -208,8 +208,8 @@ function Lanchas({ ida, vuelta }) {
         {Array.from({ length: 9 }, (_, i) => <path key={i} d={`M0 ${36 + i * 13} Q 160 ${32 + i * 13} 320 ${36 + i * 13} T 640 ${36 + i * 13}`} stroke="rgba(143,211,238,0.08)" fill="none" />)}
         {fila(ida, 1, CIELO, 62)}
         {fila(vuelta, -1, ARC, 112)}
-        <text x="8" y="14" fill="rgba(244,241,236,.6)" fontSize="12" fontFamily="JetBrains Mono, monospace">TIERRA BOMBA</text>
-        <text x="632" y="14" fill="rgba(244,241,236,.6)" fontSize="12" textAnchor="end" fontFamily="JetBrains Mono, monospace">BOCAGRANDE</text>
+        <text x="8" y="14" fill="rgba(244,241,236,.6)" fontSize="12" fontFamily="Geist Mono, monospace">TIERRA BOMBA</text>
+        <text x="632" y="14" fill="rgba(244,241,236,.6)" fontSize="12" textAnchor="end" fontFamily="Geist Mono, monospace">BOCAGRANDE</text>
       </svg>
       <div className="mt-3 grid grid-cols-2 gap-4">
         <p><span className="num text-3xl font-semibold" style={{ color: CIELO }}><Contador valor={ida} /></span><span className="ml-2 text-[12px] text-white/60">viajes hacia Bocagrande →</span></p>
@@ -236,8 +236,8 @@ function Anillos({ items, total, sel, setSel }) {
           </g>
         );
       })}
-      <text x="200" y="190" textAnchor="middle" fill="#f4f1ec" fontSize="44" fontWeight="600" fontFamily="Space Grotesk, sans-serif">{items[sel].p} %</text>
-      <text x="200" y="215" textAnchor="middle" fill="rgba(244,241,236,.6)" fontSize="13" fontFamily="Space Grotesk, sans-serif">{items[sel].corto}</text>
+      <text x="200" y="190" textAnchor="middle" fill="#f4f1ec" fontSize="44" fontWeight="600" fontFamily="Geist, sans-serif">{items[sel].p} %</text>
+      <text x="200" y="215" textAnchor="middle" fill="rgba(244,241,236,.6)" fontSize="13" fontFamily="Geist, sans-serif">{items[sel].corto}</text>
     </svg>
   );
 }
@@ -416,7 +416,7 @@ function Conexiones() {
                 <path d={d} fill="none" stroke={CIELO} strokeWidth="2" pathLength="1" strokeDasharray="1" strokeDashoffset={visto ? 0 : 1} style={{ transition: `stroke-dashoffset 1.4s ease ${i * 0.2}s` }} />
                 {visto && <circle r="3.4" fill="#fff"><animateMotion dur="3.2s" begin={`${i * 0.5}s`} repeatCount="indefinite" path={d} /></circle>}
                 <circle cx="440" cy={y} r="5" fill={ARC} />
-                <text x="454" y={y + 4} fill="#f4f1ec" fontSize="14" fontFamily="Space Grotesk, system-ui, sans-serif">{DESTINOS[i]}</text>
+                <text x="454" y={y + 4} fill="#f4f1ec" fontSize="14" fontFamily="Geist, system-ui, sans-serif">{DESTINOS[i]}</text>
               </g>
             );
           })}
@@ -425,7 +425,7 @@ function Conexiones() {
             {visto && <animate attributeName="opacity" values="0.5;0;0.5" dur="3.4s" repeatCount="indefinite" />}
           </circle>
           <circle cx="104" cy="150" r="20" fill={ARC} />
-          <text x="104" y="198" textAnchor="middle" fill="#f4f1ec" fontSize="14" fontWeight="600" fontFamily="Space Grotesk, system-ui, sans-serif">Tierra Bomba</text>
+          <text x="104" y="198" textAnchor="middle" fill="#f4f1ec" fontSize="14" fontWeight="600" fontFamily="Geist, system-ui, sans-serif">Tierra Bomba</text>
         </svg>
       </div>
 
