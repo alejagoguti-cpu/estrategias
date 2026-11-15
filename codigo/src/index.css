@@ -130,3 +130,12 @@ body {
 @keyframes porque-in { from { opacity: 0; transform: translateY(26px) scale(.98); } to { opacity: 1; transform: none; } }
 .porque-flecha { height: 22px; transform-origin: top; animation: porque-linea .6s ease-out both; }
 @keyframes porque-linea { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+
+.porque-trazo { stroke-dasharray: 1; stroke-dashoffset: 1; animation: porque-dibuja .9s cubic-bezier(.65,0,.35,1) forwards; }
+@keyframes porque-dibuja { to { stroke-dashoffset: 0; } }
+.porque-pulso { animation: porque-latido 2s ease-out infinite; }
+@keyframes porque-latido { from { transform: scale(1); opacity: .8; } to { transform: scale(1.7); opacity: 0; } }
+.porque-panel { animation: porque-in .6s cubic-bezier(.16,1,.3,1) both; }
+.porque-siguiente { animation: porque-llama 2.4s ease-in-out infinite; }
+@keyframes porque-llama { 0%,100% { box-shadow: 0 0 0 0 rgba(200,109,81,0); } 50% { box-shadow: 0 0 0 8px rgba(200,109,81,.18); } }
+@media (max-width: 1023px) { .porque-escalon, .porque-conector { --sangria: 0% !important; } .porque-conector svg { left: 28px !important; width: 2px !important; } }

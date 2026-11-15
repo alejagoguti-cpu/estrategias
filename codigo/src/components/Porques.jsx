@@ -123,78 +123,88 @@ const NIVELES = [
 
 export default function Porques() {
   const [vistos, setVistos] = useState(1);
-  const [abierto, setAbierto] = useState(null);
-  const finRef = useRef(null);
+  const [sel, setSel] = useState(0);
   const completo = vistos >= NIVELES.length;
-  const siguiente = () => { if (!completo) { setVistos((v) => v + 1); setAbierto(null); } };
-  useEffect(() => { if (vistos > 1) finRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, [vistos]);
-  const erosionVisible = vistos >= 2;
+  const siguiente = () => { if (!completo) { setSel(vistos); setVistos((v) => v + 1); } };
+  const n = NIVELES[sel];
+  const panelRef = useRef(null);
+  const PASO = 12; // % de sangría por escalón (escritorio)
 
   return (
-    <section id="porques" className="relative bg-tinta text-papel">
-      <div className="mx-auto max-w-[1640px] px-5 lg:px-16 py-20 sm:px-10 sm:py-28">
-        <p className="etiqueta text-arcilla">Cinco porqués</p>
-        <h2 className="mt-4 max-w-6xl text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-8xl">Del problema a lo que hay que medir.</h2>
-        <p className="mt-5 max-w-3xl text-lg leading-relaxed text-white/65">Entre un porqué y otro no decimos «causa»: decimos «se relaciona con», hasta que el dato lo confirme. Toca una tarjeta para ver cómo se mide.</p>
+    <section id="porques" className="relative overflow-hidden bg-tinta text-papel">
+      {/* fondo: retícula muy tenue */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)', backgroundSize: '64px 64px' }} aria-hidden="true" />
+      <div className="relative mx-auto max-w-[1760px] px-5 py-16 sm:px-10 sm:py-24 lg:px-12">
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p className="etiqueta text-arcilla">Cinco porqués</p>
+            <h2 className="mt-4 max-w-6xl text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-8xl">Del problema a lo que hay que medir.</h2>
+          </div>
+          <p className="max-w-md text-base leading-relaxed text-white/60">Entre un porqué y otro no decimos «causa»: decimos <span className="text-white">«se relaciona con»</span>, hasta que el dato lo confirme.</p>
+        </div>
 
-        <div className="relative mt-14 lg:grid lg:grid-cols-[1fr_22rem] lg:gap-14">
+        <div className="mt-14 grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(24rem,1fr)] lg:gap-16">
+          {/* escalera */}
           <ol className="relative">
-            {NIVELES.slice(0, vistos).map((n, i) => {
-              const ab = abierto === i;
+            {NIVELES.slice(0, vistos).map((nv, i) => {
+              const on = sel === i;
               return (
-                <li key={n.frase} className="porque-entra">
+                <li key={nv.frase} className="porque-entra relative" style={{ '--sangria': `${i * PASO}%` }}>
                   {i > 0 && (
-                    <div className="flex flex-col items-center py-3" aria-hidden="true">
-                      <span className="porque-flecha block w-px bg-gradient-to-b from-white/10 to-arcilla" />
-                      <span className="etiqueta my-2 rounded-full border border-white/20 px-3 py-1 text-[10px] text-white/60">se relaciona con</span>
-                      <span className="porque-flecha block w-px bg-gradient-to-b from-arcilla to-white/10" />
+                    <div className="porque-conector relative h-16 sm:h-20" aria-hidden="true">
+                      <svg className="absolute inset-y-0 h-full" style={{ left: 'calc(var(--sangria) - 12% + 28px)', width: 'calc(12% + 0px)' }} viewBox="0 0 100 100" preserveAspectRatio="none">
+                        <path d="M0 0 C 0 60, 100 40, 100 100" fill="none" stroke="#c86d51" strokeWidth="2" vectorEffect="non-scaling-stroke" pathLength="1" className="porque-trazo" />
+                      </svg>
+                      <span className="etiqueta absolute top-1/2 -translate-y-1/2 whitespace-nowrap text-[10px] text-white/45" style={{ left: 'calc(var(--sangria) + 52px)' }}>se relaciona con</span>
                     </div>
                   )}
-                  <button type="button" onClick={() => setAbierto(ab ? null : i)} aria-expanded={ab}
-                    className={`group w-full rounded-[6px] border p-6 text-left transition-all duration-300 sm:p-8 ${i === 0 ? 'border-arcilla/70 bg-arcilla/10' : 'border-white/15 bg-white/[0.03] hover:border-white/40'} ${ab ? 'shadow-[0_20px_60px_-25px_rgba(200,109,81,.6)]' : ''}`}>
-                    <div className="flex items-start gap-4">
-                      <span className="num mt-1 text-sm text-arcilla">{i === 0 ? '·' : String(i).padStart(2, '0')}</span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-2xl font-semibold leading-tight tracking-tight sm:text-4xl lg:text-5xl">{n.frase}</p>
-                        {n.sub && <p className="mt-2 text-sm text-white/60">{n.sub}</p>}
-                        {n.erosion && <p className="mt-3 inline-flex items-center gap-2 text-[11px] text-[#ff9a7a] lg:hidden"><i className="inline-block h-2 w-2 rounded-full bg-[#ff6b4a]" />se relaciona con la erosión costera</p>}
-                      </div>
-                      <span className={`etiqueta mt-2 shrink-0 text-white/40 transition-transform duration-300 ${ab ? 'rotate-45 text-arcilla' : ''}`}>+</span>
-                    </div>
-                    <div className={`grid transition-[grid-template-rows] duration-500 ease-out ${ab ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                      <div className="overflow-hidden">
-                        {ab && (
-                          <div className="mt-6 border-t border-white/15 pt-5">
-                            {n.hip && <p className="mb-4 text-[13px] text-white/60">Hipótesis: <span className="text-white/90">{n.hip}</span></p>}
-                            <p className="etiqueta mb-3 text-arcilla">Cómo se mide</p>
-                            {n.mide()}
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                  <button type="button" onClick={() => { setSel(i); if (window.innerWidth < 1024) setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50); }} aria-pressed={on}
+                    className="porque-escalon group relative flex w-full items-center gap-5 text-left" style={{ paddingLeft: 'var(--sangria)' }}>
+                    <span className={`relative grid h-14 w-14 shrink-0 place-items-center rounded-full border-2 font-semibold transition-all duration-300 ${on ? 'scale-110 border-arcilla bg-arcilla text-[#0b1015]' : i === 0 ? 'border-arcilla text-arcilla' : 'border-white/30 text-white/80 group-hover:border-white'}`}>
+                      <span className="num text-lg">{i === 0 ? '●' : i}</span>
+                      {on && <span className="porque-pulso absolute inset-0 rounded-full border-2 border-arcilla" />}
+                    </span>
+                    <span className="min-w-0">
+                      {i === 0 && <span className="etiqueta block text-arcilla">Problema central</span>}
+                      <span className={`block font-semibold leading-[1.05] tracking-tight transition-colors ${i === 0 ? 'text-3xl sm:text-5xl' : 'text-2xl sm:text-4xl'} ${on ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>{nv.frase}</span>
+                      {nv.erosion && <span className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-[#ff9a7a]"><i className="inline-block h-1.5 w-1.5 rounded-full bg-[#ff6b4a]" />erosión costera</span>}
+                    </span>
                   </button>
                 </li>
               );
             })}
+            <li className="porque-escalon mt-10 flex items-center gap-4" style={{ paddingLeft: 'var(--sangria)', '--sangria': `${Math.min(vistos, 5) * PASO}%` }}>
+              {!completo ? (
+                <button type="button" onClick={siguiente} className="porque-siguiente red-boton">{vistos === 1 ? '¿Por qué? ↓' : 'Siguiente porqué ↓'}</button>
+              ) : (
+                <button type="button" onClick={() => { setVistos(1); setSel(0); }} className="red-boton">Volver a empezar ↺</button>
+              )}
+              <span className="etiqueta num text-white/40">{vistos - 1} / 5</span>
+            </li>
           </ol>
 
-          {/* recuadro lateral: la erosión entra en los porqués 1 y 3 */}
-          <aside className={`hidden transition-all duration-700 lg:block ${erosionVisible ? 'opacity-100' : 'opacity-0'}`} aria-hidden={!erosionVisible}>
-            <div className="sticky top-28 rounded-[6px] border border-dashed border-[#ff6b4a]/60 p-5">
-              <p className="etiqueta text-[#ff9a7a]">Erosión costera</p>
-              <p className="mt-2 text-sm leading-relaxed text-white/75">La costa que retrocede condiciona qué viviendas se deterioran (porqué 1) y hacia dónde conviene subir (porqué 3).</p>
-              <p className="num mt-3 text-[12px] text-white/50">0,63 a 3 m/año · INVEMAR</p>
+          {/* panel de medición */}
+          <aside ref={panelRef} className="scroll-mt-20 lg:sticky lg:top-24 lg:self-start">
+            <div key={sel} className="porque-panel rounded-[8px] border border-white/12 bg-white/[0.035] p-6 backdrop-blur-sm sm:p-8">
+              <p className="etiqueta text-arcilla">{sel === 0 ? 'Problema central' : `Porqué ${sel}`}</p>
+              <p className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{n.frase}</p>
+              {n.sub && <p className="mt-3 text-sm leading-relaxed text-white/65">{n.sub}</p>}
+              {n.hip && (
+                <div className="mt-5 flex gap-3 border-l-2 border-arcilla pl-4">
+                  <p className="text-[15px] leading-snug text-white/85"><span className="etiqueta mb-1 block text-white/45">Hipótesis</span>{n.hip}</p>
+                </div>
+              )}
+              <p className="etiqueta mb-4 mt-7 text-white/45">Cómo se mide</p>
+              {n.mide()}
             </div>
+            {/* la erosión, conectada con los porqués 1 y 3 */}
+            {vistos >= 2 && (
+              <div className={`porque-panel mt-4 rounded-[8px] border border-dashed p-5 transition-colors ${NIVELES[sel]?.erosion ? 'border-[#ff6b4a] bg-[#ff6b4a]/10' : 'border-[#ff6b4a]/40'}`}>
+                <p className="etiqueta text-[#ff9a7a]">Erosión costera · se relaciona con los porqués 1 y 3</p>
+                <p className="mt-2 text-sm leading-relaxed text-white/75">La costa que retrocede condiciona qué viviendas se deterioran y hacia dónde conviene subir. INVEMAR midió en la isla de 0,63 a 3 m/año.</p>
+              </div>
+            )}
           </aside>
-        </div>
-
-        <div ref={finRef} className="mt-10 flex flex-wrap items-center justify-between gap-4">
-          <p className="etiqueta num text-white/45">{String(vistos - 1).padStart(2, '0')} / 05 porqués</p>
-          {!completo ? (
-            <button type="button" onClick={siguiente} className="red-boton">{vistos === 1 ? '¿Por qué? ↓' : 'Siguiente porqué ↓'}</button>
-          ) : (
-            <button type="button" onClick={() => { setVistos(1); setAbierto(null); }} className="red-boton">Volver a empezar ↺</button>
-          )}
         </div>
       </div>
     </section>
