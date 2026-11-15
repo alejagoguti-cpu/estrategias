@@ -205,7 +205,7 @@ function PanelErosion({ stats, anio, modo, ctrl, setCtrl }) {
 
       <div className="mt-3 grid grid-cols-2 gap-4 border-t border-white/14 pt-3">
         <div>
-          <p className="cifra text-[2.6rem] leading-none text-[#ef5a78]">{fmt(casas)}</p>
+          <p className="cifra text-[2.6rem] leading-none text-[#e5303f]">{fmt(casas)}</p>
           <p className="mt-1.5 text-xs leading-snug text-white/65">viviendas perdidas<br />de {fmt(stats.casas.total)}</p>
         </div>
         <div>
@@ -251,7 +251,7 @@ function PanelErosion({ stats, anio, modo, ctrl, setCtrl }) {
               : 'En rojo, la tierra que el mar ocupa por el retroceso del borde. La línea clara es la costa de ese año.'}
       </p>
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-white/60">
-        {[['#6b0219', 'hasta 10 años'], ['#a80a29', '10 a 20'], ['#db3857', '20 a 30']].map(([c, t]) => (
+        {[['#660510', 'hasta 10 años'], ['#9e0812', '10 a 20'], ['#cc121a', '20 a 30']].map(([c, t]) => (
           <span key={t} className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-2.5" style={{ background: c }} />{t}</span>
         ))}
       </div>
@@ -440,7 +440,7 @@ function PanelSintaxis({ paso, datos, stats, ctrl, setCtrl, lanchas }) {
         </div>
         <div className="mt-4 grid grid-cols-2 gap-4 border-t border-white/14 pt-3">
           <div>
-            <p className="cifra text-[2.6rem] leading-none text-[#ef5a78]">{fmt(r.pct[y], 1)}<span className="ml-1 text-sm font-normal">%</span></p>
+            <p className="cifra text-[2.6rem] leading-none text-[#e5303f]">{fmt(r.pct[y], 1)}<span className="ml-1 text-sm font-normal">%</span></p>
             <p className="mt-1.5 text-xs leading-snug text-white/65">de la red ({fmt(r.km_perdidos[y], 1)} de {fmt(r.km, 1)} km)<br />queda dentro de la franja</p>
           </div>
           <div>

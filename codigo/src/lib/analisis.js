@@ -108,7 +108,7 @@ function ponerTr(i) {
   if (i === trIdx) return; trIdx = i; const e = ESTADOS_TR[i];
   raiz.querySelectorAll('[data-tr]').forEach((b) => b.setAttribute('aria-selected', String(+b.dataset.tr === i)));
   $('#tr-titulo').textContent = e.titulo; $('#tr-p').textContent = e.p; $('#tr-nota').textContent = e.nota;
-  $('#barras').innerHTML = e.barras.map(([t, v, txt], q) => `<div class="barra"><span class="rotulo"><span>${t}</span><span class="dato">${txt}</span></span><i style="--v:0%;--c:${q === 1 && i === 0 ? '#f2cf94' : i === 0 && q === 0 ? '#e0294d' : 'var(--acento)'}"></i></div>`).join('');
+  $('#barras').innerHTML = e.barras.map(([t, v, txt], q) => `<div class="barra"><span class="rotulo"><span>${t}</span><span class="dato">${txt}</span></span><i style="--v:0%;--c:${q === 1 && i === 0 ? '#f2cf94' : i === 0 && q === 0 ? '#c8102e' : 'var(--acento)'}"></i></div>`).join('');
   requestAnimationFrame(() => raiz.querySelectorAll('#barras i').forEach((el, q) => { el.style.setProperty('--v', `${Math.max(2, e.barras[q][1] * 100)}%`); }));
 }
 raiz.querySelectorAll('[data-tr]').forEach((b) => { b.onclick = () => { const s = $('#transformacion'); const top = s.getBoundingClientRect().top + scrollY; scrollTo({ top: top + (+b.dataset.tr + 0.5) / 2 * (s.offsetHeight - innerHeight) }); }; });
@@ -127,12 +127,12 @@ function dibujarTr(t) {
     if (!isla[k]) continue; const ii = k % GW; const jj = Math.floor(k / GW);
     const x = off[0] + (ii + 0.5) * esc; const y = off[1] + (jj + 0.5) * esc; if (x < -10 || y < -10 || x > w + 10 || y > h + 10) continue;
     const ya = aniosDe(k); const perdido = anio > 0 && ya <= anio; const inu = capa.inundable.val(k) > 0.5;
-    let c; if (perdido) c = `rgba(${Math.round(150 + ya * 2.6)},${Math.round(14 + ya * 1.4)},${Math.round(44 + ya * 1.3)},0.95)`; else if (inu) c = 'rgba(242,207,148,0.8)'; else c = `rgb(${sat[k * 3]},${sat[k * 3 + 1]},${sat[k * 3 + 2]})`;
+    let c; if (perdido) c = `rgba(${Math.round(140 + ya * 2.6)},${Math.round(10 + ya * 0.6)},${Math.round(18 + ya * 0.5)},0.95)`; else if (inu) c = 'rgba(242,207,148,0.8)'; else c = `rgb(${sat[k * 3]},${sat[k * 3 + 1]},${sat[k * 3 + 2]})`;
     const resp = pausado ? 1 : 0.82 + 0.18 * Math.sin(t * 0.002 + ii * 0.35 + jj * 0.22);
     trCx.fillStyle = c; trCx.beginPath(); trCx.arc(x, y, (perdido ? rad * 1.25 : rad) * resp, 0, 6.283); trCx.fill();
   }
   const gr = trCx.createLinearGradient(0, h, 0, h * 0.45); gr.addColorStop(0, 'rgba(4,6,7,0.92)'); gr.addColorStop(1, 'rgba(4,6,7,0)'); trCx.fillStyle = gr; trCx.fillRect(0, h * 0.45, w, h * 0.55);
-  if (i === 0) { trCx.font = `300 ${Math.round(64 * DPR)}px "Barlow Condensed"`; trCx.fillStyle = 'rgba(239,90,120,0.95)'; trCx.textAlign = 'right'; trCx.fillText(`+${Math.round(anio)} AÑOS`, w - (innerWidth < 760 ? 16 : 40) * DPR, (innerWidth < 760 ? 330 : 150) * DPR); trCx.textAlign = 'left'; }
+  if (i === 0) { trCx.font = `300 ${Math.round(64 * DPR)}px "Barlow Condensed"`; trCx.fillStyle = 'rgba(229,48,63,0.95)'; trCx.textAlign = 'right'; trCx.fillText(`+${Math.round(anio)} AÑOS`, w - (innerWidth < 760 ? 16 : 40) * DPR, (innerWidth < 760 ? 330 : 150) * DPR); trCx.textAlign = 'left'; }
 }
 
 /* ================= 4. pila de capas en 3D: cada ráster con altura donde su valor es mayor ================= */

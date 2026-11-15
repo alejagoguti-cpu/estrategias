@@ -56,7 +56,7 @@ const NIVELES = [
     mide: () => (
       <>
         <p className="mb-3 text-[13px] text-white/75">Viviendas según la amenaza por erosión del tramo de costa más cercano (a menos de 200 m):</p>
-        <Barras total={D.total} datos={P1} colores={P1.map((x) => ({ 'Muy Alta': '#c8102e', Alta: '#e04a64', Moderada: '#ee8fa0', Baja: '#f5c6cf', 'Muy Baja': '#f9e3e7' }[x.l] || '#6b7680'))} />
+        <Barras total={D.total} datos={P1} colores={P1.map((x) => ({ 'Muy Alta': '#8e0a1e', Alta: '#b5121f', Moderada: '#d92b2b', Baja: '#8a6a62', 'Muy Baja': '#6e6e6a' }[x.l] || '#6b7680'))} />
         <p className="mt-3 text-[11px] leading-snug text-white/45">Fuente: MIDAS (INVEMAR 2011) y construcciones del archivo de la tesis. Mide exposición por tramo; el estado de deterioro de cada vivienda todavía no está levantado: falta el inventario en campo.</p>
       </>
     ),
@@ -167,7 +167,7 @@ export default function Porques() {
                     <span className="min-w-0">
                       {i === 0 && <span className="etiqueta block text-arcilla">Problema central</span>}
                       <span className={`block font-semibold leading-[1.05] tracking-tight transition-colors ${i === 0 ? 'text-xl sm:text-2xl' : 'text-base sm:text-xl'} ${on ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>{nv.frase}</span>
-                      {nv.erosion && <span className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-[#ef7d93]"><i className="inline-block h-1.5 w-1.5 rounded-full bg-[#c8102e]" />erosión costera</span>}
+                      {nv.erosion && <span className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-[#e5303f]"><i className="inline-block h-1.5 w-1.5 rounded-full bg-[#c8102e]" />erosión costera</span>}
                     </span>
                   </button>
                 </li>
@@ -195,7 +195,7 @@ export default function Porques() {
             {/* la erosión, conectada con los porqués 1 y 3 */}
             {vistos >= 2 && (
               <div className={`porque-panel mt-4 rounded-[8px] border border-dashed p-5 transition-colors ${NIVELES[sel]?.erosion ? 'border-[#c8102e] bg-[#c8102e]/10' : 'border-[#c8102e]/40'}`}>
-                <p className="etiqueta text-[#ef7d93]">Erosión costera · se relaciona con los niveles 1 y 3</p>
+                <p className="etiqueta text-[#e5303f]">Erosión costera · se relaciona con los niveles 1 y 3</p>
                 <p className="mt-2 text-sm leading-relaxed text-white/75">La costa que retrocede condiciona qué viviendas se deterioran y hacia dónde conviene subir. INVEMAR midió en la isla de 0,63 a 3 m/año.</p>
               </div>
             )}

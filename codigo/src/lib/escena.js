@@ -27,7 +27,7 @@ export const TASA_MAX = 3.0;
 export const TASA_CLASE = { 'Muy Alta': 3.0, Alta: 1.5, Moderada: 0.63, Baja: 0.3, 'Muy Baja': 0.15, SD: 0.63 };
 export const TASA = TASA_MEDIA; // tramos de costa sin clase en MIDAS
 export const AÑO_BASE = 2025; // «hoy» del modelo
-export const COLOR_CLASE_EROSION = { 'Muy Alta': '#c8102e', Alta: '#e04a64', Moderada: '#ee8fa0', Baja: '#f5c6cf', 'Muy Baja': '#f9e3e7', SD: '#9aa0a6' };
+export const COLOR_CLASE_EROSION = { 'Muy Alta': '#8e0a1e', Alta: '#b5121f', Moderada: '#d92b2b', Baja: '#8a6a62', 'Muy Baja': '#6e6e6a', SD: '#9aa0a6' };
 export const COLOR_MIDAS = { zona: '#f2cf94' };
 
 // Nivel del agua que alcanza la tierra baja en cada horizonte (años desde hoy), con valores medidos para Cartagena:
@@ -167,11 +167,11 @@ function parchearTerreno(mat, U) {
         if (gone && uMode > 0.5) discard;
         diffuseColor.rgb *= mix(1.0, 0.30, uDim);
         if (gone) {
-          vec3 band = lostAt <= 10.0 ? vec3(0.42, 0.02, 0.10) : (lostAt <= 20.0 ? vec3(0.66, 0.04, 0.16) : vec3(0.86, 0.22, 0.34));
+          vec3 band = lostAt <= 10.0 ? vec3(0.40, 0.02, 0.05) : (lostAt <= 20.0 ? vec3(0.62, 0.03, 0.07) : vec3(0.80, 0.07, 0.10));
           diffuseColor.rgb = mix(diffuseColor.rgb, band, 0.84);
         }
         float front = smoothstep(0.8, 0.0, abs(lostAt - uYear)) * step(0.001, uYear) * (1.0 - uMode) * enTierra;
-        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.86, 0.88), front * 0.8);
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.98, 0.94, 0.90), front * 0.8);
         // plan maestro: la franja que se pierde pasa de rojo a parque; meseta segura, parque central y humedal
         if (uFranja > 0.001 && uYear > 0.001 && lostAt <= 30.0) {
           float raya = step(0.5, fract((vWin.x * 1.0 + vWin.y * 1.7) * 1100.0));
