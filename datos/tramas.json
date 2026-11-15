@@ -8,14 +8,16 @@
     "es": "Algodoncillo gigante",
     "sci": "Calotropis procera",
     "grupo": "Flora",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Susan J. Hewitt, some rights reserved (CC BY-NC)"
    },
    "b": {
     "tid": 48662,
     "es": "Mariposa monarca",
     "sci": "Danaus plexippus",
     "grupo": "Insectos",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Alejandro Lopez, some rights reserved (CC BY-NC-SA)"
    },
    "tipo": "Herbivoría y frugivoría",
    "tipos": [
@@ -31,14 +33,16 @@
     "es": "Mangle Botoncillo",
     "sci": "Conocarpus erectus",
     "grupo": "Flora",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Clifton Albrecht, some rights reserved (CC BY-NC)"
    },
    "b": {
     "tid": 16798,
     "es": "Tirano gris",
     "sci": "Tyrannus dominicensis",
     "grupo": "Aves",
-    "foto": true
+    "foto": true,
+    "credito": "(c) JeffreyGammon, some rights reserved (CC BY-NC)"
    },
    "tipo": "Refugio y hábitat",
    "tipos": [
@@ -52,14 +56,16 @@
     "es": "Pez trompeta",
     "sci": "Aulostomus maculatus",
     "grupo": "Peces",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Frank Krasovec, some rights reserved (CC BY-NC)"
    },
    "b": {
     "tid": 49306,
     "es": "Jaquetas",
     "sci": "Stegastes",
     "grupo": "Peces",
-    "foto": true
+    "foto": true,
+    "credito": "(c) terence zahner, some rights reserved (CC BY-NC)"
    },
    "tipo": "Depredación",
    "tipos": [
@@ -73,14 +79,16 @@
     "es": "Anacahuitas, ciricotes y parientes",
     "sci": "Cordia",
     "grupo": "Flora",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Ricardo Ayala, some rights reserved (CC BY-NC)"
    },
    "b": {
     "tid": 10295,
     "es": "Tangara azulgrís",
     "sci": "Thraupis episcopus",
     "grupo": "Aves",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Ad Konings, some rights reserved (CC BY-NC)"
    },
    "tipo": "Dispersión de semillas",
    "tipos": [
@@ -95,14 +103,16 @@
     "es": "Verdolaga de playa",
     "sci": "Sesuvium portulacastrum",
     "grupo": "Flora",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Nick Block, some rights reserved (CC BY)"
    },
    "b": {
     "tid": 51111,
     "es": "Abejas Carpinteras Grandes",
     "sci": "Xylocopa",
     "grupo": "Insectos",
-    "foto": true
+    "foto": true,
+    "credito": "(c) L. Shyamal, some rights reserved (CC BY-SA)"
    },
    "tipo": "Mutualismo y simbiosis",
    "tipos": [
@@ -117,14 +127,16 @@
     "es": "Ceibas o pochotes",
     "sci": "Ceiba",
     "grupo": "Flora",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Andreas Berger, some rights reserved (CC BY-NC)"
    },
    "b": {
     "tid": 4999,
     "es": "Garza Nocturna Corona Clara",
     "sci": "Nyctanassa violacea",
     "grupo": "Aves",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Linda, some rights reserved (CC BY-NC)"
    },
    "tipo": "Refugio y hábitat",
    "tipos": [
@@ -138,14 +150,16 @@
     "es": "Mariposa pasionaria motas blancas",
     "sci": "Dione vanillae",
     "grupo": "Insectos",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Mary Keim, some rights reserved (CC BY-NC-SA)"
    },
    "b": {
     "tid": 51448,
     "es": "Maracuyá silvestre",
     "sci": "Passiflora foetida",
     "grupo": "Flora",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Carlos G Velazco-Macias, some rights reserved (CC BY-NC)"
    },
    "tipo": "Herbivoría y frugivoría",
    "tipos": [
@@ -161,14 +175,16 @@
     "es": "Pelícano café",
     "sci": "Pelecanus occidentalis",
     "grupo": "Aves",
-    "foto": true
+    "foto": true,
+    "credito": "(c) BJ Stacey, some rights reserved (CC BY-NC)"
    },
    "b": {
     "tid": 144539,
     "es": "Charrán Real",
     "sci": "Thalasseus maximus",
     "grupo": "Aves",
-    "foto": true
+    "foto": true,
+    "credito": "(c) Omar Del Toro, some rights reserved (CC BY-NC)"
    },
    "tipo": "Competencia",
    "tipos": [

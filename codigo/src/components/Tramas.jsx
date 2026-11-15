@@ -4,8 +4,8 @@ import React, { useEffect, useRef, useState } from 'react';
 // (fotos de la red de especies) que se arman frente a la cámara, unidas por un cuadrado con su interacción.
 // Las parejas anteriores quedan como cuadrados pequeños sobre la isla: una constelación que anticipa la red.
 const BASE = import.meta.env.BASE_URL;
-const FOTOS = 'https://anasoficasca-code.github.io/tierrabomba/assets/fotos/';
-const R = 64; // resolución del retrato en puntos
+const FOTOS = `${BASE}datos/tramas/`; // fotos de iNaturalist con la especie recortada del fondo
+const R = 104; // resolución del retrato en puntos
 
 const clamp01 = (x) => Math.max(0, Math.min(1, x));
 const suave = (x) => { const t = clamp01(x); return t * t * (3 - 2 * t); };
@@ -13,11 +13,11 @@ const cargarImg = (src) => new Promise((ok, mal) => { const i = new Image(); i.c
 
 async function retrato(tid) {
   try {
-    const img = await cargarImg(`${FOTOS}${tid}.webp`);
+    const img = await cargarImg(`${FOTOS}${tid}.png`);
     const c = document.createElement('canvas'); c.width = R; c.height = R; const x = c.getContext('2d', { willReadFrequently: true });
     const m = Math.min(img.width, img.height); x.drawImage(img, (img.width - m) / 2, (img.height - m) / 2, m, m, 0, 0, R, R);
     const d = x.getImageData(0, 0, R, R).data; const pts = [];
-    for (let j = 0; j < R; j++) for (let i = 0; i < R; i++) { const o = (j * R + i) * 4; const lum = (d[o] + d[o + 1] + d[o + 2]) / 765; pts.push({ i, j, c: `rgb(${d[o]},${d[o + 1]},${d[o + 2]})`, r: 0.16 + 0.34 * lum, sx: Math.random(), sy: Math.random(), f: Math.random() }); }
+    for (let j = 0; j < R; j++) for (let i = 0; i < R; i++) { const o = (j * R + i) * 4; if (d[o + 3] < 90) continue; const lum = (d[o] + d[o + 1] + d[o + 2]) / 765; pts.push({ i: i + (Math.random() - 0.5) * 0.5, j: j + (Math.random() - 0.5) * 0.5, c: `rgb(${Math.min(255, d[o] * 1.08 + 8)},${Math.min(255, d[o + 1] * 1.08 + 8)},${Math.min(255, d[o + 2] * 1.08 + 8)})`, r: 0.28 + 0.36 * lum, sx: Math.random(), sy: Math.random(), f: Math.random() }); }
     return pts;
   } catch { return null; }
 }
@@ -60,7 +60,7 @@ export default function Tramas() {
 
     const recuadro = (x, y, L, pts, k, num, nombre, t, alfa = 1) => {
       cx.globalAlpha = alfa;
-      cx.fillStyle = 'rgba(4,6,7,.82)'; cx.fillRect(x, y, L, L);
+      cx.fillStyle = 'rgba(4,6,7,.92)'; cx.fillRect(x, y, L, L);
       if (pts) {
         const p = L / R;
         for (const q of pts) {
@@ -128,11 +128,12 @@ export default function Tramas() {
       // la pareja actual, grande
       if (s >= 0 && s < N) {
         const pr = datos.pares[s]; const k = clamp01((t - vistoEn[s]) / 1600);
-        const L = (movil ? Math.min(w * 0.36, h * 0.2) : Math.min(w * 0.17, h * 0.34));
-        const ax = movil ? w * 0.08 : w * 0.38; const ay = movil ? h * 0.3 : h * 0.3; const bx = movil ? w * 0.92 - L : w * 0.38 + L * 2.1; const by = movil ? h * 0.3 : h * 0.3;
-        const qx = (ax + L + bx) / 2; const qy = ay + L / 2; const Lq = movil ? L * 0.55 : L * 0.62;
-        linea(ax + L, ay + L / 2, qx - Lq / 2, qy, suave(k * 1.6 - 0.4), t, true);
-        linea(bx, by + L / 2, qx + Lq / 2, qy, suave(k * 1.6 - 0.4), t, true);
+        const L = (movil ? Math.min(w * 0.4, h * 0.24) : Math.min(w * 0.21, h * 0.42));
+        const ax = movil ? w * 0.06 : w * 0.36; const ay = movil ? h * 0.26 : h * 0.27; const bx = movil ? w * 0.94 - L : w * 0.36 + L * 1.95; const by = ay;
+        const Lq = movil ? L * 0.62 : L * 0.62;
+        const qx = movil ? w / 2 : (ax + L + bx) / 2; const qy = movil ? ay + L + 34 * DPR + Lq / 2 : ay + L / 2;
+        if (movil) { linea(ax + L / 2, ay + L + 26 * DPR, qx - Lq / 2, qy, suave(k * 1.6 - 0.4), t, true); linea(bx + L / 2, by + L + 26 * DPR, qx + Lq / 2, qy, suave(k * 1.6 - 0.4), t, true); }
+        else { linea(ax + L, ay + L / 2, qx - Lq / 2, qy, suave(k * 1.6 - 0.4), t, true); linea(bx, by + L / 2, qx + Lq / 2, qy, suave(k * 1.6 - 0.4), t, true); }
         recuadro(ax, ay, L, ret[pr.a.tid], k, 2 * s + 1, pr.a.es, t);
         recuadro(bx, by, L, ret[pr.b.tid], clamp01(k * 1.15 - 0.15), 2 * s + 2, pr.b.es, t);
         cuadroInter(qx, qy, Lq, pr.tipo, suave(k * 2 - 0.6));
@@ -164,7 +165,8 @@ export default function Tramas() {
               <p className="etiqueta text-arcilla">{String(paso + 1).padStart(2, '0')} / {String(N).padStart(2, '0')} · {pr.tipos.join(' · ')}</p>
               <h2 className="mt-3 text-3xl leading-[1.02] sm:text-4xl">{pr.a.es}<span className="mx-2 text-arcilla">↔</span>{pr.b.es}</h2>
               <p className="mt-3 text-[13px] italic leading-snug text-white/60">{pr.a.sci} · {pr.b.sci}</p>
-              <p className="mt-4 text-[11px] leading-snug text-white/45">Fuente: {pr.fuente}</p>
+              <p className="mt-4 text-[11px] leading-snug text-white/45">Interacción: {pr.fuente}</p>
+              <p className="mt-1 text-[10.5px] leading-snug text-white/35">Fotos (iNaturalist): {pr.a.credito}; {pr.b.credito}</p>
             </div>
           )}
           {datos && paso >= N && (
