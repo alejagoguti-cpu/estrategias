@@ -153,7 +153,7 @@ const PASO = 1; const SX = Math.ceil(BW / PASO); const SY = Math.ceil(BH / PASO)
 const ALT_BASE = 12; const ALT_HOVER = 40; // altura del valor máximo: en reposo y levantada
 const ELEV = (38 * Math.PI) / 180; // la cámara mira la pila de lado, poco inclinada: ninguna capa tapa a otra
 const DIAG = Math.hypot(BW, BH); // la pila se puede girar: la separación alcanza para cualquier ángulo
-const ESCALA_PILA = 0.6; // fracción del ancho de la columna que ocupa la isla
+const ESCALA_PILA = 0.4; // fracción del ancho de la columna que ocupa la isla
 let giroPila = 0; // giro (radianes) que se cambia arrastrando
 const SEP = (DIAG * 0.82 * Math.sin(ELEV) + ALT_HOVER * Math.cos(ELEV) * 0.55) / Math.cos(ELEV) + 6; // separación entre capas: un poco más que lo que ocupa cada una en pantalla
 const MAR = [0.02, 0.028, 0.034];
