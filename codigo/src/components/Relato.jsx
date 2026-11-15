@@ -4,6 +4,7 @@ import { GRUPOS_TIPO, TASA_MEDIA, TASA_MAX, TASA_CLASE, AÑO_BASE, COLOR_CLASE_E
 import Red from './Red.jsx';
 import Social from './Social.jsx';
 import Sectores from './Sectores.jsx';
+import RedEspecies from './RedEspecies.jsx';
 import { PLAN_PASOS, planEstado, SeccionEsquema } from './Plan.jsx';
 import { PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from '../lib/plan.js';
 
@@ -30,7 +31,8 @@ const CAPITULOS = [
   { id: 'sintaxis', n: '05', nombre: 'Sintaxis espacial' },
   { id: 'plan', n: '06', nombre: 'Plan maestro' },
   { id: 'esquema', n: '06', nombre: 'Esquema y criterios' },
-  { id: 'cierre', n: '07', nombre: 'Lo que sigue' },
+  { id: 'especies', n: '07', nombre: 'Especies de la isla' },
+  { id: 'cierre', n: '08', nombre: 'Lo que sigue' },
 ];
 
 const RADIOS = [
@@ -578,7 +580,7 @@ function Cierre({ api, version }) {
   return (
     <section id="cierre" className="relative bg-papel text-tinta">
       <div className="mx-auto max-w-6xl px-5 py-24 sm:px-10 sm:py-32">
-        <p className="etiqueta text-arcilla">07 · Lo que sigue</p>
+        <p className="etiqueta text-arcilla">08 · Lo que sigue</p>
         <h2 className="mt-4 max-w-3xl text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">Lo que muestran los números, y lo que falta.</h2>
 
         <div className="mt-14 grid gap-12 lg:grid-cols-2">
@@ -878,6 +880,7 @@ export default function Relato({ api, sinEscena }) {
         </>
       )}
 
+      <RedEspecies />
       <Cierre api={api} version={version} />
     </div>
   );
