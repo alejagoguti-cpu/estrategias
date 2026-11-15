@@ -150,22 +150,23 @@ let bx0 = GW, bx1 = 0, by0 = GH, by1 = 0; for (let k = 0; k < N; k++) if (isla[k
 bx0 = Math.max(0, bx0 - 4); by0 = Math.max(0, by0 - 4); bx1 = Math.min(GW - 1, bx1 + 4); by1 = Math.min(GH - 1, by1 + 4);
 const BW = bx1 - bx0 + 1; const BH = by1 - by0 + 1;
 const PASO = 2; const SX = Math.ceil(BW / PASO); const SY = Math.ceil(BH / PASO);
-const SEP = 34; // separación entre capas
-const ABANICO = 0.13; // corrimiento lateral de cada capa (fracción del ancho), para que se vean todas
+const ELEV = (17 * Math.PI) / 180; // la cámara mira la pila de lado, poco inclinada: ninguna capa tapa a otra
+const SEP = BW * Math.sin(ELEV) * 1.12 + 22; // separación entre capas: un poco más que lo que ocupa cada una en pantalla
 const ALT_BASE = 12; const ALT_HOVER = 40; // altura del valor máximo: en reposo y levantada
 const MAR = [0.02, 0.028, 0.034];
 const capas3d = orden.map((c, i) => {
   const geo = new THREE.PlaneGeometry(BW, BH, SX - 1, SY - 1); geo.rotateX(-Math.PI / 2);
-  const pos = geo.attributes.position; const n = pos.count; const val = new Float32Array(n); const col = new Float32Array(n * 3);
+  const pos = geo.attributes.position; const n = pos.count; const val = new Float32Array(n); const col = new Float32Array(n * 4);
   for (let v = 0; v < n; v++) {
     const ix = v % SX; const iy = Math.floor(v / SX); const k = Math.min(by1, by0 + iy * PASO) * GW + Math.min(bx1, bx0 + ix * PASO);
     let rgb; if (!isla[k]) { rgb = MAR.map((x) => x * 255); val[v] = 0; } else { const t = c.val(k); val[v] = Math.max(0, t); rgb = t < 0 ? [58, 66, 72] : colorDe(c.rampa, Math.max(0.12, t)); }
-    col[v * 3] = rgb[0] / 255; col[v * 3 + 1] = rgb[1] / 255; col[v * 3 + 2] = rgb[2] / 255;
+    col[v * 4] = rgb[0] / 255; col[v * 4 + 1] = rgb[1] / 255; col[v * 4 + 2] = rgb[2] / 255; col[v * 4 + 3] = isla[k] ? 1 : 0;
   }
-  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 4));
+  const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, transparent: true, alphaTest: 0.5 });
   const malla = new THREE.Mesh(geo, mat);
   const borde = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.PlaneGeometry(BW, BH).rotateX(-Math.PI / 2)), new THREE.LineBasicMaterial({ color: 0xd6e6ec, transparent: true, opacity: 0.5 }));
+  borde.visible = false; // sin el cuadrado: solo la forma de la isla
   const grupo = new THREE.Group(); grupo.add(malla, borde); grupo.userData = { c, i, val, alt: ALT_BASE }; malla.userData.id = c.id;
   pEsc.add(grupo); return grupo;
 });
@@ -182,12 +183,11 @@ function dibujarPila() {
   const w = Math.max(1, r.width); const h = Math.max(1, r.height);
   if (pRen.domElement.width !== Math.round(w * DPR) || pRen.domElement.height !== Math.round(h * DPR)) pRen.setSize(w, h, false);
   // cámara isométrica; la pila completa cabe en el cuadro
-  const alto = orden.length * SEP * 0.8 + BH * 0.75;
-  const ancho = (BW + BH) * 0.5 + orden.length * BW * ABANICO * 0.75;
-  const mitadH = Math.max(alto * 0.62, (ancho * 0.55) / (w / h)) * 1.0;
+  const alto = (orden.length - 1) * SEP * Math.cos(ELEV) + BW * Math.sin(ELEV) + ALT_HOVER + 60;
+  const mitadH = Math.max(alto * 0.53, (BH * 0.56) / (w / h));
   pCam.left = -mitadH * (w / h); pCam.right = mitadH * (w / h); pCam.top = mitadH; pCam.bottom = -mitadH; pCam.updateProjectionMatrix();
-  const giro = pausado ? 0 : performance.now() * 0.00009;
-  const d = 600; const cy = -orden.length * SEP * 0.5 + 10; pCam.position.set(Math.sin(Math.PI / 4 + giro) * d, cy + d * 0.5, Math.cos(Math.PI / 4 + giro) * d); pCam.lookAt(0, cy, 0);
+  
+  const d = 900; const cy = -((orden.length - 1) * SEP) / 2 + 20; pCam.position.set(Math.cos(ELEV) * d, cy + Math.sin(ELEV) * d, 0); pCam.lookAt(0, cy, 0);
   raiz.querySelectorAll('[data-capa]').forEach((b) => (b.dataset.capa === pHover ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
   const ahora = performance.now(); const ia = intro('capas', ahora, 2600);
   capas3d.forEach((g) => {
@@ -196,9 +196,8 @@ function dibujarPila() {
     if (Math.abs(nueva - g.userData.alt) > 0.02) { g.userData.alt = nueva; aplicarAltura(g, nueva); }
     const ic = suave((ia - (orden.length - 1 - i) * 0.06) / 0.4);
     const flota = pausado ? 0 : Math.sin(ahora * 0.0012 + i * 0.6) * 3.2 + ola * 10;
-    const iSel = pHover ? orden.findIndex((o) => o.id === pHover) : -1; const sube = iSel >= 0 && i < iSel ? 75 : sel ? 8 : 0; /* las capas de encima se abren como un cajón */ g.userData.sube = (g.userData.sube || 0) + (sube - (g.userData.sube || 0)) * 0.14;
+    const iSel = pHover ? orden.findIndex((o) => o.id === pHover) : -1; const sube = iSel >= 0 && i < iSel ? 26 : sel ? 6 : 0; /* las capas de encima se abren como un cajón */ g.userData.sube = (g.userData.sube || 0) + (sube - (g.userData.sube || 0)) * 0.14;
     g.position.y = -i * SEP + flota + g.userData.sube + (1 - ic) * 260;
-    g.position.x = (i - (orden.length - 1) / 2) * BW * ABANICO;
     g.visible = ic > 0.01; g.children[0].material.color.setScalar(pHover && !sel ? 0.4 : 1);
     g.children[1].material.color.set(sel ? 0xff6b4a : 0xd6e6ec); g.children[1].material.opacity = ic * (sel ? 0.95 : 0.45 + 0.4 * ola);
   });

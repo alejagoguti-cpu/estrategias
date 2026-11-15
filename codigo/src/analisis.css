@@ -40,9 +40,9 @@
 .an .capas-cab h2 { font-size: var(--t-1); margin-top: 6px; }
 .an .capas-cab p { color: var(--tinta-2); max-width: 300px; }
 .an .pila { position: relative; display: grid; grid-template-columns: 1fr 240px; align-items: center; gap: 12px; }
-.an #pila-3d { position: relative; width: 100%; height: min(88svh, 860px); }
+.an #pila-3d { position: relative; width: 100%; height: max(165svh, 1200px); }
 .an #pila-3d canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
-.an .pila ol { list-style: none; margin: 0; padding: 0; }
+.an .pila ol { list-style: none; margin: 0; padding: 0; position: sticky; top: 40svh; align-self: start; }
 .an .pila li button { display: flex; gap: 12px; align-items: baseline; width: 100%; text-align: left; padding: 3px 0; font-size: .82rem; color: var(--tinta-2); border-top: 1px solid transparent; }
 .an .pila li button::before { content: ""; flex: 0 0 36px; height: 1px; background: var(--linea-media); transform: translateY(-4px); }
 .an .pila li button em { font: 400 .74rem var(--dato); color: var(--tinta-3); font-style: normal; }
@@ -61,7 +61,7 @@
 .an #capas { grid-template-columns: 1fr; padding: 110px 16px 60px; }
 .an .pila { grid-template-columns: 1fr; }
 .an .pila ol { columns: 2; }
-.an #pila-3d { height: 72svh; }
+.an #pila-3d { height: 125svh; }
 }
 .an #relaciones { padding: 100px 40px 90px; }
 .an .rel-pestanas { display: flex; flex-wrap: wrap; gap: 26px; margin-bottom: 36px; }
