@@ -24,20 +24,25 @@
       #pre .velo { position: absolute; inset: 0; background: linear-gradient(to top, rgba(8,11,13,.92), rgba(8,11,13,.15) 55%, rgba(8,11,13,.35)); }
       #pre .ola { position: absolute; inset: 0; background: repeating-linear-gradient(100deg, rgba(255,255,255,0) 0 38px, rgba(255,255,255,.05) 40px, rgba(255,255,255,0) 44px); background-size: 200% 100%; animation: ola 6s linear infinite; mix-blend-mode: screen; -webkit-mask: linear-gradient(90deg, #000 0 32%, transparent 48%); mask: linear-gradient(90deg, #000 0 32%, transparent 48%); }
       @keyframes ola { to { background-position: -400px 0; } }
-      #pre .txt { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 20px 34px; color: #e8eef0; font-family: 'Geist', system-ui, sans-serif; }
-      @media (min-width: 640px) { #pre .txt { padding: 0 48px 52px; } }
-      #pre h1 { margin: 0; font-size: clamp(3.4rem, 13vw, 10.5rem); font-weight: 600; line-height: .86; letter-spacing: -.045em; }
-      #pre p { margin: 18px 0 0; font: 500 .68rem/1.4 'Geist Mono', monospace; letter-spacing: .14em; text-transform: uppercase; color: rgba(232,238,240,.7); }
+      #pre .txt { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 20px 32px; color: #e8eef0; font-family: 'Geist', system-ui, sans-serif; opacity: 0; transition: opacity .6s ease; }
+      #pre.letra .txt { opacity: 1; }
+      #pre .marco { position: absolute; inset: 18px; border: 1px solid rgb(214 230 236 / .12); }
+      @media (min-width: 640px) { #pre .txt { padding: 0 48px 48px; } }
+      #pre h1 { margin: 0; font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: clamp(3rem, 9vw, 7.5rem); font-weight: 300; line-height: .86; letter-spacing: .01em; text-transform: uppercase; }
+      #pre .sub { margin: 16px 0 0; max-width: 36rem; font: 300 1.1rem/1.35 'Geist', sans-serif; letter-spacing: 0; text-transform: none; color: rgba(232,238,240,.85); }
+      #pre p { margin: 28px 0 0; font: 400 .72rem/1.4 'Geist Mono', monospace; letter-spacing: .1em; text-transform: uppercase; color: rgba(232,238,240,.6); }
       #pre .barra { margin-top: 12px; height: 1px; max-width: 28rem; background: rgba(255,255,255,.15); overflow: hidden; }
       #pre .barra i { display: block; height: 100%; width: 3%; background: #ff6b4a; transition: width .5s ease; }
       @media (prefers-reduced-motion: reduce) { #pre img, #pre .ola { animation: none; } }
     </style>
-    <script type="module" crossorigin src="./app/index-e64eW1t4.js"></script>
-    <link rel="stylesheet" crossorigin href="./app/index-CDuv3SIz.css">
+    <script type="module" crossorigin src="./app/index-8xiyDERP.js"></script>
+    <link rel="stylesheet" crossorigin href="./app/index-BjiAd0Sf.css">
   </head>
   <body>
     <div id="pre" aria-hidden="true">
-      <div class="txt"><h1>Tierra Bomba</h1><p id="pre-msg">Preparando la isla</p><div class="barra"><i id="pre-barra"></i></div></div>
+      <div class="marco"></div>
+      <div class="txt"><h1>Tierra Bomba</h1><p class="sub">Planificación y adaptación territorial frente a la pérdida de suelo costero</p><p id="pre-msg">Preparando la isla</p><div class="barra"><i id="pre-barra"></i></div></div>
+      <script>(function () { var p = document.getElementById('pre'); var ver = function () { p.classList.add('letra'); }; if (document.fonts && document.fonts.load) { Promise.all([document.fonts.load('300 40px "Barlow Condensed"'), document.fonts.load('400 16px "Geist"'), document.fonts.load('400 12px "Geist Mono"')]).then(ver, ver); setTimeout(ver, 2500); } else { ver(); } })();</script>
     </div>
     <div id="root"></div>
   </body>
