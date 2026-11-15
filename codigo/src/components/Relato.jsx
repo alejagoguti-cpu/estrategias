@@ -833,7 +833,7 @@ export default function Relato({ api, sinEscena }) {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-tinta/85 via-tinta/35 to-transparent" />
         <div className="relative w-full px-5 pb-8 sm:px-12 sm:pb-12">
           <p className="etiqueta subir text-white/70" style={{ animationDelay: '0.15s' }}>Tesis de grado · Arquitectura y Urbanismo · Tercer corte</p>
-          <h1 className="portada-titulo mt-3 text-[clamp(4.2rem,15vw,13rem)] leading-[0.84]" aria-label="Tierra Bomba">
+          <h1 className="portada-titulo mt-3 text-[clamp(3rem,9vw,7.5rem)] leading-[0.86]" aria-label="Tierra Bomba">
             {['Tierra', 'Bomba'].map((pal, pi) => (
               <span key={pal} className="mr-[0.18em] inline-block whitespace-nowrap" aria-hidden="true">
                 {[...pal].map((l, li) => (
@@ -842,7 +842,7 @@ export default function Relato({ api, sinEscena }) {
               </span>
             ))}
           </h1>
-          <p className="subir mt-4 max-w-2xl text-lg font-light leading-snug text-white/85 sm:text-2xl" style={{ animationDelay: '1.05s' }}>
+          <p className="subir mt-4 max-w-xl text-base font-light leading-snug text-white/85 sm:text-xl" style={{ animationDelay: '1.05s' }}>
             Planificación y adaptación territorial frente a la pérdida de suelo costero
           </p>
           <div className="subir mt-10 flex flex-wrap items-end justify-between gap-x-10 gap-y-4" style={{ animationDelay: '1.3s' }}>
@@ -859,10 +859,9 @@ export default function Relato({ api, sinEscena }) {
       <section id="problema" className="relative">
         <div className="relative flex min-h-[130svh] items-center">
           <div className="absolute inset-0 bg-tinta/45" />
-          <div className="relative w-full max-w-[60rem] px-5 py-24 sm:px-12 lg:ml-[5vw]">
+          <div className="relative w-full max-w-[44rem] px-5 py-24 sm:px-12 lg:ml-[5vw]">
             <p className="etiqueta text-arcilla">01 · Formulación del problema</p>
-            <div className="mt-8"><FrasesProblema /></div>
-            <p className="mt-10 max-w-xl text-sm leading-relaxed text-white/60">{PROBLEMA}</p>
+            <ScrollWords text={PROBLEMA} className="mt-6 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl" />
             {sinEscena && <p className="mt-8 text-sm text-white/60">Este dispositivo no pudo mostrar la vista 3D; se muestra la imagen satelital y los datos.</p>}
           </div>
         </div>

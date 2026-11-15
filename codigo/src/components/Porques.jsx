@@ -124,34 +124,23 @@ export default function Porques() {
   const [vistos, setVistos] = useState(1);
   const [sel, setSel] = useState(0);
   const completo = vistos >= NIVELES.length;
-  const secRef = useRef(null);
-  const [auto, setAuto] = useState(0); // al entrar en pantalla, los niveles se despliegan solos
-  useEffect(() => {
-    const el = secRef.current; if (!el) return undefined;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setAuto((a) => a || 1); io.disconnect(); } }, { threshold: 0.3 });
-    io.observe(el); return () => io.disconnect();
-  }, []);
-  useEffect(() => {
-    if (!auto || vistos >= NIVELES.length) return undefined;
-    const t = setTimeout(() => { setSel(vistos); setVistos((v) => v + 1); }, vistos === 1 ? 700 : 1150);
-    return () => clearTimeout(t);
-  }, [auto, vistos]);
+  const siguiente = () => { if (!completo) { setSel(vistos); setVistos((v) => v + 1); } };
   const n = NIVELES[sel];
   const panelRef = useRef(null);
   const PASO = 12; // % de sangría por escalón (escritorio)
 
   return (
-    <section id="porques" ref={secRef} className="relative text-papel">
+    <section id="porques" className="relative text-papel">
       {/* fondo: retícula muy tenue */}
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-tinta/40" aria-hidden="true" />
       <div className="relative mx-auto max-w-[1640px] px-3 py-16 sm:px-8 sm:py-24 lg:px-12">
-        <div className="rounded-[10px] border border-white/15 px-5 py-10 shadow-[0_24px_60px_-20px_rgba(0,0,0,.55)] sm:px-10 sm:py-12 lg:px-14" style={{ background: 'rgba(8,11,13,0.42)', backdropFilter: 'blur(5px) saturate(1.3)', WebkitBackdropFilter: 'blur(5px) saturate(1.3)' }}>
+        <div className="rounded-[10px] border border-white/15 px-5 py-10 shadow-[0_24px_60px_-20px_rgba(0,0,0,.55)] sm:px-10 sm:py-12 lg:px-14" style={{ background: 'rgba(11,16,21,0.42)', backdropFilter: 'blur(5px) saturate(1.3)', WebkitBackdropFilter: 'blur(5px) saturate(1.3)' }}>
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="etiqueta text-arcilla">El problema, desplegado</p>
             <h2 className="mt-4 max-w-4xl text-2xl sm:text-3xl lg:text-4xl">Del problema a lo que hay que medir.</h2>
           </div>
-          <p className="etiqueta text-white/45">Entre un nivel y otro: «se relaciona con»</p>
+          <p className="max-w-md text-sm leading-relaxed text-white/70">Entre un nivel y otro no decimos «causa»: decimos <span className="text-white">«se relaciona con»</span>, hasta que el dato lo confirme.</p>
         </div>
 
         <div className="mt-14 grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(24rem,1fr)] lg:gap-16">
@@ -185,7 +174,11 @@ export default function Porques() {
               );
             })}
             <li className="porque-escalon mt-10 flex items-center gap-4" style={{ paddingLeft: 'var(--sangria)', '--sangria': `${Math.min(vistos, 5) * PASO}%` }}>
-              {completo && <button type="button" onClick={() => { setVistos(1); setSel(0); setAuto((a) => a + 1); }} className="red-boton">Ver de nuevo ↺</button>}
+              {!completo ? (
+                <button type="button" onClick={siguiente} className="porque-siguiente red-boton">{vistos === 1 ? 'Desplegar el problema ↓' : 'Siguiente nivel ↓'}</button>
+              ) : (
+                <button type="button" onClick={() => { setVistos(1); setSel(0); }} className="red-boton">Volver a empezar ↺</button>
+              )}
               <span className="etiqueta num text-white/40">{vistos - 1} / 5</span>
             </li>
           </ol>
@@ -199,7 +192,13 @@ export default function Porques() {
               <p className="etiqueta mb-4 mt-7 text-white/45">Cómo se mide</p>
               {n.mide()}
             </div>
-
+            {/* la erosión, conectada con los porqués 1 y 3 */}
+            {vistos >= 2 && (
+              <div className={`porque-panel mt-4 rounded-[8px] border border-dashed p-5 transition-colors ${NIVELES[sel]?.erosion ? 'border-[#c8102e] bg-[#c8102e]/10' : 'border-[#c8102e]/40'}`}>
+                <p className="etiqueta text-[#ef7d93]">Erosión costera · se relaciona con los niveles 1 y 3</p>
+                <p className="mt-2 text-sm leading-relaxed text-white/75">La costa que retrocede condiciona qué viviendas se deterioran y hacia dónde conviene subir. INVEMAR midió en la isla de 0,63 a 3 m/año.</p>
+              </div>
+            )}
           </aside>
         </div>
         </div>
