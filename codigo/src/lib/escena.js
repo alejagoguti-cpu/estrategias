@@ -224,7 +224,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   let disposed = false;
 
   // ---------- carga de datos ----------
-  const TOTAL = 16;
+  const TOTAL = 17;
   let hechas = 0;
   const track = (p) => p.then((r) => { hechas++; onProgreso(0.6 * (hechas / TOTAL), 'Descargando la isla'); return r; });
   const jsonOf = (u) => fetch(u).then((r) => { if (!r.ok) throw new Error(u); return r.json(); });
@@ -238,7 +238,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     return JSON.parse(new TextDecoder().decode(u8));
   };
 
-  const [satImg, maskImg, patchImg, geoRef, veg, construcciones, sintaxis, normalsImg, cartagenaMascaraImg, midasJson, ctxJson, ...demImgs] = await Promise.all([
+  const [satImg, maskImg, patchImg, geoRef, veg, construcciones, sintaxis, normalsImg, cartagenaMascaraImg, midasJson, ctxJson, ctgImg, ...demImgs] = await Promise.all([
     track(loadImg(`${BASE}assets/texturas/sat_base.jpg`)),
     track(loadImg(`${BASE}datos/isla_mascara_osm.png`)),
     track(loadImg(`${BASE}assets/texturas/tierrabomba_satelite.jpg`)),
@@ -250,6 +250,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     track(loadImg(`${BASE}datos/cartagena_mascara.png`)),
     track(jsonOf(`${BASE}datos/midas_tierrabomba.json`)),
     track(gunzipJSON(`${BASE}datos/cartagena_contexto.json.gz`)),
+    track(loadImg(`${BASE}assets/texturas/cartagena_z14.jpg`)),
     track(loadImg(`${BASE}datos/elevacion/1187_1929.png`)),
     track(loadImg(`${BASE}datos/elevacion/1188_1929.png`)),
     track(loadImg(`${BASE}datos/elevacion/1187_1930.png`)),
@@ -921,27 +922,33 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   };
   updateHouses(0, 'perdida', CASA_ESCALA);
 
-  // ---------- contexto: Cartagena (todo el mosaico satelital, plano, aparece en el paso de lanchas) ----------
-  const cx0 = MOSAICO.x0; const cx1 = MOSAICO.x0 + MOSAICO.nx; const cy0 = MOSAICO.y0; const cy1 = MOSAICO.y0 + MOSAICO.ny;
+  // ---------- contexto: toda Cartagena con foto aérea (Esri World Imagery z14), recortada a la tierra ----------
+  // Extensión del mosaico z14: x 4748–4759, y 7711–7722 (en coordenadas z15: ×2). Solo se ve la tierra (masas de tierra del catastro).
+  const cx0 = 4748 * 2; const cx1 = 4760 * 2; const cy0 = 7711 * 2; const cy1 = 7723 * 2;
   const [qx0, qz0] = toXZ(cx0, cy0); const [qx1, qz1] = toXZ(cx1, cy1);
   const ctxGeo = new THREE.BufferGeometry();
   ctxGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([qx0, 1, qz0, qx1, 1, qz0, qx0, 1, qz1, qx1, 1, qz1]), 3));
   ctxGeo.setAttribute('normal', new THREE.BufferAttribute(new Float32Array([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]), 3));
   ctxGeo.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0, 1, 1, 1, 0, 0, 1, 0]), 2));
   ctxGeo.setIndex([0, 2, 1, 1, 2, 3]);
-  // solo la tierra de Cartagena (máscara de la costa de OSM): sin mar, para que no compita con el agua de la escena
-  const ctxMask = new THREE.Texture(cartagenaMascaraImg);
-  ctxMask.needsUpdate = true;
+  const ctxMaskCanvas = document.createElement('canvas'); ctxMaskCanvas.width = ctgImg.width; ctxMaskCanvas.height = ctgImg.height;
+  {
+    const mc = ctxMaskCanvas.getContext('2d'); mc.fillStyle = '#000'; mc.fillRect(0, 0, ctxMaskCanvas.width, ctxMaskCanvas.height); mc.fillStyle = '#fff';
+    const aPx = (lon, lat) => { const [tx, ty] = lonLatToTile(lon, lat); return [((tx - cx0) / (cx1 - cx0)) * ctxMaskCanvas.width, ((ty - cy0) / (cy1 - cy0)) * ctxMaskCanvas.height]; };
+    mc.beginPath();
+    ctxJson.tierras.forEach((ring) => {
+      let sx = 0; let sy = 0; ring.forEach(([lo, la]) => { sx += lo; sy += la; }); sx /= ring.length; sy /= ring.length;
+      if (sy < 10.388 && sx < -75.536) return; // Tierra Bomba ya está modelada
+      ring.forEach(([lo, la], k) => { const [px, py] = aPx(lo, la); if (k) mc.lineTo(px, py); else mc.moveTo(px, py); }); mc.closePath();
+    });
+    mc.fill('evenodd');
+  }
+  const ctxMask = new THREE.CanvasTexture(ctxMaskCanvas);
+  const ctxTex = new THREE.Texture(ctgImg); ctxTex.colorSpace = THREE.SRGBColorSpace; ctxTex.anisotropy = aniso; ctxTex.needsUpdate = true;
   const ctxMat = new THREE.MeshStandardMaterial({
-    map: terrainMat.map, alphaMap: ctxMask, roughness: 1, metalness: 0, transparent: true, opacity: 0, alphaTest: 0.02,
+    map: ctxTex, alphaMap: ctxMask, roughness: 1, metalness: 0, transparent: true, opacity: 0, alphaTest: 0.5,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2,
-  });
-  // la imagen se desvanece hacia sus bordes: debajo quedan el suelo y los edificios de Cartagena (sin corte recto)
-  ctxMat.onBeforeCompile = (sh) => {
-    sh.fragmentShader = sh.fragmentShader.replace('#include <alphamap_fragment>', '#include <alphamap_fragment>\n vec2 eC = min(vAlphaMapUv, 1.0 - vAlphaMapUv); diffuseColor.a *= smoothstep(0.0, 0.07, min(eC.x, eC.y));');
-  };
-  ctxMat.customProgramCacheKey = () => 'ctx-borde';
-  const contexto = new THREE.Mesh(ctxGeo, ctxMat);
+  });  const contexto = new THREE.Mesh(ctxGeo, ctxMat);
   contexto.visible = false;
   contexto.renderOrder = 1;
 
@@ -1046,7 +1053,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         float lod = 1.0 - smoothstep(300.0, 3200.0, dc);
         float mpx = dc * 0.0011; // metros por píxel, aproximado
         // la fuerza del oleaje cambia por zonas, suave y sin repetirse
-        float zona = 0.55 + 0.45 * ondas(p / 260.0 + vec2(uTime * 0.012, 0.0));
+        float zona = 0.55 + 0.45 * ondas(p / 420.0 + vec2(uTime * 0.01, 0.0));
         // oleaje: 10 trenes de olas de 8 a 70 m, con direcciones alrededor del viento del noreste y su velocidad real √(g/k).
         // Las olas más pequeñas que unos píxeles se apagan (si no, parpadean de lejos)
         vec2 g = vec2(0.0); float cresta = 0.0; float sTot = 0.0;
@@ -1054,7 +1061,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
           float fi = float(i);
           float ang = 2.2 + (hash1(fi + 1.3) - 0.5) * 1.4;
           vec2 dd = vec2(cos(ang), sin(ang));
-          float L = mix(8.0, 70.0, pow(hash1(fi + 7.7), 1.3));
+          float L = mix(14.0, 120.0, pow(hash1(fi + 7.7), 1.3));
           float kk = 6.2832 / L;
           float ph = dot(dd, p) * kk - uTime * sqrt(9.8 * kk) + hash1(fi + 3.1) * 6.2832;
           float s = 0.065 * (1.0 - smoothstep(L * 0.05, L * 0.14, mpx)); // solo olas de al menos ~8 píxeles
@@ -1062,7 +1069,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         }
         g *= zona; cresta = sTot > 0.0 ? cresta / sTot * zona : 0.0;
         // rizado fino solo cerca de la cámara
-        vec2 rizo = vec2(ondas(p / 0.9 + vec2(uTime * 1.6, 0.0)), ondas(p.yx / 0.75 + vec2(3.1, -uTime * 1.4))) - 0.5;
+        vec2 rizo = vec2(ondas(p / 1.8 + vec2(uTime * 1.1, 0.0)), ondas(p.yx / 1.5 + vec2(3.1, -uTime * 1.0))) - 0.5;
         g += rizo * 0.07 * (1.0 - smoothstep(40.0, 220.0, dc));
         vec2 n2 = g * 4.0;
         // pendiente acotada: con olas muy inclinadas el reflejo rasante del cielo daba rayas blancas vistas desde arriba
@@ -1374,8 +1381,8 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       shapes.push(new THREE.Shape(pts));
     });
     const geo = new THREE.ShapeGeometry(shapes); geo.rotateX(-Math.PI / 2); geo.translate(0, 0.5, 0);
-    const suelo = new THREE.Mesh(geo, sueloMat); suelo.renderOrder = 0; suelo.receiveShadow = false;
-    ctgGroup.add(suelo);
+    // (el suelo plano ya no se agrega: la foto aérea cubre toda la tierra de Cartagena)
+    geo.dispose();
   }
   const edMat = new THREE.MeshStandardMaterial({ color: 0xe9e3d6, roughness: 0.85, metalness: 0, transparent: true, opacity: 0 });
   const edGeo = new THREE.BoxGeometry(1, 1, 1); edGeo.translate(0, 0.5, 0);
