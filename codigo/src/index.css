@@ -125,3 +125,8 @@ body {
   .red-anillo { animation: none; display: none; }
   .red-enlace { transition: none; }
 }
+/* cinco porqués */
+.porque-entra { animation: porque-in .8s cubic-bezier(.16,1,.3,1) both; }
+@keyframes porque-in { from { opacity: 0; transform: translateY(26px) scale(.98); } to { opacity: 1; transform: none; } }
+.porque-flecha { height: 22px; transform-origin: top; animation: porque-linea .6s ease-out both; }
+@keyframes porque-linea { from { transform: scaleY(0); } to { transform: scaleY(1); } }

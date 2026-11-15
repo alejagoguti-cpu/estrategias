@@ -4,6 +4,7 @@ import { GRUPOS_TIPO, TASA_MEDIA, TASA_MAX, TASA_CLASE, AÑO_BASE, COLOR_CLASE_E
 import Red from './Red.jsx';
 import Social from './Social.jsx';
 import Sectores from './Sectores.jsx';
+import Porques from './Porques.jsx';
 import RedEspecies from './RedEspecies.jsx';
 import { PLAN_PASOS, planEstado, SeccionEsquema } from './Plan.jsx';
 import { PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from '../lib/plan.js';
@@ -847,6 +848,7 @@ export default function Relato({ api, sinEscena }) {
 
       {/* 02 · lo social */}
       {/* la isla y sus cuatro sectores, en puntos */}
+      <Porques />
       <Sectores />
       <Social />
       {/* 02 · erosión (la escena la mueve el scroll) */}
