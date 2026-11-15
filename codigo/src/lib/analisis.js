@@ -149,18 +149,23 @@ const pCam = new THREE.OrthographicCamera(-1, 1, 1, -1, -2000, 2000);
 let bx0 = GW, bx1 = 0, by0 = GH, by1 = 0; for (let k = 0; k < N; k++) if (isla[k]) { const i = k % GW; const j = Math.floor(k / GW); bx0 = Math.min(bx0, i); bx1 = Math.max(bx1, i); by0 = Math.min(by0, j); by1 = Math.max(by1, j); }
 bx0 = Math.max(0, bx0 - 4); by0 = Math.max(0, by0 - 4); bx1 = Math.min(GW - 1, bx1 + 4); by1 = Math.min(GH - 1, by1 + 4);
 const BW = bx1 - bx0 + 1; const BH = by1 - by0 + 1;
-const PASO = 2; const SX = Math.ceil(BW / PASO); const SY = Math.ceil(BH / PASO);
+const PASO = 1; const SX = Math.ceil(BW / PASO); const SY = Math.ceil(BH / PASO);
 const ALT_BASE = 12; const ALT_HOVER = 40; // altura del valor máximo: en reposo y levantada
 const ELEV = (38 * Math.PI) / 180; // la cámara mira la pila de lado, poco inclinada: ninguna capa tapa a otra
-const SEP = (BW * Math.sin(ELEV) + ALT_HOVER * Math.cos(ELEV) * 0.55) / Math.cos(ELEV) * 0.98 + 6; // separación entre capas: un poco más que lo que ocupa cada una en pantalla
+const DIAG = Math.hypot(BW, BH); // la pila se puede girar: la separación alcanza para cualquier ángulo
+const ESCALA_PILA = 0.6; // fracción del ancho de la columna que ocupa la isla
+let giroPila = 0; // giro (radianes) que se cambia arrastrando
+const SEP = (DIAG * 0.82 * Math.sin(ELEV) + ALT_HOVER * Math.cos(ELEV) * 0.55) / Math.cos(ELEV) + 6; // separación entre capas: un poco más que lo que ocupa cada una en pantalla
 const MAR = [0.02, 0.028, 0.034];
+const islaSuave = (k) => { const i = k % GW; const j = Math.floor(k / GW); let s = 0; let n = 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di; const jj = j + dj; if (ii < 0 || jj < 0 || ii >= GW || jj >= GH) continue; const w = di && dj ? 0.6 : 1; s += isla[jj * GW + ii] * w; n += w; } return s / n; };
+const vecinoIsla = (k) => { const i = k % GW; const j = Math.floor(k / GW); for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di; const jj = j + dj; if (ii < 0 || jj < 0 || ii >= GW || jj >= GH) continue; const k2 = jj * GW + ii; if (isla[k2]) return k2; } return -1; };
 const capas3d = orden.map((c, i) => {
   const geo = new THREE.PlaneGeometry(BW, BH, SX - 1, SY - 1); geo.rotateX(-Math.PI / 2);
   const pos = geo.attributes.position; const n = pos.count; const val = new Float32Array(n); const col = new Float32Array(n * 4);
   for (let v = 0; v < n; v++) {
     const ix = v % SX; const iy = Math.floor(v / SX); const k = Math.min(by1, by0 + iy * PASO) * GW + Math.min(bx1, bx0 + ix * PASO);
-    let rgb; if (!isla[k]) { rgb = MAR.map((x) => x * 255); val[v] = 0; } else { const t = c.val(k); val[v] = Math.max(0, t); rgb = t < 0 ? [58, 66, 72] : colorDe(c.rampa, Math.max(0.12, t)); }
-    col[v * 4] = rgb[0] / 255; col[v * 4 + 1] = rgb[1] / 255; col[v * 4 + 2] = rgb[2] / 255; col[v * 4 + 3] = isla[k] ? 1 : 0;
+    let rgb; if (!isla[k]) { const k2 = vecinoIsla(k); const t2 = k2 >= 0 ? c.val(k2) : -1; rgb = k2 < 0 ? MAR.map((x) => x * 255) : t2 < 0 ? [58, 66, 72] : colorDe(c.rampa, Math.max(0.12, t2)); val[v] = 0; } else { const t = c.val(k); val[v] = Math.max(0, t); rgb = t < 0 ? [58, 66, 72] : colorDe(c.rampa, Math.max(0.12, t)); }
+    col[v * 4] = rgb[0] / 255; col[v * 4 + 1] = rgb[1] / 255; col[v * 4 + 2] = rgb[2] / 255; col[v * 4 + 3] = islaSuave(k);
   }
   geo.setAttribute('color', new THREE.BufferAttribute(col, 4));
   const mat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide, transparent: true, alphaTest: 0.5 });
@@ -177,7 +182,13 @@ capas3d.forEach((g) => aplicarAltura(g, ALT_BASE));
 const ray = new THREE.Raycaster(); const ptr = new THREE.Vector2();
 pRen.domElement.addEventListener('pointermove', (e) => { const r = pRen.domElement.getBoundingClientRect(); ptr.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ptr, pCam); const hit = ray.intersectObjects(capas3d.map((g) => g.children[0]))[0]; pHover = hit ? hit.object.userData.id : null; pRen.domElement.style.cursor = pHover ? 'pointer' : 'default'; });
 pRen.domElement.addEventListener('pointerleave', () => { pHover = null; });
-pRen.domElement.addEventListener('click', () => { if (pHover) abrirFicha(capa[pHover]); });
+let arrastre = null; let movido = 0;
+pRen.domElement.style.touchAction = 'pan-y'; pRen.domElement.style.cursor = 'grab';
+pRen.domElement.addEventListener('pointerdown', (e) => { arrastre = e.clientX; movido = 0; pRen.domElement.setPointerCapture(e.pointerId); pRen.domElement.style.cursor = 'grabbing'; });
+pRen.domElement.addEventListener('pointermove', (e) => { if (arrastre === null) return; const dx = e.clientX - arrastre; arrastre = e.clientX; movido += Math.abs(dx); giroPila += dx * 0.009; });
+const soltar = () => { arrastre = null; pRen.domElement.style.cursor = 'grab'; };
+pRen.domElement.addEventListener('pointerup', soltar); pRen.domElement.addEventListener('pointercancel', soltar);
+pRen.domElement.addEventListener('click', () => { if (pHover && movido < 5) abrirFicha(capa[pHover]); });
 function dibujarPila() {
   const r = pCont.getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) return;
   // el lienzo mide lo que la pantalla (queda fijo mientras se baja) y dibuja solo la parte visible de la pila:
@@ -187,13 +198,13 @@ function dibujarPila() {
   // cámara isométrica; la pila completa cabe en el cuadro
   const alto = (orden.length - 1) * SEP * Math.cos(ELEV) + BW * Math.sin(ELEV) + ALT_HOVER + 40;
   // la pila llena el ancho de su columna; el bloque se alarga lo necesario para que quepan todas las capas
-  const altoPx = Math.round(w * alto / (BH * 1.06));
+  const altoPx = Math.round(w * ESCALA_PILA * alto / (DIAG * 1.04));
   if (Math.abs(pCont.offsetHeight - altoPx) > 2) pCont.style.height = `${altoPx}px`;
-  const mitadH = Math.max(alto * 0.5, (BH * 0.53) / (w / h));
+  const mitadH = Math.max(alto * 0.5, (DIAG * 0.52 / ESCALA_PILA) / (w / h));
   pCam.left = -mitadH * (w / h); pCam.right = mitadH * (w / h); pCam.top = mitadH; pCam.bottom = -mitadH;
   const offY = Math.max(0, Math.min(h - vh, -r.top)); pCam.setViewOffset(w, h, 0, offY, w, vh);
   
-  const d = 900; const cy = -((orden.length - 1) * SEP) / 2 + 20; pCam.position.set(Math.cos(ELEV) * d, cy + Math.sin(ELEV) * d, 0); pCam.lookAt(0, cy, 0);
+  const d = 900; const cy = -((orden.length - 1) * SEP) / 2 + 20; pCam.position.set(Math.cos(ELEV) * Math.cos(giroPila) * d, cy + Math.sin(ELEV) * d, Math.cos(ELEV) * Math.sin(giroPila) * d); pCam.lookAt(0, cy, 0);
   raiz.querySelectorAll('[data-capa]').forEach((b) => (b.dataset.capa === pHover ? b.setAttribute('aria-current', 'true') : b.removeAttribute('aria-current')));
   const ahora = performance.now(); const ia = intro('capas', ahora, 2600);
   capas3d.forEach((g) => {

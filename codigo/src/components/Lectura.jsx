@@ -45,7 +45,7 @@ export default function Lectura() {
       </section>
 
       <section id="capas" aria-label="Capas del territorio">
-        <div className="capas-cab"><p className="num">15</p><h2>Capas del territorio</h2><p>Cada estrato es un ráster del encuadre de la isla sobre la misma malla de 47 m; las tres de arriba vienen de los modelos de Rhino de la tesis (economía y turismo, síntesis de picos, drenaje). Cada capa sube donde su valor es mayor: más densidad, más altura. Pase el cursor para levantarla; haga clic para leer su ficha.</p></div>
+        <div className="capas-cab"><p className="num">15</p><h2>Capas del territorio</h2><p>Cada estrato es un ráster del encuadre de la isla sobre la misma malla de 47 m; las tres de arriba vienen de los modelos de Rhino de la tesis (economía y turismo, síntesis de picos, drenaje). Cada capa sube donde su valor es mayor: más densidad, más altura. Arrastre para girar la pila; pase el cursor para levantar una capa y haga clic para leer su ficha.</p></div>
         <div className="pila"><div id="pila-3d" aria-label="Pila de capas en 3D"><p className="an-cargando">Cargando las capas…</p></div><ol id="pila-lista" /></div>
       </section>
       <aside className="ficha-capa" id="ficha-capa" aria-live="polite" />
