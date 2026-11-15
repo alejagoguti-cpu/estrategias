@@ -150,9 +150,9 @@ let bx0 = GW, bx1 = 0, by0 = GH, by1 = 0; for (let k = 0; k < N; k++) if (isla[k
 bx0 = Math.max(0, bx0 - 4); by0 = Math.max(0, by0 - 4); bx1 = Math.min(GW - 1, bx1 + 4); by1 = Math.min(GH - 1, by1 + 4);
 const BW = bx1 - bx0 + 1; const BH = by1 - by0 + 1;
 const PASO = 2; const SX = Math.ceil(BW / PASO); const SY = Math.ceil(BH / PASO);
-const ELEV = (17 * Math.PI) / 180; // la cámara mira la pila de lado, poco inclinada: ninguna capa tapa a otra
-const SEP = BW * Math.sin(ELEV) * 1.12 + 22; // separación entre capas: un poco más que lo que ocupa cada una en pantalla
 const ALT_BASE = 12; const ALT_HOVER = 40; // altura del valor máximo: en reposo y levantada
+const ELEV = (38 * Math.PI) / 180; // la cámara mira la pila de lado, poco inclinada: ninguna capa tapa a otra
+const SEP = (BW * Math.sin(ELEV) + ALT_HOVER * Math.cos(ELEV) * 0.55) / Math.cos(ELEV) * 0.98 + 6; // separación entre capas: un poco más que lo que ocupa cada una en pantalla
 const MAR = [0.02, 0.028, 0.034];
 const capas3d = orden.map((c, i) => {
   const geo = new THREE.PlaneGeometry(BW, BH, SX - 1, SY - 1); geo.rotateX(-Math.PI / 2);
@@ -183,8 +183,11 @@ function dibujarPila() {
   const w = Math.max(1, r.width); const h = Math.max(1, r.height);
   if (pRen.domElement.width !== Math.round(w * DPR) || pRen.domElement.height !== Math.round(h * DPR)) pRen.setSize(w, h, false);
   // cámara isométrica; la pila completa cabe en el cuadro
-  const alto = (orden.length - 1) * SEP * Math.cos(ELEV) + BW * Math.sin(ELEV) + ALT_HOVER + 60;
-  const mitadH = Math.max(alto * 0.53, (BH * 0.56) / (w / h));
+  const alto = (orden.length - 1) * SEP * Math.cos(ELEV) + BW * Math.sin(ELEV) + ALT_HOVER + 40;
+  // la pila llena el ancho de su columna; el bloque se alarga lo necesario para que quepan todas las capas
+  const altoPx = Math.round(w * alto / (BH * 1.06));
+  if (Math.abs(pCont.offsetHeight - altoPx) > 2) pCont.style.height = `${altoPx}px`;
+  const mitadH = Math.max(alto * 0.5, (BH * 0.53) / (w / h));
   pCam.left = -mitadH * (w / h); pCam.right = mitadH * (w / h); pCam.top = mitadH; pCam.bottom = -mitadH; pCam.updateProjectionMatrix();
   
   const d = 900; const cy = -((orden.length - 1) * SEP) / 2 + 20; pCam.position.set(Math.cos(ELEV) * d, cy + Math.sin(ELEV) * d, 0); pCam.lookAt(0, cy, 0);
