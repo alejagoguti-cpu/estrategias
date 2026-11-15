@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#040607">
 <title>Especies de la isla de Tierra Bomba</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400&family=Geist:ital,wght@0,300..700;1,400&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#000000;
+  --bg:#040607;
   --ink:#f1f5f9;
   --ink-dim:#9aa7b4;
   --line:rgba(255,255,255,.12);
@@ -197,7 +197,69 @@ button{font-family:inherit;cursor:pointer}
 @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
 #left,#left *{scrollbar-width:none}#left::-webkit-scrollbar,#left *::-webkit-scrollbar{display:none;width:0;height:0}
 #left{max-height:calc(100% - 80px)}
-</style>
+/* ---------- diagramación de la presentación: mismo fondo, líneas finas, Barlow Condensed, Geist y Geist Mono, acento coral ---------- */
+:root{--bg:#040607;--ink:#e8eef0;--ink-dim:#a7b3b8;--ink-3:#6f7c82;--line:rgb(214 230 236 / .12);--line-m:rgb(214 230 236 / .22);--glass:rgb(6 9 11 / .86);--accent:#ff6b4a;--accent-soft:rgb(255 107 74 / .12);--tit:"Barlow Condensed","Arial Narrow",sans-serif;--mono:"Geist Mono",ui-monospace,monospace}
+html,body{background:var(--bg);font-weight:400}
+.glass{border-radius:0;box-shadow:none;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#top{top:16px;left:18px;right:18px}
+.brand{font:300 22px/1 var(--tit);text-transform:uppercase;letter-spacing:.02em;padding:10px 14px}
+.brand b{font-weight:300;color:var(--accent)}
+#q{border-radius:0;background:var(--glass);border:1px solid var(--line-m);font:400 12.5px "Geist",sans-serif}
+#q::placeholder{color:var(--ink-3)}
+.qr{border-radius:0}.qr .t1{font-weight:500}
+.btn{border-radius:0;background:var(--glass);border:1px solid var(--line-m);color:var(--ink-dim);font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.1em;padding:10px 13px}
+.btn:hover{color:var(--ink);border-color:var(--ink-dim)}
+.btn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+#left,#src,#insp{top:76px}
+#left{left:18px;width:310px;padding:18px}
+#src,#insp{right:18px}
+.ph h2,.relh{font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--ink-dim)}
+.relh{margin:18px 0 8px}
+.ph .mini button{border-radius:0;font:400 10.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.ph .mini button:hover{color:var(--ink);border-color:var(--ink-dim)}
+.cat,.ty,.sw,.totals div,.facts > div{border-radius:0;background:transparent;border:1px solid var(--line)}
+.cat::before{width:2px}
+.cat .nm{font-weight:500}.cat .ct,.ty b{font:400 12px var(--mono)}
+.cat img,.qr img,.rel img{border-width:1px}
+.ty{font-weight:400}.ty i{border-radius:0;width:8px;height:8px}
+.sw{font-weight:400}.sw .knob{border-radius:0}.sw .knob::after{border-radius:0}
+.sec{border-top:1px solid var(--line)}
+.totals{border-top:1px solid var(--line)}
+.totals b{font:300 28px/1 var(--tit);color:var(--accent)}
+.totals span{font:400 10.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);display:block;margin-top:4px}
+.credits{color:var(--ink-3);font-size:10.5px}
+.donut svg text{font-family:var(--mono)!important;font-weight:400!important}.cat .nm,.qr .t1{font-weight:500!important}
+.lg i{border-radius:0}.lg b{font:400 12px var(--mono)}
+.stbl th{font:400 10.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.stbl td.n{font:400 12px var(--mono)}
+.rel{border-radius:0}.rel .r1{font-weight:500}.rel .tag{font-weight:500}
+.rel .cb{border-radius:0;font:500 10px var(--mono);color:#040607}
+#insp .ph-img{border-radius:0}
+#insp h3{font:300 32px/1 var(--tit);text-transform:uppercase;letter-spacing:.01em}
+#insp .sci{font:italic 400 13px "Geist",sans-serif}
+.chip{border-radius:0;font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.08em}
+.chip i{border-radius:0}
+.facts .k{font:400 10.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.facts .v{font-weight:500}
+.acts a,.acts button{border-radius:0;font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.1em;background:transparent;border:1px solid var(--line-m)}
+.acts .pri{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.x{border-radius:0;background:var(--glass);border:1px solid var(--line-m);font-size:14px}
+#mode{border-radius:0;bottom:22px;gap:16px;padding:8px 8px 8px 18px}
+#mode .lb{font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
+#mode .lb.on{color:var(--ink)}
+#morph{height:1px;border-radius:0;background:var(--line-m)}
+#morph::-webkit-slider-thumb{width:12px;height:12px;border-radius:0;border:0;background:var(--accent)}
+#morph::-moz-range-thumb{width:12px;height:12px;border-radius:0;border:0;background:var(--accent)}
+#go{border-radius:0;background:transparent;border:1px solid var(--accent);color:var(--ink);font:400 11.5px var(--mono);text-transform:uppercase;letter-spacing:.14em;padding:12px 20px;transition:background .25s}
+#go:hover{filter:none;background:var(--accent-soft)}
+#tip{border-radius:0}#tip .t1{font:300 20px/1.05 var(--tit);text-transform:uppercase}#tip .t2{font:italic 400 12px "Geist",sans-serif}#tip .t3{font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.06em}
+#veil{background:var(--bg)}#veil .t{font:300 30px var(--tit);text-transform:uppercase;letter-spacing:.02em}
+#veil .bar{border-radius:0;height:1px;background:var(--line-m)}#veil .s{font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3)}
+@media (max-width:760px){
+  #top,#dock,#mode,#left,#insp,#src{background:var(--bg)!important}
+  .brand{font-size:20px;padding:2px 0}
+  #mode{border-bottom:1px solid var(--line)}
+}</style>
 </head>
 <body>
 <div id="app">
@@ -291,7 +353,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPrefere
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, IS_MOBILE ? 1.75 : 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x000000);
+scene.background = new THREE.Color(0x040607);
 scene.fog = new THREE.Fog(0x000000, 300, 700);
 const camera = new THREE.PerspectiveCamera(42, 1, 0.5, 20000);
 const controls = new OrbitControls(camera, canvas);
@@ -923,7 +985,7 @@ $('tyOff').onclick = () => { typeOn.fill(false); tyList.querySelectorAll('.ty').
 
 // panel de fuentes: de dónde viene la información
 {
-  const GROUPS = [['iNaturalist', '#2A78D6'], ['Artículos científicos', '#EB6834'], ['Bases de datos científicas', '#1BAF7A'], ['Colecciones de museos', '#EDA100']];
+  const GROUPS = [['iNaturalist', '#2e8aa0'], ['Artículos científicos', '#ff6b4a'], ['Bases de datos científicas', '#8fb39a'], ['Colecciones de museos', '#f2cf94']];
   const tot = REL.fuentes.reduce((s, f) => s + f[2], 0);
   const g = GROUPS.map(([k, c]) => ({ k, c, v: REL.fuentes.filter(f => f[1] === k).reduce((s, f) => s + f[2], 0), n: REL.fuentes.filter(f => f[1] === k).length }));
   let a0 = -Math.PI / 2;
@@ -971,7 +1033,7 @@ function applyFilter() {
   nodes.forEach(n => { n.on = catOn[n.sp.cat]; n.spr.visible = n.on; if (n.on) { ns++; no += n.sp.n; } });
   // puntos de registro
   const c = obsGeo.attributes.color, col = new THREE.Color();
-  DATA.obs.forEach(([si], k) => { const on = catOn[species[si].cat]; col.set(on ? CATS[species[si].cat].color : '#000000'); c.setXYZ(k, col.r, col.g, col.b); });
+  DATA.obs.forEach(([si], k) => { const on = catOn[species[si].cat]; col.set(on ? CATS[species[si].cat].color : '#040607'); c.setXYZ(k, col.r, col.g, col.b); });
   c.needsUpdate = true;
   $('tSp').textContent = ns; $('tOb').textContent = no;
   if (selected && !selected.on) select(null);
