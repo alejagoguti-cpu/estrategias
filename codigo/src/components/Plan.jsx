@@ -5,7 +5,8 @@ const clamp01 = (x) => Math.max(0, Math.min(1, x));
 
 /** pasos del plan maestro: cámara y capas que se encienden */
 export const PLAN_PASOS = [
-  { id: 'estrategia', corto: 'Estrategia', titulo: 'No luchar contra el mar: retirarse con orden', cam: 'plan_general' },
+  { id: 'isla', corto: 'Toda la isla', titulo: 'Primero, toda la isla', cam: 'isla' },
+  { id: 'estrategia', corto: 'La punta', titulo: 'Luego, la punta: el pueblo de Tierra Bomba', cam: 'plan_general' },
   { id: 'meseta', corto: 'La meseta', titulo: 'Suelo firme a +22 m', cam: 'plan_meseta' },
   { id: 'reubicar', corto: 'Reubicar', titulo: 'Las casas viajan a la meseta', cam: 'plan_general' },
   { id: 'vivienda', corto: 'Vivienda progresiva', titulo: 'Una vivienda que crece', cam: 'plan_meseta' },
@@ -16,9 +17,12 @@ export const PLAN_PASOS = [
 ];
 
 /** estado de la escena para el paso i, con avance local lf (0..1) dentro del paso */
-export function planEstado(i, lf) {
+export function planEstado(iPaso, lf) {
+  // paso 0: la isla completa (el borde que se pierde como parque costero y el suelo seguro sobre +22 m)
+  if (iPaso === 0) return { franja: 1, seguro: 1, etiq: 0, meseta: 0, vuelo: 0, viviendas: 0, escuela: 0, lluvia: 0, vias: 0, corredores: 0, parque: 0, humedal: 0 };
+  const i = iPaso - 1; // desde aquí, el plan de la punta
   const g = (n) => (i > n ? 1 : 0);
-  const e = { franja: 1, etiq: 1, meseta: i >= 1 ? 1 : 0 };
+  const e = { franja: 1, etiq: 1, seguro: 0, meseta: i >= 1 ? 1 : 0 };
   e.vuelo = i === 2 ? clamp01(lf * 1.25) : i > 2 ? 1 : 0;
   e.viviendas = i === 3 ? clamp01(lf * 1.2) : i > 3 ? 1 : 0;
   e.escuela = i === 4 ? 1 : i > 4 ? 1 : 0;

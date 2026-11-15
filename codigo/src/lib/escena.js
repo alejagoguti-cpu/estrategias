@@ -152,11 +152,12 @@ function parchearTerreno(mat, U) {
     sh.uniforms.uFranja = U.uFranja;
     sh.uniforms.uTime = U.uTime;
     sh.uniforms.uMidasOn = U.uMidasOn;
+    sh.uniforms.uSeguro = U.uSeguro;
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute vec2 aWin;\nvarying vec2 vWin;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWin = aWin;');
+      .replace('#include <common>', '#include <common>\nattribute vec2 aWin;\nvarying vec2 vWin;\nvarying float vAlt;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWin = aWin;\nvAlt = (modelMatrix * vec4(transformed, 1.0)).y;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nuniform sampler2D uLost;\nuniform float uYear;\nuniform float uMode;\nuniform float uDim;\nuniform sampler2D uPlan;\nuniform vec3 uPlanAmt;\nuniform float uFranja;\nuniform float uTime;\nuniform float uMidasOn;\nvarying vec2 vWin;')
+      .replace('#include <common>', '#include <common>\nuniform sampler2D uLost;\nuniform float uYear;\nuniform float uMode;\nuniform float uDim;\nuniform sampler2D uPlan;\nuniform vec3 uPlanAmt;\nuniform float uFranja;\nuniform float uTime;\nuniform float uMidasOn;\nuniform float uSeguro;\nvarying vec2 vWin;\nvarying float vAlt;')
       .replace(
         '#include <map_fragment>',
         `#include <map_fragment>
@@ -172,6 +173,16 @@ function parchearTerreno(mat, U) {
         }
         float front = smoothstep(0.8, 0.0, abs(lostAt - uYear)) * step(0.001, uYear) * (1.0 - uMode) * enTierra;
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.98, 0.94, 0.90), front * 0.8);
+        // plan a escala de isla: el suelo seguro sobre +22 m (en el relieve exagerado ×${EXAG}), con un borde que lo marca
+        if (uSeguro > 0.001 && !gone) {
+          float hSeg = 22.0 * ${EXAG.toFixed(2)} + 0.3;
+          float sobre = smoothstep(hSeg - 2.0, hSeg + 2.0, vAlt);
+          float borde = 1.0 - smoothstep(0.0, 3.5, abs(vAlt - hSeg));
+          float rayaS = step(0.78, fract((vWin.x * 1.3 - vWin.y) * 900.0));
+          vec3 arenaS = vec3(0.96, 0.84, 0.62);
+          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.6 + arenaS * 0.4, 0.55 * sobre * uSeguro);
+          diffuseColor.rgb = mix(diffuseColor.rgb, arenaS, (0.35 * rayaS * sobre + 0.9 * borde) * uSeguro);
+        }
         // plan maestro: la franja que se pierde pasa de rojo a parque; meseta segura, parque central y humedal
         if (uFranja > 0.001 && uYear > 0.001 && lostAt <= 30.0) {
           float raya = step(0.5, fract((vWin.x * 1.0 + vWin.y * 1.7) * 1100.0));
@@ -693,7 +704,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   planTex.minFilter = planTex.magFilter = THREE.LinearFilter;
   planTex.generateMipmaps = false;
   const U = {
-    uPlan: { value: planTex }, uPlanAmt: { value: new THREE.Vector3(0, 0, 0) }, uFranja: { value: 0 }, uTime: { value: 0 },
+    uPlan: { value: planTex }, uPlanAmt: { value: new THREE.Vector3(0, 0, 0) }, uFranja: { value: 0 }, uSeguro: { value: 0 }, uTime: { value: 0 },
     uLost: { value: lostTex }, uYear: { value: 0 }, uMode: { value: 0 }, uDim: { value: 0 }, uMidasOn: { value: 0 },
   };
   const terrainMat = new THREE.MeshStandardMaterial({ map: textureFrom(satImg, maxTex, (ctx, sc) => pintarVias(ctx, (lon, lat) => { const [tx, ty] = lonLatToTile(lon, lat); return [(tx - MOSAICO.x0) * 256 * sc, (ty - MOSAICO.y0) * 256 * sc]; }, mpp, sc)), roughness: 1, metalness: 0 });
@@ -1410,7 +1421,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   const planGroup = new THREE.Group();
   planGroup.visible = false;
   scene.add(planGroup);
-  const PLAN_KEYS = ['meseta', 'vuelo', 'viviendas', 'escuela', 'lluvia', 'vias', 'corredores', 'parque', 'humedal', 'franja', 'etiq'];
+  const PLAN_KEYS = ['meseta', 'vuelo', 'viviendas', 'escuela', 'lluvia', 'vias', 'corredores', 'parque', 'humedal', 'franja', 'etiq', 'seguro'];
   const planT = Object.fromEntries(PLAN_KEYS.map((k) => [k, 0]));
   const planC = Object.fromEntries(PLAN_KEYS.map((k) => [k, 0]));
   const dentro = (x, z, poly) => {
@@ -1644,6 +1655,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     for (const k of PLAN_KEYS) planC[k] += (planT[k] - planC[k]) * expo(dt, k === 'vuelo' || k === 'viviendas' ? 9 : 2.4);
     U.uPlanAmt.value.set(planC.meseta, planC.parque, planC.humedal);
     U.uFranja.value = planC.franja;
+    U.uSeguro.value = planC.seguro;
     U.uTime.value = t;
     const activo = PLAN_KEYS.some((k) => planC[k] > 0.01);
     planGroup.visible = activo;

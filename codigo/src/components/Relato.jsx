@@ -496,9 +496,19 @@ function PanelPlan({ paso, idx, stats, version }) {
   const cuerpos = [
     <>
       <p className="mt-3 text-[13px] leading-relaxed text-white/80">
-        En rojo, la franja que el mar se llevaría en 30 años ({fmt(stats.ha[30], 0)} ha). Defenderla con obra dura es incierto y costoso; la tesis propone lo contrario: dejar de ocupar ese borde y mover la vida a suelo firme, con orden.
+        El plan es para toda la isla. En 30 años el mar se llevaría {fmt(stats.ha[30], 0)} ha de borde en los cuatro sectores: ese borde no se vuelve a ocupar y se convierte en un parque costero continuo (verde). En arena, el suelo seguro, por encima de +22 m, hacia donde cada poblado puede retirarse.
       </p>
-      <p className="mt-3 text-[11px] leading-snug text-white/45">Es el mismo cálculo del capítulo 03 con el escenario que elegiste ahí.</p>
+      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-white/14 pt-3">
+        <div><p className="cifra text-[2.6rem] leading-none">{fmt(stats.ha[30], 0)}<span className="ml-1 text-sm font-normal text-white/55">ha</span></p><p className="mt-1.5 text-xs text-white/65">de borde a parque costero</p></div>
+        <div><p className="cifra text-[2.6rem] leading-none">829<span className="ml-1 text-sm font-normal text-white/55">ha</span></p><p className="mt-1.5 text-xs text-white/65">sobre +22 m (41 % de la isla)</p></div>
+      </div>
+      <p className="mt-3 text-[11px] leading-snug text-white/45">Suelo sobre +22 m según el relieve de esta presentación (≈30 m de resolución). Buena parte de ese suelo no es de la comunidad: por eso el plan empieza donde ya hay un polígono definido, en la punta.</p>
+    </>,
+    <>
+      <p className="mt-3 text-[13px] leading-relaxed text-white/80">
+        Luego el plan se acerca a la punta norte, al pueblo de Tierra Bomba: es el primer paso. Ahí el borde que se pierde (verde) está pegado a las casas, y la meseta segura queda a pocos metros. Defender ese borde con obra dura es incierto y costoso; la tesis propone dejar de ocuparlo y mover la vida a suelo firme, con orden.
+      </p>
+      <p className="mt-3 text-[11px] leading-snug text-white/45">La franja es el mismo cálculo del capítulo 03 con el escenario que elegiste ahí.</p>
     </>,
     <>
       <p className="mt-3 text-[13px] leading-relaxed text-white/80">
