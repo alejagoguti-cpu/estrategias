@@ -3,6 +3,7 @@ import { Sky } from 'three/examples/jsm/objects/Sky.js';
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BASE, prepararEspecies, instanciarArboles, vientoT } from './arboles.js';
 import { rampa, percentil } from './paleta.js';
 import { MESETA, ESCUELA, VIVIENDAS, PARQUE, HUMEDAL, VIAS, CORREDORES, PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from './plan.js';
@@ -627,20 +628,20 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   const maxTex = renderer.capabilities.maxTextureSize;
   const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
   // vías de OpenStreetMap pintadas como caminos de arena sobre la imagen: ancho según el tipo, borde irregular
-  const ANCHO_VIA = { residential: 6, unclassified: 5, service: 4, track: 3.5, path: 1.8, footway: 1.8, steps: 1.6, pedestrian: 2.5 };
+  const ANCHO_VIA = { residential: 9, unclassified: 8, service: 6, track: 5.5, path: 3.2, footway: 3, steps: 2.6, pedestrian: 4 };
   const pintarVias = (ctx, aPx, mPorPx, escala) => {
     const P = sintaxis.peatonal;
     let sem = 7; const rnd = () => { sem = (sem * 16807) % 2147483647; return sem / 2147483647; };
     const pasadas = [
-      { k: 1.45, col: 'rgba(120,100,70,0.22)' }, // borde sucio
-      { k: 1.0, col: 'rgba(198,176,134,0.78)' }, // arena
-      { k: 0.55, col: 'rgba(226,210,176,0.45)' }, // centro pisado, más claro
+      { k: 1.5, col: 'rgba(110,92,64,0.3)' }, // borde sucio
+      { k: 1.0, col: 'rgba(214,192,148,0.95)' }, // arena
+      { k: 0.55, col: 'rgba(236,222,190,0.6)' }, // centro pisado, más claro
     ];
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     for (const pas of pasadas) {
       ctx.strokeStyle = pas.col;
       P.coords.forEach(([a, b, c2, d], s) => {
-        const w = Math.max(0.8, ((ANCHO_VIA[P.tipo[s]] || 3) / mPorPx) * escala * pas.k);
+        const w = Math.max(1.6, ((ANCHO_VIA[P.tipo[s]] || 4) / mPorPx) * escala * pas.k);
         const [x0, y0] = aPx(a, b); const [x1, y1] = aPx(c2, d);
         const L = Math.hypot(x1 - x0, y1 - y0); const n = Math.max(1, Math.ceil(L / Math.max(2, w * 1.5)));
         ctx.beginPath(); ctx.moveTo(x0, y0);
@@ -797,7 +798,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     console.info('árboles detectados en la imagen satelital:', n, '· total', treeAll.length);
   }
   // Cerca de la cámara: los modelos escaneados; lejos: la misma copa simplificada (instancias ligeras)
-  const TREE_CERCA = small ? 900 : 2600; const R_CERCA = small ? 900 : 1400;
+  const TREE_CERCA = small ? 900 : 3000; const R_CERCA = small ? 900 : 1400;
   let treeCentro = [Infinity, Infinity];
   let rCorte = 0; // radio dentro del cual están los modelos completos (las copas simplificadas se apagan ahí)
   const cercanos = (cx2, cz2, anio) => {
@@ -810,24 +811,55 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   let treesGroup = instanciarArboles(especies, cercanos(vx, vz, -1), 60);
   treeCentro = [vx, vz];
   let treesYear = -1;
-  const copaGeo = new THREE.IcosahedronGeometry(0.5, 1); copaGeo.scale(1, 0.75, 1); copaGeo.translate(0, 0.62, 0);
-  const copaMat = new THREE.MeshStandardMaterial({ color: 0x3f5a2a, roughness: 0.95, metalness: 0 });
+  // Árboles lejanos: «impostores» del MISMO modelo escaneado (Island Tree 01 y 02). Cada especie se fotografía
+  // una vez, de lado, a una textura con transparencia; lejos se dibuja en dos planos cruzados. Cerca, el modelo 3D completo.
+  const fotosArbol = especies.map((parts) => {
+    const esc = new THREE.Scene();
+    esc.add(new THREE.HemisphereLight(0xdff0ff, 0x4a4030, 1.25));
+    const luz = new THREE.DirectionalLight(0xfff0d8, 2.2); luz.position.set(-1, 1.6, 1.2); esc.add(luz);
+    const box = new THREE.Box3();
+    parts.forEach((pt) => { const m = new THREE.Mesh(pt.geometry, pt.material); esc.add(m); pt.geometry.computeBoundingBox(); box.union(pt.geometry.boundingBox); });
+    const ancho = Math.max(box.max.x - box.min.x, box.max.z - box.min.z);
+    const lado = Math.max(1, ancho);
+    const cam = new THREE.OrthographicCamera(-lado / 2, lado / 2, 1.02, -0.02, 0.01, 10);
+    cam.position.set(0, 0.5, 4); cam.lookAt(0, 0.5, 0);
+    const RT = 512; const rt = new THREE.WebGLRenderTarget(Math.round(RT * lado / 1.04), RT, { samples: 4 });
+    rt.texture.colorSpace = THREE.SRGBColorSpace;
+    const prevT = renderer.getRenderTarget(); const prevC = new THREE.Color(); renderer.getClearColor(prevC); const prevA = renderer.getClearAlpha();
+    renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(esc, cam);
+    renderer.setRenderTarget(prevT); renderer.setClearColor(prevC, prevA);
+    rt.texture.generateMipmaps = true; rt.texture.minFilter = THREE.LinearMipmapLinearFilter; rt.texture.anisotropy = aniso;
+    return { tex: rt.texture, ancho: lado, rt };
+  });
+  cleanups.push(() => fotosArbol.forEach((f) => f.rt.dispose()));
   const uLejos = { uCentro: { value: new THREE.Vector2(vx, vz) }, uR: { value: 0 } };
-  copaMat.onBeforeCompile = (sh) => {
-    sh.uniforms.uCentro = uLejos.uCentro; sh.uniforms.uR = uLejos.uR; sh.uniforms.uYear = U.uYear; sh.uniforms.uMode = U.uMode;
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec2 uCentro; uniform float uR; uniform float uYear; uniform float uMode; attribute float aLost;')
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\n vec2 pI = instanceMatrix[3].xz;\n if (length(pI - uCentro) < uR || (uMode > 0.5 && uYear > 0.001 && aLost <= uYear)) transformed *= 0.0;');
-  };
-  copaMat.customProgramCacheKey = () => 'copa-lejos';
-  const copas = new THREE.InstancedMesh(copaGeo, copaMat, treeAll.length);
+  const copas = new THREE.Group();
   {
+    const porEsp = fotosArbol.map(() => []);
+    treeAll.forEach((t, k) => { porEsp[(Math.imul(k + 1, 2654435761) >>> 0) % fotosArbol.length].push(t); });
     const m4 = new THREE.Matrix4(); const q = new THREE.Quaternion(); const s = new THREE.Vector3(); const p = new THREE.Vector3(); const c = new THREE.Color(); const up = new THREE.Vector3(0, 1, 0);
-    const aLost = new Float32Array(treeAll.length);
-    treeAll.forEach((t, k) => { q.setFromAxisAngle(up, t.rot); s.set(t.height * 0.62, t.height, t.height * 0.62); p.set(t.x, t.y, t.z); m4.compose(p, q, s); copas.setMatrixAt(k, m4); const v = 0.8 + t.tone * 0.4; c.setRGB(v * 0.9, v, v * 0.78); copas.setColorAt(k, c); aLost[k] = t.lostAt < 0 ? 999 : t.lostAt; });
-    copaGeo.setAttribute('aLost', new THREE.InstancedBufferAttribute(aLost, 1));
-    copas.instanceMatrix.needsUpdate = true; copas.instanceColor.needsUpdate = true;
+    fotosArbol.forEach((foto, e) => {
+      const a = new THREE.PlaneGeometry(foto.ancho, 1); a.translate(0, 0.5, 0);
+      const b = a.clone(); b.rotateY(Math.PI / 2);
+      const geo = mergeGeometries([a, b]);
+      const nrm = geo.attributes.normal; for (let v = 0; v < nrm.count; v++) nrm.setXYZ(v, 0, 1, 0); // luz pareja: la foto ya trae su sombreado
+      const lista = porEsp[e];
+      const aLost = new Float32Array(lista.length);
+      const mat = new THREE.MeshLambertMaterial({ map: foto.tex, alphaTest: 0.45, side: THREE.DoubleSide, transparent: false });
+      mat.onBeforeCompile = (sh) => {
+        sh.uniforms.uCentro = uLejos.uCentro; sh.uniforms.uR = uLejos.uR; sh.uniforms.uYear = U.uYear; sh.uniforms.uMode = U.uMode;
+        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec2 uCentro; uniform float uR; uniform float uYear; uniform float uMode; attribute float aLost;')
+          .replace('#include <begin_vertex>', '#include <begin_vertex>\n vec2 pI = instanceMatrix[3].xz;\n if (length(pI - uCentro) < uR || (uMode > 0.5 && uYear > 0.001 && aLost <= uYear)) transformed *= 0.0;');
+      };
+      mat.customProgramCacheKey = () => `impostor-${e}`;
+      const im = new THREE.InstancedMesh(geo, mat, Math.max(1, lista.length));
+      lista.forEach((t, k) => { q.setFromAxisAngle(up, t.rot); s.setScalar(t.height); p.set(t.x, t.y, t.z); m4.compose(p, q, s); im.setMatrixAt(k, m4); const v = 0.84 + t.tone * 0.3; c.setRGB(v * 0.84, v * 1.0, v * 0.74); im.setColorAt(k, c); aLost[k] = t.lostAt < 0 ? 999 : t.lostAt; });
+      geo.setAttribute('aLost', new THREE.InstancedBufferAttribute(aLost, 1));
+      im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
+      im.frustumCulled = false; im.castShadow = false;
+      copas.add(im);
+    });
   }
-  copas.frustumCulled = false;
 
   // ---------- construcciones ----------
   onProgreso(0.84, 'Colocando las construcciones');
@@ -1025,7 +1057,9 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         vec2 rizo = vec2(ondas(p / 0.9 + vec2(uTime * 1.6, 0.0)), ondas(p.yx / 0.75 + vec2(3.1, -uTime * 1.4))) - 0.5;
         g += rizo * 0.07 * (1.0 - smoothstep(40.0, 220.0, dc));
         vec2 n2 = g * 4.0;
-        vec3 n = normalize(vec3(-g.x, 1.0, -g.y));
+        // pendiente acotada: con olas muy inclinadas el reflejo rasante del cielo daba rayas blancas vistas desde arriba
+        vec2 gc = g * 0.55; float lg = length(gc); if (lg > 0.09) gc *= 0.09 / lg;
+        vec3 n = normalize(vec3(-gc.x, 1.0, -gc.y));
         vec3 V = normalize(cameraPosition - vWorld);
         float cosT = max(dot(n, V), 0.0);
         float F = 0.02 + 0.98 * pow(1.0 - cosT, 5.0);
@@ -1037,7 +1071,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         vec2 ruv = rp.xy / rp.w + n.xz * (0.035 / (1.0 + dc / 2500.0));
         vec4 rt = texture2D(uRefl, clamp(ruv, 0.001, 0.999));
         vec3 refl = mix(skyA, min(rt.rgb, vec3(0.85)), rt.a * uReflOn); // donde el espejo no ve nada, cielo sin disco solar
-        refl *= vec3(0.74, 0.84, 0.92); // el agua refleja menos que un espejo y tiñe el reflejo de azul
+        refl = min(refl, vec3(0.62, 0.72, 0.8)); refl *= vec3(0.74, 0.84, 0.92); // el agua refleja menos que un espejo y tiñe el reflejo de azul
         // costa: distancia del mar a la tierra
         vec2 uv = vec2((vWorld.x / uMpt + uWin.x) / uWin.z, (vWorld.z / uMpt + uWin.y) / uWin.w);
         float inWin = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
@@ -1070,14 +1104,14 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
         vec3 col = mix(body, refl, clamp(F, 0.0, 1.0));
         // destellos del sol sobre las olas (finos, no un disco)
         float sd = max(dot(R, uSun), 0.0);
-        col += vec3(1.0, 0.94, 0.84) * pow(sd, 1400.0) * 3.5 * lod * lod; // de lejos el destello se apaga (si no, forma una mancha)
+        col += vec3(1.0, 0.94, 0.84) * pow(sd, 700.0) * 1.1 * lod * lod * smoothstep(0.15, 0.6, 1.0 - cosT); // destello solo mirando rasante, no desde arriba // de lejos el destello se apaga (si no, forma una mancha)
         // espuma: una línea fina que respira donde rompe la ola
         float ws = 0.5 + 0.5 * sin(dm / 5.0 - uTime * 1.1 + n2.x * 3.0);
         float rompe = (1.0 - smoothstep(0.0, 14.0, dm)) * (0.35 + 0.65 * ws) * borde;
         col = mix(col, vec3(0.86, 0.9, 0.9), clamp(rompe * 0.45, 0.0, 0.45));
         // espuma suave solo en las crestas más altas, cerca de la cámara
         float blanca = smoothstep(0.68, 0.95, cresta) * (1.0 - smoothstep(200.0, 900.0, dc));
-        col = mix(col, vec3(0.84, 0.9, 0.92), blanca * 0.08);
+        // (sin espuma en crestas: desde arriba se veía como rayas blancas)
         // en las vistas de mapa el terreno se oscurece para leer las líneas: el agua se oscurece igual (si no, la orilla brilla como neón)
         col *= mix(1.0, 0.42, uDim);
         gl_FragColor = vec4(col, 1.0);
