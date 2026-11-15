@@ -1,31 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import D from '../data/porques.json';
 
-// El problema hasta la raíz, como diagrama: el problema arriba, tres ramas que bajan con «¿por qué?»
-// y una raíz común abajo. Cada nodo es un problema en una frase; al tocarlo se abre lo que lo muestra y su fuente.
+// El problema hasta la raíz: una sola cadena de «¿por qué?» que baja desde el problema hasta su causa de raíz.
+// Cada nivel responde al anterior. Al tocar un nivel se abre lo que lo muestra y su fuente.
 const fmt = (n) => Math.round(n).toLocaleString('es-CO');
 
-const RAMAS = [
-  { titulo: 'El borde', nodos: [
-    { t: 'Las casas del borde se deterioran y se pierden', d: '891 de 2.600 construcciones quedan en la franja que el mar alcanza en 30 años.', f: 'Modelo de esta presentación (INVEMAR, MIDAS).' },
-    { t: 'El mar avanza sobre una costa sin protección', d: 'Retroceso medido de 0,63 a 3 m por año entre 1994 y 2011.', f: 'INVEMAR-MADS-Alcaldía-CDKN (2012).' },
-    { t: 'El pueblo creció en la parte más baja, pegado al agua', d: `${fmt(D.p3.bajo5)} construcciones a menos de 5 m sobre el mar.`, f: 'Terrain Tiles y archivo de la tesis.' },
-    { t: 'La economía de la isla depende de la orilla', d: 'Se vive de la pesca, las lanchas y el turismo de playa.', f: 'Cartagena Cómo Vamos (2022).' },
-  ] },
-  { titulo: 'La tierra', nodos: [
-    { t: 'Nadie se traslada a la parte alta, que es segura', d: `${fmt(D.p3.enMeseta)} construcciones en la meseta, sobre +22 m.`, f: 'Polígono de la meseta y archivo de la tesis.' },
-    { t: 'La tierra alta no es de la comunidad', d: 'Unas 1.080 ha son de particulares; 261 ha de la Armada y 176 ha de la Nación.', f: 'Incoder, Res. 4192 de 2015 (Semana, Dejusticia).' },
-    { t: 'Ni el suelo del pueblo es de quienes lo habitan', d: 'Las 379 ha del poblado quedaron a nombre del Distrito.', f: 'Res. 4192 de 2015; Dejusticia.' },
-    { t: 'La tenencia de la tierra no está resuelta', d: 'El Consejo Comunitario pide título colectivo de 2.039 ha; depende de que el Distrito done su predio.', f: 'Dejusticia; Publimetro (2023).' },
-  ] },
-  { titulo: 'Cartagena', nodos: [
-    { t: 'La isla depende de Cartagena para casi todo', d: '614 viajes en un día desde la isla a Bocagrande, en un solo embarcadero (2014).', f: 'Estudio de transporte acuático (2014).' },
-    { t: 'Faltan en la isla el agua, la salud y el estudio completo', d: 'Sin acueducto ni alcantarillado; el agua llega en bongos. Sin ambulancia acuática.', f: 'Alcaldía de Cartagena; El Universal.' },
-    { t: 'No hay empleo ni ingresos propios', d: '96,7 % de la población en pobreza.', f: 'Cartagena Cómo Vamos (2019–2020).' },
-    { t: 'Las decisiones y la inversión vienen de afuera', d: 'Agua, muelles y suelo se deciden en Cartagena y Bogotá; el acueducto espera aprobación desde 2024.', f: 'El Universal (2024); POT de Cartagena (2001).' },
-  ] },
+const PROBLEMA = 'Las familias de Tierra Bomba pierden el suelo donde viven y no tienen a dónde moverse dentro de su propia isla';
+
+const CADENA = [
+  { q: '¿Por qué pierden el suelo donde viven?', t: 'Porque viven en la franja baja del borde, que el mar está erosionando', d: `${fmt(D.p3.bajo5)} construcciones a menos de 5 m sobre el mar; la costa retrocede de 0,63 a 3 m por año.`, f: 'Terrain Tiles y archivo de la tesis; INVEMAR-MADS-Alcaldía-CDKN (2012).' },
+  { q: '¿Por qué viven en el borde?', t: 'Porque de la orilla dependen el trabajo y la salida a Cartagena', d: 'Se vive de la pesca, las lanchas y el turismo de playa, y todo viaje sale del muelle.', f: 'Cartagena Cómo Vamos (2022); estudio de transporte acuático (2014).' },
+  { q: '¿Por qué no se mueven a la parte alta, que es segura?', t: 'Porque esa tierra no es de la comunidad', d: `Solo ${fmt(D.p3.enMeseta)} construcciones en la meseta; unas 1.080 ha de la isla son de particulares, 261 ha de la Armada y 176 ha de la Nación.`, f: 'Incoder, Res. 4192 de 2015 (Semana, Dejusticia).' },
+  { q: '¿Por qué la tierra no es de la comunidad?', t: 'Porque nunca obtuvo el título de la tierra que ocupa: ni el suelo del pueblo es suyo', d: 'Las 379 ha del poblado quedaron a nombre del Distrito; el título colectivo de 2.039 ha sigue sin resolverse.', f: 'Res. 4192 de 2015; Dejusticia; Publimetro (2023).' },
+  { q: '¿Por qué no se ha resuelto?', t: 'Porque las decisiones sobre la isla se toman desde afuera, sin la comunidad', d: 'El título depende de que el Distrito done su predio, y el proyecto se retiró del Concejo; el agua, los muelles y el suelo también se deciden en Cartagena y Bogotá.', f: 'Dejusticia; Publimetro (2023); El Universal (2024).', raiz: true },
 ];
-function useVisto(ref, umbral = 0.2) {
+
+function useVisto(ref, umbral = 0.15) {
   const [v, setV] = useState(false);
   useEffect(() => {
     const el = ref.current; if (!el) return undefined;
@@ -35,67 +25,40 @@ function useVisto(ref, umbral = 0.2) {
   return v;
 }
 
-function Nodo({ x, i, ri, on, alTocar, visto }) {
-  const raiz = i === 3; const ret = 0.6 + i * 0.45 + ri * 0.1;
+function Nivel({ x, i, on, alTocar }) {
+  const ref = useRef(null); const visto = useVisto(ref, 0.5);
+  const ancho = 100 - i * 6; // cada nivel un poco más angosto: se va hacia la raíz
   return (
-    <li className="relative flex flex-col items-center" style={{ opacity: visto ? 1 : 0, transform: `translateY(${visto ? 0 : 20}px)`, transition: `opacity .8s cubic-bezier(.16,1,.3,1) ${ret}s, transform .8s cubic-bezier(.16,1,.3,1) ${ret}s` }}>
-      {i > 0 && (
-        <div className="relative h-10 w-px" aria-hidden="true">
-          <span className="absolute inset-0 origin-top bg-[var(--linea-fuerte)]" style={{ transform: `scaleY(${visto ? 1 : 0})`, transition: `transform .45s ease ${ret - 0.15}s` }} />
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 whitespace-nowrap font-mono text-[9px] uppercase tracking-[.12em] text-[var(--tinta-3)]">por qué</span>
-        </div>
-      )}
+    <li ref={ref} className="flex flex-col items-center">
+      <div className="relative h-16 w-px" aria-hidden="true">
+        <span className="absolute inset-0 origin-top bg-[var(--linea-fuerte)]" style={{ transform: `scaleY(${visto ? 1 : 0})`, transition: 'transform .6s ease' }} />
+      </div>
+      <p className="mb-3 text-center font-mono text-[11px] uppercase tracking-[.12em] text-[var(--tinta-2)]" style={{ opacity: visto ? 1 : 0, transition: 'opacity .6s ease .25s' }}>{x.q}</p>
       <button type="button" onClick={alTocar} aria-expanded={on}
-        className={`w-full max-w-[17rem] border px-4 py-3 text-center transition-colors ${raiz ? 'border-arcilla bg-[rgb(255_107_74/.1)]' : on ? 'border-[var(--tinta-2)] bg-[var(--campo-1)]' : 'border-[var(--linea-media)] bg-[rgb(8_11_13/.5)] hover:border-[var(--tinta-2)]'}`}>
-        {raiz && <span className="etiqueta mb-1 block text-[9.5px] text-arcilla">Problema de raíz</span>}
-        <span className={`block text-[15px] font-medium leading-snug ${raiz ? 'text-white' : 'text-white/90'}`}>{x.t}</span>
-        {on && <span className="mt-2 block border-t border-[var(--linea)] pt-2 text-left text-[12px] leading-snug text-white/70"><span className="etiqueta mb-1 block text-[9px] text-[var(--tinta-3)]">Lo que lo muestra</span>{x.d}<span className="mt-1 block text-[10.5px] text-[var(--tinta-3)]">{x.f}</span></span>}
+        className={`border px-5 py-4 text-center transition-colors sm:px-8 sm:py-5 ${x.raiz ? 'border-arcilla bg-[rgb(255_107_74/.12)]' : on ? 'border-[var(--tinta-2)] bg-[var(--campo-1)]' : 'border-[var(--linea-media)] bg-[rgb(8_11_13/.55)] hover:border-[var(--tinta-2)]'}`}
+        style={{ width: `min(${ancho}%, 46rem)`, opacity: visto ? 1 : 0, transform: `translateY(${visto ? 0 : 18}px)`, transition: 'opacity .8s cubic-bezier(.16,1,.3,1) .4s, transform .8s cubic-bezier(.16,1,.3,1) .4s, border-color .2s, background-color .2s' }}>
+        {x.raiz && <span className="etiqueta mb-2 block text-arcilla">Raíz</span>}
+        <span className={`block leading-snug ${x.raiz ? 'text-xl text-white sm:text-2xl' : 'text-base text-white/90 sm:text-lg'}`}>{x.t}</span>
+        {on && <span className="mx-auto mt-3 block max-w-xl border-t border-[var(--linea)] pt-3 text-[12.5px] leading-snug text-white/70">{x.d}<span className="mt-1 block text-[10.5px] text-[var(--tinta-3)]">{x.f}</span></span>}
       </button>
     </li>
   );
 }
 
 export default function Porques() {
-  const ref = useRef(null); const visto = useVisto(ref, 0.12);
+  const ref = useRef(null); const visto = useVisto(ref, 0.3);
   const [abierto, setAbierto] = useState(null);
   return (
     <section id="porques" className="relative text-papel">
-      <div className="relative mx-auto max-w-[1400px] px-3 py-16 sm:px-8 sm:py-24 lg:px-12">
-        <div ref={ref} className="border border-[var(--linea-media)] px-4 py-10 sm:px-10 sm:py-14" style={{ background: 'rgba(8,11,13,0.62)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
-          {/* problema */}
-          <div className="text-center" style={{ opacity: visto ? 1 : 0, transition: 'opacity .9s ease' }}>
+      <div className="relative mx-auto max-w-[1200px] px-3 py-16 sm:px-8 sm:py-24">
+        <div className="border border-[var(--linea-media)] px-4 py-12 sm:px-10 sm:py-16" style={{ background: 'rgba(8,11,13,0.62)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
+          <div ref={ref} className="text-center" style={{ opacity: visto ? 1 : 0, transform: `translateY(${visto ? 0 : 16}px)`, transition: 'opacity .9s ease, transform .9s cubic-bezier(.16,1,.3,1)' }}>
             <p className="etiqueta text-arcilla">El problema</p>
-            <h2 className="mx-auto mt-3 max-w-3xl text-3xl sm:text-4xl lg:text-5xl">El mar se lleva el suelo donde vive la gente</h2>
+            <h2 className="mx-auto mt-4 max-w-4xl text-3xl sm:text-4xl lg:text-5xl">{PROBLEMA}</h2>
           </div>
-          {/* tres ramas que salen del problema (escritorio) */}
-          <svg viewBox="0 0 1200 90" preserveAspectRatio="none" className="mt-6 hidden h-20 w-full lg:block" aria-hidden="true">
-            {[200, 600, 1000].map((x, k) => (
-              <path key={x} d={`M600 0 C 600 50, ${x} 40, ${x} 90`} fill="none" stroke="rgba(214,230,236,.42)" strokeWidth="1.2" vectorEffect="non-scaling-stroke" pathLength="1" strokeDasharray="1" strokeDashoffset={visto ? 0 : 1} style={{ transition: `stroke-dashoffset 1s cubic-bezier(.65,0,.35,1) ${0.3 + k * 0.1}s` }} />
-            ))}
-          </svg>
-          <div className="mt-8 grid gap-14 lg:mt-0 lg:grid-cols-3 lg:gap-6">
-            {RAMAS.map((r, ri) => (
-              <div key={r.titulo}>
-                <p className="text-center font-mono text-[11px] uppercase tracking-[.16em] text-white" style={{ opacity: visto ? 1 : 0, transition: `opacity .8s ease ${0.4 + ri * 0.1}s` }}>{r.titulo}</p>
-                <ol className="mt-4">
-                  {r.nodos.map((x, i) => {
-                    const id = `${ri}-${i}`;
-                    return <Nodo key={id} x={x} i={i} ri={ri} visto={visto} on={abierto === id} alTocar={() => setAbierto(abierto === id ? null : id)} />;
-                  })}
-                </ol>
-              </div>
-            ))}
-          </div>
-          {/* las raíces convergen */}
-          <svg viewBox="0 0 1200 90" preserveAspectRatio="none" className="hidden h-20 w-full lg:block" aria-hidden="true">
-            {[200, 600, 1000].map((x, k) => (
-              <path key={x} d={`M${x} 0 C ${x} 50, 600 40, 600 90`} fill="none" stroke="#ff6b4a" strokeWidth="1.4" vectorEffect="non-scaling-stroke" pathLength="1" strokeDasharray="1" strokeDashoffset={visto ? 0 : 1} style={{ transition: `stroke-dashoffset 1.1s cubic-bezier(.65,0,.35,1) ${2.6 + k * 0.1}s` }} />
-            ))}
-          </svg>
-          <div className="mx-auto mt-12 max-w-xl border border-arcilla px-6 py-6 text-center lg:mt-0" style={{ background: 'rgb(255 107 74 / .12)', opacity: visto ? 1 : 0, transform: `translateY(${visto ? 0 : 16}px)`, transition: 'opacity 1s ease 3.1s, transform 1s cubic-bezier(.16,1,.3,1) 3.1s' }}>
-            <p className="etiqueta text-arcilla">Raíz común</p>
-            <p className="mt-2 text-2xl leading-tight sm:text-3xl" style={{ fontFamily: "'Barlow Condensed', sans-serif", fontWeight: 300, textTransform: 'uppercase' }}>La comunidad no controla su suelo ni sus servicios</p>
-          </div>
+          <ol className="mt-4">
+            {CADENA.map((x, i) => <Nivel key={x.q} x={x} i={i} on={abierto === i} alTocar={() => setAbierto(abierto === i ? null : i)} />)}
+          </ol>
         </div>
       </div>
     </section>
