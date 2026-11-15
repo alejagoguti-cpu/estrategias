@@ -37,7 +37,7 @@ const rampaRGB = Object.fromEntries(Object.entries(RAMPAS).map(([k, v]) => [k, v
 const colorDe = (rampa, t) => { const st = rampaRGB[rampa]; const x = clamp01(t) * (st.length - 1); const i = Math.min(st.length - 2, Math.floor(x)); const f = x - i; return [0, 1, 2].map((k) => st[i][k] + (st[i + 1][k] - st[i][k]) * f); };
 const gradCSS = (rampa) => `linear-gradient(90deg, ${RAMPAS[rampa].join(', ')})`;
 /* ---------- datos ---------- */
-const D = await (await fetch(BASE + 'analisis/capas.json')).json();
+const D = await (await fetch(BASE + 'datos/capas_lectura.json')).json();
 const { gw: GW, gh: GH, celdaM } = D.malla;
 const N = GW * GH;
 const isla = b64(D.isla);
@@ -213,7 +213,7 @@ function abrirFicha(c) {
 const alEsc = (e) => { if (e.key === 'Escape') $('#ficha-capa').classList.remove('on'); }; addEventListener('keydown', alEsc);
 /* ================= 5. relaciones ================= */
 const TEXTOS_REL = {
-  '': '12 lecturas del mismo encuadre, sobre la misma malla de 47 m. Hasta aquí cada una se lee sola; desde aquí empiezan a relacionarse.',
+  '': `${D.capas.length} lecturas del mismo encuadre, sobre la misma malla de 47 m. Hasta aquí cada una se lee sola; desde aquí empiezan a relacionarse.`,
   'modo-norm': 'Cada variable llega en su propia unidad: metros, años, clases, conteos. Para hablar un lenguaje comparable se lleva a 0–1 con el método que le corresponde; no hay una sola normalización.',
   'modo-media': 'Varias capas del mismo proceso comparten un peso: la cobertura arbórea y los registros de especies se promedian en el valor ecológico, con pesos iguales.',
   'modo-op': 'Las capas que describen el mar (distancia a la costa, amenaza, retroceso y zona inundable) se unen en la exposición; desde ella se cruzan con la gente, la red y la vida.',
@@ -238,7 +238,7 @@ const puntos = new THREE.Points(geo, new THREE.PointsMaterial({ vertexColors: tr
 escena.add(lineas, puntos);
 const ctrl3d = new OrbitControls(cam, renderer.domElement); ctrl3d.enableDamping = true; ctrl3d.autoRotate = !pausado; ctrl3d.autoRotateSpeed = 0.9; ctrl3d.maxPolarAngle = Math.PI * 0.48; ctrl3d.minDistance = 1500; ctrl3d.maxDistance = 16000;
 cam.position.set(2600, 6200, 7600); ctrl3d.target.set(0, 0, 0);
-const MODOS = [['relieve', 'Solo relieve'], ['E', 'Exposición'], ['H', 'Presión habitacional'], ['R', 'Red expuesta'], ['V', 'Valor ecológico'], ['inundable', 'Zona inundable'], ['retroceso', 'Años hasta el retroceso']];
+const MODOS = [['relieve', 'Solo relieve'], ['E', 'Exposición'], ['H', 'Presión habitacional'], ['R', 'Red expuesta'], ['V', 'Valor ecológico'], ['inundable', 'Zona inundable'], ['economia', 'Economía y turismo'], ['sintesis', 'Síntesis de picos'], ['drenaje', 'Drenaje y escorrentía'], ['retroceso', 'Años hasta el retroceso']];
 const TEXTO_REL = 'El terreno real de la isla, de 0 a {max} m, como una superficie de líneas y puntos. Elija una capa para vestir la topografía con sus valores; arrastre para girarla.';
 $('#relieve-texto').textContent = TEXTO_REL.replace('{max}', fmt(D.stats.elevMax));
 const colsBase = new Float32Array(nv * 3); let modoActual = 'relieve';
