@@ -834,21 +834,12 @@ export default function Relato({ api, sinEscena }) {
             {sinEscena && <p className="mt-8 text-sm text-white/60">Este dispositivo no pudo mostrar la vista 3D; se muestra la imagen satelital y los datos.</p>}
           </div>
         </div>
-        <div className="relative bg-tinta/88 px-5 py-20 backdrop-blur-sm sm:px-12 sm:py-28">
-          <Red
-            etiqueta="Sistema de relaciones"
-            titulo="La tierra que retrocede."
-            centro={{ titulo: 'Pérdida de suelo costero', sub: 'Problema central', icono: 'suelo', detalle: PROBLEMA }}
-            nodos={NODOS_PROBLEMA}
-            textoFinal="Ver cómo lo viven ↓"
-            alFinal={() => document.getElementById('social')?.scrollIntoView({ behavior: 'smooth' })}
-          />
-        </div>
+        {/* el problema desplegado, en vidrio sobre la isla */}
+        <Porques />
       </section>
 
       {/* 02 · lo social */}
       {/* la isla y sus cuatro sectores, en puntos */}
-      <Porques />
       <Sectores />
       <Social />
       {/* 02 · erosión (la escena la mueve el scroll) */}

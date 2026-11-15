@@ -43,16 +43,15 @@ function Linea({ hitos }) {
 const P1 = D.p1.filter((x) => x.n > 0);
 const NIVELES = [
   {
-    frase: 'Las viviendas y los modos de habitar',
-    sub: 'Estado de deterioro y usos distintos según el tramo de costa y la cercanía al muelle.',
-    hip: null,
+    frase: 'Viviendas deterioradas y modos de habitar distintos',
+    sub: 'El estado de las viviendas y la forma de habitarlas cambian según el tramo de costa y la cercanía al muelle.',
     mide: () => (
-      <p className="text-[13px] leading-relaxed text-white/75">{fmt(D.total)} construcciones en el archivo de la tesis, repartidas en cuatro sectores. Cada porqué de abajo es una hipótesis que se prueba con un dato.</p>
+      <p className="text-[13px] leading-relaxed text-white/75">{fmt(D.total)} construcciones en el archivo de la tesis, repartidas en cuatro sectores. Cada nivel que se despliega es una relación que se prueba con un dato.</p>
     ),
   },
   {
-    frase: '¿Por qué se deterioran?',
-    hip: 'La erosión del tramo donde están.',
+    frase: 'Erosión del tramo de costa',
+    sub: 'Las viviendas se deterioran según la erosión del tramo de costa donde están.',
     erosion: true,
     mide: () => (
       <>
@@ -63,8 +62,8 @@ const NIVELES = [
     ),
   },
   {
-    frase: '¿Por qué hay viviendas en el borde?',
-    hip: 'El muelle en la orilla es la puerta a Cartagena.',
+    frase: 'Vivienda concentrada en el borde',
+    sub: 'Se vive en la orilla porque ahí está el muelle, la puerta de salida hacia Cartagena.',
     mide: () => (
       <>
         <p className="mb-3 text-[13px] text-white/75">Distancia en línea recta de cada vivienda al punto de embarque más cercano. Mediana: <strong className="num text-white">{fmt(D.p2.mediana)} m</strong>.</p>
@@ -74,8 +73,8 @@ const NIVELES = [
     ),
   },
   {
-    frase: '¿Por qué no en la parte alta?',
-    hip: 'El suelo, el acceso y la topografía.',
+    frase: 'Parte alta sin ocupar',
+    sub: 'Subir no ha sido opción: la tenencia del suelo, el acceso y la topografía lo frenan.',
     erosion: true,
     mide: () => (
       <>
@@ -87,8 +86,8 @@ const NIVELES = [
     ),
   },
   {
-    frase: '¿Por qué la isla depende de Cartagena?',
-    hip: 'Agua, alimentos, trabajo, educación y salud vienen de afuera.',
+    frase: 'Dependencia de Cartagena',
+    sub: 'Agua, alimentos, trabajo, educación y salud llegan de afuera, y casi todo pasa por el muelle.',
     mide: () => (
       <>
         <div className="grid grid-cols-2 gap-4">
@@ -106,8 +105,8 @@ const NIVELES = [
     ),
   },
   {
-    frase: '¿Qué decidió dónde van servicios y muelles?',
-    hip: 'Decisiones y normas del Distrito.',
+    frase: 'Decisiones del Distrito',
+    sub: 'Dónde quedan servicios y muelles lo han definido normas y planes de Cartagena, no la isla.',
     mide: () => (
       <Linea hitos={[
         ['2001', 'Plan de Ordenamiento Territorial de Cartagena', 'Capa «POT 2001» en MIDAS'],
@@ -131,16 +130,17 @@ export default function Porques() {
   const PASO = 12; // % de sangría por escalón (escritorio)
 
   return (
-    <section id="porques" className="relative overflow-hidden bg-tinta text-papel">
+    <section id="porques" className="relative text-papel">
       {/* fondo: retícula muy tenue */}
-      <div className="pointer-events-none absolute inset-0 opacity-[0.07]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)', backgroundSize: '64px 64px' }} aria-hidden="true" />
-      <div className="relative mx-auto max-w-[1760px] px-5 py-16 sm:px-10 sm:py-24 lg:px-12">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-tinta/40" aria-hidden="true" />
+      <div className="relative mx-auto max-w-[1640px] px-3 py-16 sm:px-8 sm:py-24 lg:px-12">
+        <div className="rounded-[10px] border border-white/15 px-5 py-10 shadow-[0_24px_60px_-20px_rgba(0,0,0,.55)] sm:px-10 sm:py-12 lg:px-14" style={{ background: 'rgba(11,16,21,0.42)', backdropFilter: 'blur(5px) saturate(1.3)', WebkitBackdropFilter: 'blur(5px) saturate(1.3)' }}>
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="etiqueta text-arcilla">Cinco porqués</p>
-            <h2 className="mt-4 max-w-6xl text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-8xl">Del problema a lo que hay que medir.</h2>
+            <p className="etiqueta text-arcilla">El problema, desplegado</p>
+            <h2 className="mt-4 max-w-4xl text-3xl sm:text-4xl lg:text-5xl">Del problema a lo que hay que medir.</h2>
           </div>
-          <p className="max-w-md text-base leading-relaxed text-white/60">Entre un porqué y otro no decimos «causa»: decimos <span className="text-white">«se relaciona con»</span>, hasta que el dato lo confirme.</p>
+          <p className="max-w-md text-sm leading-relaxed text-white/70">Entre un nivel y otro no decimos «causa»: decimos <span className="text-white">«se relaciona con»</span>, hasta que el dato lo confirme.</p>
         </div>
 
         <div className="mt-14 grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(24rem,1fr)] lg:gap-16">
@@ -166,7 +166,7 @@ export default function Porques() {
                     </span>
                     <span className="min-w-0">
                       {i === 0 && <span className="etiqueta block text-arcilla">Problema central</span>}
-                      <span className={`block font-semibold leading-[1.05] tracking-tight transition-colors ${i === 0 ? 'text-3xl sm:text-5xl' : 'text-2xl sm:text-4xl'} ${on ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>{nv.frase}</span>
+                      <span className={`block font-semibold leading-[1.05] tracking-tight transition-colors ${i === 0 ? 'text-2xl sm:text-3xl' : 'text-lg sm:text-2xl'} ${on ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>{nv.frase}</span>
                       {nv.erosion && <span className="mt-1 inline-flex items-center gap-1.5 text-[11px] text-[#ff9a7a]"><i className="inline-block h-1.5 w-1.5 rounded-full bg-[#ff6b4a]" />erosión costera</span>}
                     </span>
                   </button>
@@ -175,7 +175,7 @@ export default function Porques() {
             })}
             <li className="porque-escalon mt-10 flex items-center gap-4" style={{ paddingLeft: 'var(--sangria)', '--sangria': `${Math.min(vistos, 5) * PASO}%` }}>
               {!completo ? (
-                <button type="button" onClick={siguiente} className="porque-siguiente red-boton">{vistos === 1 ? '¿Por qué? ↓' : 'Siguiente porqué ↓'}</button>
+                <button type="button" onClick={siguiente} className="porque-siguiente red-boton">{vistos === 1 ? 'Desplegar el problema ↓' : 'Siguiente nivel ↓'}</button>
               ) : (
                 <button type="button" onClick={() => { setVistos(1); setSel(0); }} className="red-boton">Volver a empezar ↺</button>
               )}
@@ -185,26 +185,22 @@ export default function Porques() {
 
           {/* panel de medición */}
           <aside ref={panelRef} className="scroll-mt-20 lg:sticky lg:top-24 lg:self-start">
-            <div key={sel} className="porque-panel rounded-[8px] border border-white/12 bg-white/[0.035] p-6 backdrop-blur-sm sm:p-8">
-              <p className="etiqueta text-arcilla">{sel === 0 ? 'Problema central' : `Porqué ${sel}`}</p>
-              <p className="mt-3 text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">{n.frase}</p>
-              {n.sub && <p className="mt-3 text-sm leading-relaxed text-white/65">{n.sub}</p>}
-              {n.hip && (
-                <div className="mt-5 flex gap-3 border-l-2 border-arcilla pl-4">
-                  <p className="text-[15px] leading-snug text-white/85"><span className="etiqueta mb-1 block text-white/45">Hipótesis</span>{n.hip}</p>
-                </div>
-              )}
+            <div key={sel} className="porque-panel rounded-[8px] border border-white/15 bg-tinta/45 p-6 sm:p-8">
+              <p className="etiqueta text-arcilla">{sel === 0 ? 'Problema central' : `Nivel ${sel} · se relaciona con el anterior`}</p>
+              <p className="mt-3 text-xl font-semibold leading-tight tracking-tight sm:text-2xl">{n.frase}</p>
+              {n.sub && <p className="mt-4 border-l-2 border-arcilla pl-4 text-[15px] leading-snug text-white/85">{n.sub}</p>}
               <p className="etiqueta mb-4 mt-7 text-white/45">Cómo se mide</p>
               {n.mide()}
             </div>
             {/* la erosión, conectada con los porqués 1 y 3 */}
             {vistos >= 2 && (
               <div className={`porque-panel mt-4 rounded-[8px] border border-dashed p-5 transition-colors ${NIVELES[sel]?.erosion ? 'border-[#ff6b4a] bg-[#ff6b4a]/10' : 'border-[#ff6b4a]/40'}`}>
-                <p className="etiqueta text-[#ff9a7a]">Erosión costera · se relaciona con los porqués 1 y 3</p>
+                <p className="etiqueta text-[#ff9a7a]">Erosión costera · se relaciona con los niveles 1 y 3</p>
                 <p className="mt-2 text-sm leading-relaxed text-white/75">La costa que retrocede condiciona qué viviendas se deterioran y hacia dónde conviene subir. INVEMAR midió en la isla de 0,63 a 3 m/año.</p>
               </div>
             )}
           </aside>
+        </div>
         </div>
       </div>
     </section>

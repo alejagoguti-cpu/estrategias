@@ -347,7 +347,6 @@ function Convivencia() {
         textoFinal="Ver los datos de escuela ↓"
         alFinal={() => document.getElementById('social-escuela')?.scrollIntoView({ behavior: 'smooth' })}
       />
-      <Calendario />
     </div>
   );
 }
@@ -364,27 +363,7 @@ function Escuela() {
           <Pictograma por={10} cols={30} grupos={[{ v: 729, l: 'Sede Tierra Bomba (34 grupos)', c: ARC }, { v: 157, l: 'Sede Punta Arena (8 grupos)', c: CIELO }]} />
         </div>
       </div>
-      <div>
-        <p className="etiqueta text-white/50">Quiénes estudiaban en Tierra Bomba · matrícula reportada en 2022</p>
-        <div className="mt-5 grid gap-10 md:grid-cols-2">
-          <div><p className="mb-3 text-[13px] text-white/70">Por sexo</p><Dona tam={170} centro="2022" sub="matrícula" partes={[{ v: 46, l: 'Mujeres', c: ARC }, { v: 54, l: 'Hombres', c: ARENA }]} /></div>
-          <div><p className="mb-3 text-[13px] text-white/70">Por nivel (porcentajes redondeados)</p><Dona tam={170} centro="4" sub="niveles" partes={[{ v: 8, l: 'Preescolar', c: CIELO }, { v: 43, l: 'Primaria', c: ARC }, { v: 35, l: 'Secundaria', c: MAR }, { v: 13, l: 'Media', c: ARENA }]} /></div>
-          <div className="md:col-span-2">
-            <p className="mb-3 text-[13px] text-white/70">Sede de Punta Arena, por nivel</p>
-            <Dona tam={150} centro="Punta" sub="Arena" partes={[{ v: 15, l: 'Preescolar', c: CIELO }, { v: 85, l: 'Primaria', c: ARC }]} />
-            <p className="mt-3 text-[12px] leading-snug text-white/60">Para cursar sexto grado, los estudiantes de Punta Arena tenían que cambiar de sede.</p>
-          </div>
-        </div>
-      </div>
-      <div>
-        <p className="etiqueta text-white/50">Deserción durante el año escolar · I.E. de Tierra Bomba</p>
-        <div className="mt-6"><Columnas max={4.2} datos={[{ v: 2.6, l: 'Tierra Bomba 2019', c: ARC }, { v: 0.9, l: 'Tierra Bomba 2022', c: MAR }, { v: 3.9, l: 'Promedio distrital 2022', c: '#9aa7b4' }]} /></div>
-      </div>
-      <div>
-        <p className="etiqueta text-white/50">¿Había un deterioro educativo asociado a la erosión? · 238 habitantes encuestados</p>
-        <div className="mt-4"><Dona tam={170} centro="238" sub="encuestados" partes={[{ v: 47.9, l: 'Lo percibía', c: ARC }, { v: 52.1, l: 'En desacuerdo', c: 'rgba(255,255,255,0.35)' }]} /></div>
-        <p className="mt-2 text-[12px] leading-snug text-white/60">El estudio de 2017 documentó docentes que viajaban en lancha desde Cartagena; el oleaje alto dificultaba su llegada.</p>
-      </div>
+      <p className="max-w-2xl text-[13px] leading-relaxed text-white/70">La sede de Punta Arena solo tiene preescolar y primaria: para cursar sexto grado los estudiantes deben cambiar de sede. El estudio de 2017 documentó docentes que viajaban en lancha desde Cartagena; el oleaje alto dificultaba su llegada.</p>
 
       <div className="border border-dashed border-white/30 p-5">
         <p className="etiqueta text-[#e0917a]">Dato que falta</p>
@@ -433,12 +412,7 @@ function Conexiones() {
         <p className="etiqueta text-white/50">Embarcadero del Hospital de Bocagrande · 13 horas, de 6:00 a. m. a 7:00 p. m. · aforo de mayo de 2014</p>
         <div className="mt-4"><Lanchas ida={614} vuelta={407} /></div>
       </div>
-      <div>
-        <p className="etiqueta text-white/50">Centro de Salud de Tierra Bomba · renovado en 2022</p>
-        <div className="mt-5"><Areas a={{ v: 84, l: 'Área en uso, antes', c: 'rgba(255,255,255,0.4)' }} b={{ v: 253, l: 'Área en uso, después (2022)', c: MAR }} /></div>
-        <p className="mb-3 mt-8 text-[13px] text-white/70">Capacidad anunciada: 170 servicios semanales</p>
-        <Dona tam={170} centro="170" sub="servicios / semana" partes={[{ v: 72, l: 'Medicina general', c: MAR, suf: '' }, { v: 48, l: 'Odontología y vacunación', c: CIELO, suf: '' }, { v: 50, l: 'Toma de muestras', c: ARENA, suf: '' }]} />        <p className="mt-2 text-[12px] leading-snug text-white/60">Habitantes también reportaron viajes en lancha a Bocagrande para recibir atención médica.</p>
-      </div>
+      <p className="max-w-2xl text-[13px] leading-relaxed text-white/70">El Centro de Salud de Tierra Bomba se renovó en 2022 (de 84 a 253 m² en uso); aun así, habitantes reportaron viajes en lancha a Bocagrande para recibir atención médica.</p>
 
       <div>
         <p className="etiqueta text-white/50">Vía entre los cuatro poblados · inaugurada en 2021</p>
@@ -454,15 +428,6 @@ function Conexiones() {
         <p className="mt-3 text-[12px] leading-snug text-white/60">El diagnóstico distrital registra el uso de mototaxis para los desplazamientos internos.</p>
       </div>
 
-      <div>
-        <p className="etiqueta text-white/50">Equipamientos culturales y comunitarios del poblado</p>
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-          {['Casa de la Cultura Belmir Caraballo Díaz', 'Iglesia', 'Cementerio', 'Estación de Policía'].map((e) => (
-            <li key={e} className="border-t border-white/18 pt-2 text-[13px] text-white/85">{e}</li>
-          ))}
-        </ul>
-        <p className="mt-3 text-[12px] leading-snug text-white/60">El cementerio y la iglesia aparecen en testimonios e investigaciones sobre afectaciones del borde costero.</p>
-      </div>
     </div>
   );
 }

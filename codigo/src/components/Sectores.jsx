@@ -101,35 +101,42 @@ export default function Sectores() {
     <section id="sectores" className="relative bg-tinta text-papel">
       <div className="mx-auto max-w-[1760px] px-5 py-16 sm:px-10 sm:py-24 lg:px-12">
         <p className="etiqueta text-arcilla">Del encuadre al sector</p>
-        <h2 className="mt-4 text-4xl font-semibold leading-[1.02] tracking-tight sm:text-6xl lg:text-8xl">La isla y sus cuatro sectores.</h2>
+        <h2 className="mt-4 text-4xl sm:text-5xl lg:text-6xl">La isla y sus cuatro sectores.</h2>
         <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,30rem)] lg:gap-12">
           <canvas ref={cvRef} className="block h-[72svh] min-h-[460px] w-full lg:h-[88svh]" aria-label="Mapa de puntos de Tierra Bomba con sus cuatro sectores; toca un punto rojo para acercarte" />
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col lg:pt-2">
+            <ul className="border-t border-white/15">
             {[['isla', 'La isla', null], ...CLAVES.map((k) => [k, SECT[k].nombre, datos ? datos.res[CLAVES.indexOf(k)] : null])].map(([k, t, rr]) => {
               const on = sel === k;
               return (
-                <button key={k} type="button" onClick={() => setSel(k)} aria-pressed={on}
-                  className={`rounded-[6px] border p-5 text-left transition-all duration-300 ${on ? 'border-arcilla bg-arcilla/12 shadow-[0_18px_50px_-24px_rgba(200,109,81,.7)]' : 'border-white/12 bg-white/[0.03] hover:border-white/35'}`}>
+                <li key={k} className="border-b border-white/15">
+                <button type="button" onClick={() => setSel(k)} aria-pressed={on}
+                  className="group relative w-full py-4 pl-5 pr-1 text-left">
+                  <span className={`absolute left-0 top-4 h-[calc(100%-2rem)] w-[2px] transition-colors duration-300 ${on ? 'bg-arcilla' : 'bg-transparent'}`} />
                   <div className="flex items-baseline justify-between gap-3">
-                    <p className={`font-semibold tracking-tight ${on ? 'text-3xl' : 'text-2xl'} transition-all`}>{t}</p>
-                    {k !== 'isla' && <p className="num text-sm text-white/55">{fmt(SECT[k].cons)} construcciones</p>}
+                    <p className={`text-xl tracking-tight transition-colors sm:text-2xl ${on ? 'text-white' : 'text-white/60 group-hover:text-white'}`}>{t}</p>
+                    {k !== 'isla' ? <p className="num text-[12px] text-white/45">{fmt(SECT[k].cons)} construcciones</p> : datos && <p className="num text-[12px] text-white/45">{fmt(datos.haIsla)} ha · 2.600 construcciones</p>}
                   </div>
-                  {k === 'isla' && datos && <p className="mt-2 text-sm text-white/65">{fmt(datos.haIsla)} ha de tierra emergida · 2.600 construcciones</p>}
                   {rr && (
                     <div className={`grid transition-[grid-template-rows] duration-500 ${on ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
                       <div className="overflow-hidden">
-                        <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-white/15 pt-4">
-                          <div><dd className="num text-3xl font-semibold lg:text-4xl">{fmt(rr.ha)}</dd><dt className="mt-1 text-[11px] text-white/55">ha del sector</dt></div>
-                          <div><dd className="num text-3xl font-semibold text-[#ff8a7a] lg:text-4xl">{fmt(rr.ha30)}</dd><dt className="mt-1 text-[11px] text-white/55">ha perdidas a 30 años ({fmt((100 * rr.ha30) / rr.ha)} %)</dt></div>
-                          <div><dd className="num text-3xl font-semibold text-[#8cc4ff] lg:text-4xl">{fmt(rr.haInu)}</dd><dt className="mt-1 text-[11px] text-white/55">ha en zona inundable</dt></div>
+                        <div className="mt-4 flex h-2 w-full overflow-hidden bg-white/12" aria-hidden="true">
+                          <span className="h-full bg-arcilla" style={{ width: `${(100 * rr.ha30) / rr.ha}%` }} />
+                          <span className="h-full" style={{ width: `${(100 * Math.min(rr.haInu, rr.ha - rr.ha30)) / rr.ha}%`, background: 'repeating-linear-gradient(135deg, rgba(244,241,236,.55) 0 2px, transparent 2px 5px)' }} />
+                        </div>
+                        <dl className="mt-3 grid grid-cols-3 gap-3">
+                          <div><dd className="num text-xl text-white sm:text-2xl">{fmt(rr.ha)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">del sector</dt></div>
+                          <div><dd className="num text-xl text-[#e0917a] sm:text-2xl">{fmt(rr.ha30)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">perdidas a 30 años ({fmt((100 * rr.ha30) / rr.ha)} %)</dt></div>
+                          <div><dd className="num text-xl text-white/85 sm:text-2xl">{fmt(rr.haInu)} <span className="text-[12px] text-white/45">ha</span></dd><dt className="text-[11px] text-white/50">en zona inundable</dt></div>
                         </dl>
                       </div>
                     </div>
                   )}
                 </button>
+                </li>
               );
             })}
-            <p className="mt-2 text-[11px] leading-snug text-white/40">Puntos: celdas de 47 m con el color de la imagen satelital (Esri World Imagery); costa © OpenStreetMap. Sector de cada celda: el punto de referencia más cercano del archivo de la tesis. Pérdida a 30 años: retroceso por tramo con tasas de INVEMAR; zona inundable: MIDAS.</p>
+            </ul>            <p className="mt-2 text-[11px] leading-snug text-white/40">Puntos: celdas de 47 m con el color de la imagen satelital (Esri World Imagery); costa © OpenStreetMap. Sector de cada celda: el punto de referencia más cercano del archivo de la tesis. Pérdida a 30 años: retroceso por tramo con tasas de INVEMAR; zona inundable: MIDAS.</p>
           </div>
         </div>
       </div>
