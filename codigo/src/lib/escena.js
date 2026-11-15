@@ -28,7 +28,7 @@ export const TASA_CLASE = { 'Muy Alta': 3.0, Alta: 1.5, Moderada: 0.63, Baja: 0.
 export const TASA = TASA_MEDIA; // tramos de costa sin clase en MIDAS
 export const AÑO_BASE = 2025; // «hoy» del modelo
 export const COLOR_CLASE_EROSION = { 'Muy Alta': '#ff2d2d', Alta: '#ff8c1a', Moderada: '#ffe14d', Baja: '#9be15d', 'Muy Baja': '#2ecc71', SD: '#cccccc' };
-export const COLOR_MIDAS = { zona: '#6fb6ff' };
+export const COLOR_MIDAS = { zona: '#f2cf94' };
 
 // Nivel del agua que alcanza la tierra baja en cada horizonte (años desde hoy), con valores medidos para Cartagena:
 //  - marea astronómica de sicigia 0,20 m y sobreelevación de tormenta de 10 años de retorno 0,20 m;
@@ -185,10 +185,13 @@ function parchearTerreno(mat, U) {
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.16, 0.58, 0.30), 0.62 * pz.g * uPlanAmt.y);
         diffuseColor.rgb += vec3(0.30, 0.95, 0.45) * (1.0 - smoothstep(0.0, 0.16, abs(pz.g - 0.5))) * uPlanAmt.y * 0.4;
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.20, 0.62, 0.78), 0.66 * pz.b * uPlanAmt.z);
-        // zona inundable oficial de MIDAS: rayado azul suave
+        // zona inundable oficial de MIDAS: velo arena claro con rayado fino (no compite con el rojo de la erosión)
         if (uMidasOn > 0.001 && lt.b > 0.5) {
-          float rayaM = step(0.6, fract((vWin.x * 1.78 - vWin.y) * 650.0));
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.32, 0.6, 1.0), (0.16 + 0.34 * rayaM) * uMidasOn);
+          float fr = fract((vWin.x * 1.78 - vWin.y) * 900.0);
+          float rayaM = smoothstep(0.80, 0.86, fr) * (1.0 - smoothstep(0.94, 1.0, fr));
+          vec3 arena = vec3(0.97, 0.82, 0.55);
+          diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.6 + arena * 0.4, 0.5 * uMidasOn);
+          diffuseColor.rgb = mix(diffuseColor.rgb, arena, 0.55 * rayaM * uMidasOn);
         }`
       );
   };
@@ -1716,7 +1719,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     lineMats.push(m);
   };
   {
-    trazoMidas([...(midasJson.moderada2019 || []), ...(midasJson.fuerte2040 || [])].filter(sobreIsla), new THREE.Color(COLOR_MIDAS.zona).getHex(), 2.2);
+    trazoMidas([...(midasJson.moderada2019 || []), ...(midasJson.fuerte2040 || [])].filter(sobreIsla), new THREE.Color(COLOR_MIDAS.zona).getHex(), 1.6);
     const porClase = {};
     (midasJson.erosion || []).filter((e) => sobreIsla(e.pts)).forEach(({ clase, pts }) => { (porClase[clase] = porClase[clase] || []).push(pts); });
     Object.entries(porClase).forEach(([clase, ls]) => trazoMidas(ls, new THREE.Color(COLOR_CLASE_EROSION[clase] || '#cccccc').getHex(), 5));

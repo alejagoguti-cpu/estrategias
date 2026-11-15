@@ -154,7 +154,7 @@ function PanelErosion({ stats, anio, modo, ctrl, setCtrl }) {
       </label>
       {ctrl.verMidas && (
         <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-white/65">
-          <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-4" style={{ background: `repeating-linear-gradient(135deg, ${COLOR_MIDAS.zona} 0 2px, transparent 2px 5px)`, outline: `1px solid ${COLOR_MIDAS.zona}` }} />Zona inundable {mid.años[0]}–{mid.años[1]}</span>
+          <span className="flex items-center gap-1.5"><i className="inline-block h-2.5 w-4" style={{ background: `repeating-linear-gradient(135deg, ${COLOR_MIDAS.zona} 0 1.5px, rgba(242,207,148,.25) 1.5px 5px)`, outline: `1px solid ${COLOR_MIDAS.zona}` }} />Zona inundable {mid.años[0]}–{mid.años[1]}</span>
           {['Muy Alta', 'Alta', 'Moderada', 'Baja'].map((c) => (
             <span key={c} className="flex items-center gap-1.5"><i className="inline-block h-[5px] w-4" style={{ background: COLOR_CLASE_EROSION[c] }} />Erosión {c.toLowerCase()}</span>
           ))}
@@ -194,7 +194,7 @@ function PanelErosion({ stats, anio, modo, ctrl, setCtrl }) {
 
       {ctrl.verMidas && (
         <p className="mt-3 flex items-baseline gap-2 border-t border-white/14 pt-3 text-xs leading-snug text-white/70">
-          <span className="num text-xl font-semibold text-[#8cc4ff]">{fmt(mid.casasZona)}</span>
+          <span className="num text-xl font-semibold text-[#f2cf94]">{fmt(mid.casasZona)}</span>
           <span>viviendas dentro de la zona inundable oficial de MIDAS ({fmt(mid.haZona, 0)} ha de la isla). Es amenaza por eventos, no tierra perdida.</span>
         </p>
       )}
@@ -219,7 +219,7 @@ function PanelErosion({ stats, anio, modo, ctrl, setCtrl }) {
           : anio === 0
             ? 'La costa actual, según la silueta oficial de la isla. Desplázate: el mar empieza a avanzar.'
             : ctrl.modelo === 'midas'
-              ? `En rojo, la tierra que se pierde por erosión: cada tramo de costa retrocede según su amenaza en MIDAS, con las tasas medidas por INVEMAR en la isla. En azul rayado, la zona inundable oficial por ascenso del nivel del mar (escenarios ${mid.años[0]} y ${mid.años[1]}). El frente naranja es la costa de ese año.`
+              ? `En rojo, la tierra que se pierde por erosión: cada tramo de costa retrocede según su amenaza en MIDAS, con las tasas medidas por INVEMAR en la isla. En arena rayado, la zona inundable oficial por ascenso del nivel del mar (escenarios ${mid.años[0]} y ${mid.años[1]}). El frente naranja es la costa de ese año.`
             : ctrl.modelo === 'leva'
               ? 'En rojo, lo que el borde que retrocede o una marea de leva alcanza, siguiendo las curvas de nivel: el oleaje trepa por la costa y entra por la tierra baja. El frente naranja es el avance de ese año.'
               : ctrl.modelo === 'manual'
