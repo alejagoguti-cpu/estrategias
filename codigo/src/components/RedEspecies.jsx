@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-// Red de especies de la isla (aplicación aparte, embebida). Se carga solo cuando la sección se acerca a la pantalla,
+// Red de especies de la isla (aplicación aparte, embebida). Empieza a cargar al llegar a «Tramas de vida», para estar lista al final del recorrido,
 // para no frenar la carga de la escena 3D.
 // copia de la aplicación con colores suaves y la tipografía del sitio (lee sus datos de anasoficasca-code.github.io/tierrabomba)
 const URL_RED = `${import.meta.env.BASE_URL}especies/`;
@@ -11,7 +11,7 @@ export default function RedEspecies() {
   const [lista, setLista] = useState(false);
   useEffect(() => {
     const el = ref.current; if (!el) return undefined;
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setCargar(true); io.disconnect(); } }, { rootMargin: '600px 0px' });
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setCargar(true); io.disconnect(); } }, { rootMargin: '0px 0px 1200% 0px' });
     io.observe(el); return () => io.disconnect();
   }, []);
   return (
@@ -37,7 +37,6 @@ export default function RedEspecies() {
               className="absolute inset-0 h-full w-full transition-opacity duration-700"
               style={{ opacity: lista ? 1 : 0 }}
               onLoad={() => setLista(true)}
-              loading="lazy"
               allow="fullscreen"
             />
           )}

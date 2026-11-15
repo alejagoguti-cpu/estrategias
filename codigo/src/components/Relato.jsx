@@ -7,6 +7,7 @@ import Sectores from './Sectores.jsx';
 import Porques from './Porques.jsx';
 import RedEspecies from './RedEspecies.jsx';
 import Lectura from './Lectura.jsx';
+import Tramas from './Tramas.jsx';
 import { PLAN_PASOS, planEstado } from './Plan.jsx';
 import { PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from '../lib/plan.js';
 
@@ -33,7 +34,8 @@ const CAPITULOS = [
   { id: 'vias', n: '04', nombre: 'Las vías', corto: 'Vías' },
   { id: 'sintaxis', n: '05', nombre: 'Sintaxis espacial', corto: 'Sintaxis' },
   { id: 'plan', n: '06', nombre: 'Plan maestro', corto: 'Plan' },
-  { id: 'especies', n: '07', nombre: 'Especies de la isla', corto: 'Especies' },
+  { id: 'tramas', n: '07', nombre: 'Especies de la isla', corto: 'Especies' },
+  { id: 'especies', n: '07', nombre: 'Red de especies', corto: 'Red' },
   { id: 'cierre', n: '08', nombre: 'Lo que sigue', corto: 'Cierre' },
 ];
 
@@ -914,6 +916,7 @@ export default function Relato({ api, sinEscena }) {
         </>
       )}
 
+      <Tramas />
       <RedEspecies />
       <Cierre api={api} version={version} />
     </div>

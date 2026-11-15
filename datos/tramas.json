@@ -1,0 +1,180 @@
+{
+ "especies": 436,
+ "relaciones": 920,
+ "pares": [
+  {
+   "a": {
+    "tid": 120917,
+    "es": "Algodoncillo gigante",
+    "sci": "Calotropis procera",
+    "grupo": "Flora",
+    "foto": true
+   },
+   "b": {
+    "tid": 48662,
+    "es": "Mariposa monarca",
+    "sci": "Danaus plexippus",
+    "grupo": "Insectos",
+    "foto": true
+   },
+   "tipo": "Herbivoría y frugivoría",
+   "tipos": [
+    "Herbivoría y frugivoría",
+    "Parasitismo, hospederos y patógenos",
+    "Visita floral y polinización"
+   ],
+   "fuente": "iNaturalist (observaciones ciudadanas con interacción)"
+  },
+  {
+   "a": {
+    "tid": 62850,
+    "es": "Mangle Botoncillo",
+    "sci": "Conocarpus erectus",
+    "grupo": "Flora",
+    "foto": true
+   },
+   "b": {
+    "tid": 16798,
+    "es": "Tirano gris",
+    "sci": "Tyrannus dominicensis",
+    "grupo": "Aves",
+    "foto": true
+   },
+   "tipo": "Refugio y hábitat",
+   "tipos": [
+    "Refugio y hábitat"
+   ],
+   "fuente": "iNaturalist (observaciones ciudadanas con interacción)"
+  },
+  {
+   "a": {
+    "tid": 47238,
+    "es": "Pez trompeta",
+    "sci": "Aulostomus maculatus",
+    "grupo": "Peces",
+    "foto": true
+   },
+   "b": {
+    "tid": 49306,
+    "es": "Jaquetas",
+    "sci": "Stegastes",
+    "grupo": "Peces",
+    "foto": true
+   },
+   "tipo": "Depredación",
+   "tipos": [
+    "Depredación"
+   ],
+   "fuente": "Carvajal-Quintero et al. 2026, redes tróficas de peces (Science Advances)"
+  },
+  {
+   "a": {
+    "tid": 62841,
+    "es": "Anacahuitas, ciricotes y parientes",
+    "sci": "Cordia",
+    "grupo": "Flora",
+    "foto": true
+   },
+   "b": {
+    "tid": 10295,
+    "es": "Tangara azulgrís",
+    "sci": "Thraupis episcopus",
+    "grupo": "Aves",
+    "foto": true
+   },
+   "tipo": "Dispersión de semillas",
+   "tipos": [
+    "Dispersión de semillas",
+    "Herbivoría y frugivoría"
+   ],
+   "fuente": "Fricke y Svenning 2020, red global planta-frugívoro (Nature)"
+  },
+  {
+   "a": {
+    "tid": 130743,
+    "es": "Verdolaga de playa",
+    "sci": "Sesuvium portulacastrum",
+    "grupo": "Flora",
+    "foto": true
+   },
+   "b": {
+    "tid": 51111,
+    "es": "Abejas Carpinteras Grandes",
+    "sci": "Xylocopa",
+    "grupo": "Insectos",
+    "foto": true
+   },
+   "tipo": "Mutualismo y simbiosis",
+   "tipos": [
+    "Mutualismo y simbiosis",
+    "Visita floral y polinización"
+   ],
+   "fuente": "iNaturalist (observaciones ciudadanas con interacción)"
+  },
+  {
+   "a": {
+    "tid": 62819,
+    "es": "Ceibas o pochotes",
+    "sci": "Ceiba",
+    "grupo": "Flora",
+    "foto": true
+   },
+   "b": {
+    "tid": 4999,
+    "es": "Garza Nocturna Corona Clara",
+    "sci": "Nyctanassa violacea",
+    "grupo": "Aves",
+    "foto": true
+   },
+   "tipo": "Refugio y hábitat",
+   "tipos": [
+    "Refugio y hábitat"
+   ],
+   "fuente": "iNaturalist (observaciones ciudadanas con interacción)"
+  },
+  {
+   "a": {
+    "tid": 49150,
+    "es": "Mariposa pasionaria motas blancas",
+    "sci": "Dione vanillae",
+    "grupo": "Insectos",
+    "foto": true
+   },
+   "b": {
+    "tid": 51448,
+    "es": "Maracuyá silvestre",
+    "sci": "Passiflora foetida",
+    "grupo": "Flora",
+    "foto": true
+   },
+   "tipo": "Herbivoría y frugivoría",
+   "tipos": [
+    "Herbivoría y frugivoría",
+    "Parasitismo, hospederos y patógenos",
+    "Visita floral y polinización"
+   ],
+   "fuente": "iNaturalist (observaciones ciudadanas con interacción)"
+  },
+  {
+   "a": {
+    "tid": 4328,
+    "es": "Pelícano café",
+    "sci": "Pelecanus occidentalis",
+    "grupo": "Aves",
+    "foto": true
+   },
+   "b": {
+    "tid": 144539,
+    "es": "Charrán Real",
+    "sci": "Thalasseus maximus",
+    "grupo": "Aves",
+    "foto": true
+   },
+   "tipo": "Competencia",
+   "tipos": [
+    "Competencia"
+   ],
+   "fuente": "iNaturalist (observaciones ciudadanas con interacción)"
+  }
+ ]
+}
