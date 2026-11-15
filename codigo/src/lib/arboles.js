@@ -84,7 +84,7 @@ export async function prepararEspecies() {
 export function instanciarArboles(especies, lista, celda = 60) {
   const bloques = new Map();
   lista.forEach((t, i) => {
-    const sp = (Math.imul(i + 1, 2654435761) >>> 0) % especies.length;
+    const sp = t.sp ?? (Math.imul(i + 1, 2654435761) >>> 0) % especies.length; // especie fija del árbol: no cambia al moverse la cámara
     const key = `${sp}:${Math.floor(t.x / celda)}:${Math.floor(t.z / celda)}`;
     if (!bloques.has(key)) bloques.set(key, []);
     bloques.get(key).push(t);

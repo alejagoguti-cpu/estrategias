@@ -806,13 +806,14 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   }
   // Cerca de la cámara: los modelos escaneados; lejos: la misma copa simplificada (instancias ligeras)
   const TREE_CERCA = small ? 600 : 1500; const R_CERCA = small ? 900 : 1400;
+  treeAll.forEach((t, k) => { t.sp = (Math.imul(k + 1, 2654435761) >>> 0) % especies.length; }); // especie fija por árbol
   let treeCentro = [Infinity, Infinity];
   let rCorte = 0; // radio dentro del cual están los modelos completos (las copas simplificadas se apagan ahí)
   const cercanos = (cx2, cz2, anio) => {
-    const l = treeAll.filter((tr) => (anio < 0 || tr.lostAt > anio) && Math.abs(tr.x - cx2) < R_CERCA && Math.abs(tr.z - cz2) < R_CERCA)
-      .map((tr) => [tr, (tr.x - cx2) ** 2 + (tr.z - cz2) ** 2]).sort((a, b) => a[1] - b[1]);
+    const l = treeAll.filter((tr) => (anio < 0 || tr.lostAt > anio))
+      .map((tr) => [tr, (tr.x - cx2) ** 2 + (tr.z - cz2) ** 2]).filter((e) => e[1] < R_CERCA * R_CERCA).sort((a, b) => a[1] - b[1]);
     const sel = l.slice(0, TREE_CERCA);
-    rCorte = sel.length < l.length ? Math.sqrt(sel[sel.length - 1][1]) : R_CERCA;
+    rCorte = sel.length < l.length ? Math.sqrt(sel[sel.length - 1][1]) + 0.5 : R_CERCA;
     return sel.map((e) => e[0]);
   };
   let treesGroup = instanciarArboles(especies, cercanos(vx, vz, -1), 60);
@@ -843,7 +844,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
   const copas = new THREE.Group();
   {
     const porEsp = fotosArbol.map(() => []);
-    treeAll.forEach((t, k) => { porEsp[(Math.imul(k + 1, 2654435761) >>> 0) % fotosArbol.length].push(t); });
+    treeAll.forEach((t) => { porEsp[t.sp % fotosArbol.length].push(t); });
     const m4 = new THREE.Matrix4(); const q = new THREE.Quaternion(); const s = new THREE.Vector3(); const p = new THREE.Vector3(); const c = new THREE.Color(); const up = new THREE.Vector3(0, 1, 0);
     fotosArbol.forEach((foto, e) => {
       const a = new THREE.PlaneGeometry(foto.ancho, 1); a.translate(0, 0.5, 0);
@@ -852,7 +853,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       const nrm = geo.attributes.normal; for (let v = 0; v < nrm.count; v++) nrm.setXYZ(v, 0, 1, 0); // luz pareja: la foto ya trae su sombreado
       const lista = porEsp[e];
       const aLost = new Float32Array(lista.length);
-      const mat = new THREE.MeshLambertMaterial({ map: foto.tex, alphaTest: 0.45, side: THREE.DoubleSide, transparent: false });
+      const mat = new THREE.MeshLambertMaterial({ map: foto.tex, alphaTest: 0.45, alphaToCoverage: true, side: THREE.DoubleSide, transparent: false });
       mat.onBeforeCompile = (sh) => {
         sh.uniforms.uCentro = uLejos.uCentro; sh.uniforms.uR = uLejos.uR; sh.uniforms.uYear = U.uYear; sh.uniforms.uMode = U.uMode;
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec2 uCentro; uniform float uR; uniform float uYear; uniform float uMode; attribute float aLost;')
