@@ -23,7 +23,7 @@ async function retrato(tid) {
 }
 
 // posiciones (fracción de pantalla) de las parejas ya vistas: cuadrados pequeños sobre la isla
-const CONSTELACION = [[0.58, 0.18], [0.82, 0.24], [0.66, 0.42], [0.9, 0.5], [0.55, 0.66], [0.78, 0.74], [0.63, 0.88], [0.92, 0.86]];
+const CONSTELACION = [[0.46, 0.14], [0.63, 0.1], [0.8, 0.15], [0.93, 0.24], [0.47, 0.84], [0.64, 0.89], [0.81, 0.84], [0.93, 0.74]];
 
 export default function Tramas() {
   const ref = useRef(null); const cvRef = useRef(null);
@@ -51,7 +51,7 @@ export default function Tramas() {
         const t = document.createElement('canvas'); t.width = GW; t.height = GH; const tx = t.getContext('2d', { willReadFrequently: true });
         tx.drawImage(img, W.left, W.top, W.w, W.h, 0, 0, GW, GH); const d = tx.getImageData(0, 0, GW, GH).data;
         let i0 = GW; let i1 = 0; let j0 = GH; let j1 = 0; for (let k = 0; k < GW * GH; k++) if (m[k]) { const i = k % GW; const j = Math.floor(k / GW); i0 = Math.min(i0, i); i1 = Math.max(i1, i); j0 = Math.min(j0, j); j1 = Math.max(j1, j); }
-        const pts = []; for (let k = 0; k < GW * GH; k++) if (m[k]) { const i = k % GW; const j = Math.floor(k / GW); pts.push([(i - i0) / (i1 - i0), (j - j0) / (j1 - j0), d[k * 4], d[k * 4 + 1], d[k * 4 + 2], Math.random()]); }
+        const pts = []; for (let k = 0; k < GW * GH; k++) if (m[k]) { const i = k % GW; const j = Math.floor(k / GW); pts.push([(i - i0 + 0.5 + (Math.random() - 0.5) * 0.7) / (i1 - i0 + 1), (j - j0 + 0.5 + (Math.random() - 0.5) * 0.7) / (j1 - j0 + 1), d[k * 4], d[k * 4 + 1], d[k * 4 + 2], Math.random()]); }
         isla = pts; islaAsp = (i1 - i0) / (j1 - j0);
       } catch { /* sin isla de fondo */ }
     })();
@@ -106,14 +106,14 @@ export default function Tramas() {
       for (const q of campo) {
         const ang = Math.sin(q.x * 6 + t * 0.00025) * 2 + Math.cos(q.y * 5 - t * 0.0002) * 2;
         q.x += Math.cos(ang) * 0.00022 * (0.4 + q.z); q.y += Math.sin(ang) * 0.00022 * (0.4 + q.z); if (q.x < 0) q.x += 1; if (q.x > 1) q.x -= 1; if (q.y < 0) q.y += 1; if (q.y > 1) q.y -= 1;
-        const a = (0.08 + 0.3 * q.z) * (0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * 0.002 * (0.5 + q.r) + q.r * 40)));
+        const a = (0.16 + 0.5 * q.z) * (0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * 0.002 * (0.5 + q.r) + q.r * 40)));
         cx.fillStyle = q.z > 0.8 ? `rgba(220,248,255,${a})` : `rgba(73,198,229,${a * 0.7})`; const z = (0.6 + q.z * 1.4) * DPR; cx.fillRect(q.x * w, q.y * h, z, z);
       }
       // la isla de fondo
       if (isla.length) {
         const ih = h * (movil ? 0.62 : 0.92); const iw = ih * islaAsp; const ix = (movil ? 0.5 : 0.72) * w - iw / 2; const iy = (movil ? 0.2 : 0.04) * h;
-        const al = s < 0 ? 0.75 : 0.42; const pz = Math.max(1.2, iw / 150) * 0.9;
-        for (const [x, y, rr, g, b, f] of isla) { const res = 0.75 + 0.25 * Math.sin(t * 0.0015 + f * 20); cx.fillStyle = `rgba(${rr},${g},${b},${al * res})`; cx.fillRect(ix + x * iw, iy + y * ih, pz, pz); }
+        const al = s < 0 ? 0.85 : 0.45; const rad = Math.max(0.8, iw / 300);
+        for (const [x, y, rr, g, b, f] of isla) { const res = 0.7 + 0.3 * Math.sin(t * 0.0015 + f * 20); cx.fillStyle = `rgba(${Math.min(255, rr * 1.25 + 20)},${Math.min(255, g * 1.25 + 25)},${Math.min(255, b * 1.2 + 25)},${al * res})`; cx.beginPath(); cx.arc(ix + x * iw, iy + y * ih, rad * (0.7 + 0.5 * f), 0, 6.283); cx.fill(); }
       }
       // parejas ya vistas: cuadrados pequeños unidos sobre la isla
       const Lp = (movil ? 30 : 44) * DPR;
