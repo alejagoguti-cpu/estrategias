@@ -379,7 +379,7 @@ const FUENTES = [
   ['Costa y relieve', [['Línea de costa', '© OpenStreetMap contributors (ODbL)'], ['Terrain Tiles · Terrarium z12', 'Mapzen / AWS Open Data']]],
   ['Riesgo', [['MIDAS · capas de cambio climático', 'Alcaldía de Cartagena; Secretaría de Planeación-INVEMAR-CDKN (2014), consultadas el 2026-11-14'], ['Lineamientos de adaptación al cambio climático para Cartagena', 'INVEMAR-MADS-Alcaldía-CDKN (2012): tasas de retroceso y años de escenario']]],
   ['Ciudad', [['Construcciones', 'Archivo de la tesis (2.600 huellas, alturas de referencia)'], ['Vías y muelles', '© OpenStreetMap contributors (ODbL)'], ['Sintaxis espacial', 'Reimplementación del método angular de depthmapX (UCL Space Group)']]],
-  ['Vida', [['Copas de árboles', 'Detección sobre Esri World Imagery (3.840 copas)'], ['Especies e interacciones', 'iNaturalist, GBIF y GloBI, compiladas en la red de especies de la isla']]],
+  ['Vida', [['Cobertura arbórea', 'Índice de verdor de copas sobre Esri World Imagery, en toda la isla'], ['Especies e interacciones', 'iNaturalist, GBIF y GloBI, compiladas en la red de especies de la isla']]],
   ['Imagen', [['Esri World Imagery', 'Esri, Maxar, Earthstar Geographics y la comunidad GIS']]],
 ];
 $('#fuentes').innerHTML = FUENTES.map(([t, l]) => `<p class="rotulo" style="margin:0 0 6px">${t} <span class="dato" style="margin-left:8px">${l.length}</span></p>${l.map(([a, b]) => `<div class="fuente"><strong>${a}</strong><span>${b}</span></div>`).join('')}<div style="height:22px"></div>`).join('');

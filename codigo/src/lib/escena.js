@@ -804,6 +804,8 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     }
     console.info('árboles detectados en la imagen satelital:', n, '· total', treeAll.length);
   }
+  // modo de depuración: posiciones de todas las copas (coordenadas de tesela z15) para recalcular la capa de cobertura arbórea
+  if (/[?&]debug/.test(location.search)) window.__copasZ15 = treeAll.map((t) => [t.x / mpt + txc, t.z / mpt + tyc]);
   // Cerca de la cámara: los modelos escaneados; lejos: la misma copa simplificada (instancias ligeras)
   const TREE_CERCA = small ? 600 : 1500; const R_CERCA = small ? 900 : 1400;
   treeAll.forEach((t, k) => { t.sp = (Math.imul(k + 1, 2654435761) >>> 0) % especies.length; }); // especie fija por árbol
