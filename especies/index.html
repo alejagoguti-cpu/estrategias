@@ -304,7 +304,7 @@ html,body{background:var(--bg);font-weight:400}
         <div><b id="tOb">0</b><span>registros de las especies</span></div>
         <div><b id="tRe">0</b><span>relaciones visibles</span></div>
       </div>
-      <div class="credits">Registros de especies: iNaturalist. Relaciones: GloBI, Global Biotic Interactions. Imagen satelital: Esri World Imagery. Relieve: Terrarium (AWS). Vías: OpenStreetMap. Edificios de Cartagena: Catastro Multipropósito 2026. Modelo 3D y árboles: tesis Tierra Bomba (Gómez y Casas).</div>
+      <div class="credits">Registros de especies: iNaturalist. Relaciones: GloBI, Global Biotic Interactions. Imagen satelital: Esri World Imagery. Modelo 3D y vegetación: tesis Tierra Bomba (Gómez y Casas).</div>
     </aside>
   </div>
 </div>
@@ -322,8 +322,6 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { LineSegments2 } from 'three/addons/lines/LineSegments2.js';
 import { LineSegmentsGeometry } from 'three/addons/lines/LineSegmentsGeometry.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
-import { Sky } from 'three/addons/objects/Sky.js';
-import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 // ======================================================================
 // Configuración
@@ -356,20 +354,18 @@ const progress = (p, t) => { vbar.style.width = p + '%'; if (t) vtxt.textContent
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', logarithmicDepthBuffer: true });   // sin parpadeo entre agua y costa
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, IS_MOBILE ? 1.75 : 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
-renderer.toneMapping = THREE.ACESFilmicToneMapping;   // como la escena principal (los símbolos de la red no pasan por el tono)
-renderer.toneMappingExposure = 1.0;
 const scene = new THREE.Scene();
-const FONDO_RED = new THREE.Color(0x040607), NIEBLA_DIA = new THREE.Color(0x9fc6d4);
-scene.background = FONDO_RED.clone();
-scene.fog = new THREE.Fog(0x040607, 300, 700); // en la red, mismo color del fondo; en el territorio, la bruma de la escena principal
-const camera = new THREE.PerspectiveCamera(42, 1, 0.5, 60000);
+scene.background = new THREE.Color(0x040607);
+scene.fog = new THREE.Fog(0x040607, 300, 700); // mismo color del fondo: sin franja
+const camera = new THREE.PerspectiveCamera(42, 1, 0.5, 20000);
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
 controls.screenSpacePanning = false;
 
-scene.add(new THREE.HemisphereLight(0xcfe6ff, 0x6b5d3a, 0.7));   // luces de la escena principal
-const sun = new THREE.DirectionalLight(0xfff0d8, 2.6);
+scene.add(new THREE.HemisphereLight(0xdfefff, 0x2a2418, 2.1));
+const sun = new THREE.DirectionalLight(0xfff3df, 2.4);
+sun.position.set(-400, 700, 300);
 scene.add(sun);
 
 const terr = new THREE.Group();       // territorio (en metros, escalado por S)
@@ -381,10 +377,12 @@ scene.add(net);
 // ======================================================================
 // Datos
 // ======================================================================
-const [DATA, GEO, VEG] = await Promise.all([
+const [DATA, GEO, SATMAP, MOSA, VEG] = await Promise.all([
   fetch('./data/especies.json').then(r => r.json()),
-  fetch('../assets/data/georef.json').then(r => r.json()),
-  fetch('../assets/data/vegetacion.json').then(r => r.json())
+  fetch(A + 'data/georef.json').then(r => r.json()),
+  fetch(A + 'data/satellite_map.json').then(r => r.json()),
+  fetch(A + 'data/mosaicos.json').then(r => r.json()),
+  fetch(A + 'data/vegetacion.json').then(r => r.json())
 ]);
 const REL = await fetch('./data/interacciones.json').then(r => r.json());
 progress(12, 'Preparando especies');
@@ -448,7 +446,7 @@ order.forEach((sp, k) => {
   const phi = Math.acos(1 - 2 * (k + 0.5) / N);
   const th = Math.PI * (1 + Math.sqrt(5)) * k;
   const r = SPH_R + ((k * 7) % 9) - 4;
-  const mat = new THREE.SpriteMaterial({ map: ballTexture(sp), transparent: true, depthWrite: false, fog: false, toneMapped: false });
+  const mat = new THREE.SpriteMaterial({ map: ballTexture(sp), transparent: true, depthWrite: false, fog: false });
   const spr = new THREE.Sprite(mat);
   spr.userData.node = null;
   net.add(spr);
@@ -466,718 +464,358 @@ order.forEach((sp, k) => {
 });
 
 // ======================================================================
-// Territorio: el MISMO modelo de la escena principal de la tesis
-// (relieve, foto satelital con las vías de OSM, casco urbano z18, casas,
-// árboles reales, agua, cielo con nubes y Cartagena con el catastro)
+// Territorio de Tierra Bomba
 // ======================================================================
-const BASE = '../';   // sitio principal (/tesis_tercer_corte/): datos/ y assets/
+const texLoader = new THREE.TextureLoader();
+const loadTex = (u) => new Promise((res, rej) => texLoader.load(u, res, undefined, rej));
 const loadGLB = (u) => new Promise((res, rej) => new GLTFLoader().load(u, res, undefined, rej));
-const loadImg = (src) => new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => rej(new Error('No se pudo cargar ' + src)); im.src = src; });
-const gunzipJSON = async (u) => {
-  const buf = await (await fetch(u)).arrayBuffer();
-  const u8 = new Uint8Array(buf);
-  if (u8[0] === 0x1f && u8[1] === 0x8b) return JSON.parse(await new Response(new Response(buf).body.pipeThrough(new DecompressionStream('gzip'))).text());
-  return JSON.parse(new TextDecoder().decode(u8));
+
+// Territorio en bloque: relieve real (DEM) exagerado, imagen satelital,
+// agua translúcida, paredes de tierra y árboles 3D en toda la isla.
+const EX = 3;                           // exageración vertical del relieve
+let BLOCK = null;   // se ajusta a toda la imagen satelital (isla y Cartagena)
+const BASE_Y = -60;                     // fondo marino lejano (m)
+const WATER_Y = 0.8;
+
+// --- utilidades de la imagen base (teselas z15) ---
+const T = MOSA.base, NT = 2 ** T.z;
+const xzToTile = (x, z) => {
+  const lon = x / GEO.kx + GEO.lon0, lat = -z / GEO.ky + GEO.lat0;
+  const tx = (lon + 180) / 360 * NT;
+  const ty = (1 - Math.asinh(Math.tan(lat * Math.PI / 180)) / Math.PI) / 2 * NT;
+  return [(tx - T.x0) / T.nx, (ty - T.y0) / T.ny];   // 0..1 dentro de la imagen
 };
-const tick0 = () => new Promise((r) => setTimeout(r, 0));
-const smooth = (a, b, x) => { const t = Math.max(0, Math.min(1, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-const cl01 = (x) => Math.max(0, Math.min(1, x));
+const loadImgData = (u) => new Promise((res, rej) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const g = c.getContext('2d'); g.drawImage(im, 0, 0); res({ w: im.width, h: im.height, d: g.getImageData(0, 0, im.width, im.height).data }); }; im.onerror = rej; im.src = u; });
 
-// mismas constantes que la escena principal
-const MOSAICO = { x0: 9502, y0: 15426, nx: 10, ny: 17 };       // foto satelital z15
-const VENTANA = { left: 231, top: 1734, w: 1445, h: 2578 };     // ventana de la isla dentro del mosaico
-const EXAG = 2.6;                                               // exageración vertical del relieve
-const DEMT = { x0: 1187, y0: 1929 };                            // teselas Terrarium z12
-const CASA_ESCALA = 2.6;
-const WATER_Y = 0;                                              // nivel del mar (m)
-
-// --- teselas z15 <-> lon/lat <-> escena (x este, z sur, en metros) ---
-const n15 = 2 ** 15;
-const ll2t = (lon, lat) => [(lon + 180) / 360 * n15, (1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n15];
-const t2ll = (tx, ty) => [tx / n15 * 360 - 180, Math.atan(Math.sinh(Math.PI * (1 - 2 * ty / n15))) * 180 / Math.PI];
-const tToXZ = (tx, ty) => llToXZ(...t2ll(tx, ty));
-const xzToT = (x, z) => ll2t(x / GEO.kx + GEO.lon0, -z / GEO.ky + GEO.lat0);
-const tx0 = MOSAICO.x0 + VENTANA.left / 256, tx1 = MOSAICO.x0 + (VENTANA.left + VENTANA.w) / 256;
-const ty0 = MOSAICO.y0 + VENTANA.top / 256, ty1 = MOSAICO.y0 + (VENTANA.top + VENTANA.h) / 256;
-const W = VENTANA.w, H = VENTANA.h;
-const mpp = 40075016.686 * Math.cos(t2ll(0, (ty0 + ty1) / 2)[1] * Math.PI / 180) / n15 / 256;   // metros por píxel z15
-const xzToUV = (x, z) => { const [tx, ty] = xzToT(x, z); return [(tx - tx0) / (tx1 - tx0), (ty - ty0) / (ty1 - ty0)]; };
-// ajuste lineal escena -> tesela (para los shaders del agua)
-const TFIT = (() => {
-  const [cx, cz] = tToXZ((tx0 + tx1) / 2, (ty0 + ty1) / 2), d = 1000;
-  const [a0, b0] = xzToT(cx, cz), [a1] = xzToT(cx + d, cz), [, b1] = xzToT(cx, cz + d);
-  const bx = (a1 - a0) / d, bz = (b1 - b0) / d;
-  return new THREE.Vector4(a0 - bx * cx, bx, b0 - bz * cz, bz);
-})();
-const BLOCK = (() => { const [xa, za] = tToXZ(tx0, ty0), [xb, zb] = tToXZ(tx1, ty1); return { x0: xa, x1: xb, z0: za, z1: zb }; })();
-const modelToLL = (x, y) => {   // modelo Revit (x este, y norte) -> lon/lat (georef.json)
-  const cr = Math.cos(GEO.rot), sr = Math.sin(GEO.rot);
-  const px = (x - GEO.tx) / GEO.sc, py = (y - GEO.ty) / GEO.sc;
-  return [GEO.lon0 + (px * cr + py * sr) / GEO.kx, GEO.lat0 + (-px * sr + py * cr) / GEO.ky];
-};
-
-// transformada de distancia euclidiana (Felzenszwalb): distancia² al píxel de mar más cercano
-function edt(width, height, land) {
-  const INF = 1e12, f = new Float32Array(width * height);
-  for (let i = 0; i < f.length; i++) f[i] = land[i] ? INF : 0;
-  const n = Math.max(width, height), d = new Float32Array(n), v = new Int32Array(n), z = new Float32Array(n + 1), line = new Float32Array(n);
-  const pass = (len, get, set) => {
-    for (let i = 0; i < len; i++) line[i] = get(i);
-    let k = 0; v[0] = 0; z[0] = -INF; z[1] = INF;
-    for (let q = 1; q < len; q++) {
-      let s = (line[q] + q * q - (line[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]);
-      while (s <= z[k]) { k--; s = (line[q] + q * q - (line[v[k]] + v[k] * v[k])) / (2 * q - 2 * v[k]); }
-      k++; v[k] = q; z[k] = s; z[k + 1] = INF;
-    }
-    k = 0;
-    for (let q = 0; q < len; q++) { while (z[k + 1] < q) k++; d[q] = (q - v[k]) * (q - v[k]) + line[v[k]]; }
-    for (let i = 0; i < len; i++) set(i, d[i]);
-  };
-  for (let x = 0; x < width; x++) pass(height, (y) => f[y * width + x], (y, val) => { f[y * width + x] = val; });
-  for (let y = 0; y < height; y++) pass(width, (x) => f[y * width + x], (x, val) => { f[y * width + x] = val; });
-  return f;
+{
+  const t2ll = (tx, ty) => [tx / NT * 360 - 180, Math.atan(Math.sinh(Math.PI * (1 - 2 * ty / NT))) * 180 / Math.PI];
+  const [lonA, latA] = t2ll(T.x0, T.y0), [lonB, latB] = t2ll(T.x0 + T.nx, T.y0 + T.ny);
+  const [xa, za] = llToXZ(lonA, latA), [xb, zb] = llToXZ(lonB, latB);
+  const ix = (xb - xa) * 0.004, iz = (zb - za) * 0.004;
+  BLOCK = { x0: xa + ix, x1: xb - ix, z0: za + iz, z1: zb - iz };
 }
-
-progress(18, 'Cargando relieve, foto satelital y Cartagena');
-const [satImg, maskImg, patchImg, construcciones, sintaxis, ctxJson, ctgImg, ...demImgs] = await Promise.all([
-  loadImg(BASE + 'assets/texturas/sat_base.jpg'),
-  loadImg(BASE + 'datos/isla_mascara_osm.png'),
-  loadImg(BASE + 'assets/texturas/tierrabomba_satelite.jpg'),
-  gunzipJSON(BASE + 'datos/construcciones_tierra_bomba.json.gz'),
-  fetch(BASE + 'datos/sintaxis.json').then((r) => r.json()),
-  gunzipJSON(BASE + 'datos/cartagena_contexto.json.gz'),
-  loadImg(BASE + 'assets/texturas/cartagena_z14.jpg'),
-  ...['1187_1929', '1188_1929', '1187_1930', '1188_1930'].map((k) => loadImg(BASE + `datos/elevacion/${k}.png`)),
+progress(18, 'Cargando relieve e imagen satelital');
+const [DEMBUF, MASKD, satMap, landMask] = await Promise.all([
+  fetch(A + 'data/dem_640x1088.bin').then(r => r.arrayBuffer()),
+  loadImgData(A + 'texturas/sat_base_mascara.png'),
+  loadTex(A + 'texturas/sat_base.jpg'),
+  loadTex(A + 'texturas/sat_base_mascara.png')
 ]);
-
-// --- silueta de la isla (OSM) y distancia al mar ---
-progress(26, 'Calculando la costa');
-await tick0();
-const maskC = document.createElement('canvas'); maskC.width = W; maskC.height = H;
-const mctx = maskC.getContext('2d', { willReadFrequently: true });
-mctx.drawImage(maskImg, 0, 0);
-const land = new Uint8Array(W * H), maskAlpha = new Uint8Array(W * H);
-{
-  const md = mctx.getImageData(0, 0, W, H).data;
-  for (let i = 0; i < W * H; i++) { const val = md[i * 4 + 3] < 255 ? md[i * 4 + 3] : md[i * 4]; maskAlpha[i] = val; if (val > 127) land[i] = 1; }
-}
-const distM = new Float32Array(W * H);
-{ const sq = edt(W, H, land); for (let i = 0; i < distM.length; i++) distM[i] = land[i] ? Math.sqrt(sq[i]) * mpp : 0; }
-const maskTex = (() => {
-  const d = new Uint8Array(W * H * 4);
-  for (let i = 0; i < W * H; i++) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = maskAlpha[i]; d[i * 4 + 3] = 255; }
-  const t = new THREE.DataTexture(d, W, H, THREE.RGBAFormat); t.minFilter = t.magFilter = THREE.LinearFilter; t.generateMipmaps = false; t.channel = 1; t.needsUpdate = true; return t;
-})();
-const distAt = (X, Z) => {
-  const [u, v] = xzToUV(X, Z), fx = u * W - 0.5, fy = v * H - 0.5;
-  if (fx < 0 || fy < 0 || fx > W - 1.001 || fy > H - 1.001) return -1;
-  const x0 = Math.floor(fx), y0 = Math.floor(fy), ax = fx - x0, ay = fy - y0, i = y0 * W + x0;
-  return distM[i] * (1 - ax) * (1 - ay) + distM[i + 1] * ax * (1 - ay) + distM[i + W] * (1 - ax) * ay + distM[i + W + 1] * ax * ay;
+const DEM = new Uint16Array(DEMBUF), DW = 640, DH = 1088;
+satMap.colorSpace = THREE.SRGBColorSpace;
+satMap.anisotropy = renderer.capabilities.getMaxAnisotropy();
+const demAt = (u, v) => {   // metros sobre el nivel del mar, bilineal
+  const fx = Math.min(DW - 1.001, Math.max(0, u * DW - 0.5)), fy = Math.min(DH - 1.001, Math.max(0, v * DH - 0.5));
+  const x0 = Math.floor(fx), y0 = Math.floor(fy), ax = fx - x0, ay = fy - y0;
+  const g = (x, y) => DEM[y * DW + x] / 100 - 30;
+  return g(x0, y0) * (1 - ax) * (1 - ay) + g(x0 + 1, y0) * ax * (1 - ay) + g(x0, y0 + 1) * (1 - ax) * ay + g(x0 + 1, y0 + 1) * ax * ay;
+};
+const landAt = (u, v) => {   // 0..1, bilineal para una costa suave
+  const fx = Math.min(MASKD.w - 1.001, Math.max(0, u * MASKD.w - 0.5)), fy = Math.min(MASKD.h - 1.001, Math.max(0, v * MASKD.h - 0.5));
+  const x0 = Math.floor(fx), y0 = Math.floor(fy), ax = fx - x0, ay = fy - y0;
+  const g = (x, y) => MASKD.d[(y * MASKD.w + x) * 4] / 255;
+  return g(x0, y0) * (1 - ax) * (1 - ay) + g(x0 + 1, y0) * ax * (1 - ay) + g(x0, y0 + 1) * (1 - ax) * ay + g(x0 + 1, y0 + 1) * ax * ay;
 };
 
-// --- relieve (Terrarium z12, igual que la escena principal) ---
-progress(32, 'Levantando el relieve');
-await tick0();
-const smallC = document.createElement('canvas'); smallC.width = Math.round(W / 4); smallC.height = Math.round(H / 4);
-const sctx = smallC.getContext('2d', { willReadFrequently: true });
-sctx.filter = 'blur(2px)'; sctx.drawImage(maskC, 0, 0, smallC.width, smallC.height);
-const sdata = sctx.getImageData(0, 0, smallC.width, smallC.height).data;
-const smallMask = (u, v) => { const x = Math.max(0, Math.min(smallC.width - 1, Math.floor(u * smallC.width))), y = Math.max(0, Math.min(smallC.height - 1, Math.floor(v * smallC.height))), i = (y * smallC.width + x) * 4; return (sdata[i + 3] < 255 ? sdata[i + 3] : sdata[i]) / 255; };
-const demC = document.createElement('canvas'); demC.width = demC.height = 512;
-const dctx = demC.getContext('2d', { willReadFrequently: true });
-dctx.drawImage(demImgs[0], 0, 0); dctx.drawImage(demImgs[1], 256, 0); dctx.drawImage(demImgs[2], 0, 256); dctx.drawImage(demImgs[3], 256, 256);
-const ddata = dctx.getImageData(0, 0, 512, 512).data;
-const demPx = (x, y) => { x = Math.max(0, Math.min(511, x)); y = Math.max(0, Math.min(511, y)); const i = (y * 512 + x) * 4; return ddata[i] * 256 + ddata[i + 1] + ddata[i + 2] / 256 - 32768; };
-const demAtTile = (tx, ty) => {
-  const fx = (tx / 8 - DEMT.x0) * 256 - 0.5, fy = (ty / 8 - DEMT.y0) * 256 - 0.5, x0 = Math.floor(fx), y0 = Math.floor(fy), ax = fx - x0, ay = fy - y0;
-  return demPx(x0, y0) * (1 - ax) * (1 - ay) + demPx(x0 + 1, y0) * ax * (1 - ay) + demPx(x0, y0 + 1) * (1 - ax) * ay + demPx(x0 + 1, y0 + 1) * ax * ay;
-};
-const NX = IS_MOBILE ? 130 : 180, NY = Math.round(NX * H / W);
-const tpos = new Float32Array((NX + 1) * (NY + 1) * 3), uvSat = new Float32Array((NX + 1) * (NY + 1) * 2), winUV = new Float32Array((NX + 1) * (NY + 1) * 2);
-const heights = new Float32Array((NX + 1) * (NY + 1)), landV = new Float32Array((NX + 1) * (NY + 1));
-for (let j = 0, p = 0, q = 0; j <= NY; j++) for (let i = 0; i <= NX; i++) {
-  const u = i / NX, v = j / NY, tx = tx0 + u * (tx1 - tx0), ty = ty0 + v * (ty1 - ty0);
-  const [X, Z] = tToXZ(tx, ty);
-  const lw = smooth(0.45, 0.9, smallMask(u, v));
-  const h = (Math.max(0, demAtTile(tx, ty)) * EXAG + 0.3) * lw - (1 - lw) * 1.5;   // en la costa el terreno queda bajo el agua
-  heights[j * (NX + 1) + i] = h; landV[j * (NX + 1) + i] = lw;
-  tpos[p++] = X; tpos[p++] = h; tpos[p++] = Z;
-  uvSat[q] = (tx - MOSAICO.x0) / MOSAICO.nx; uvSat[q + 1] = 1 - (ty - MOSAICO.y0) / MOSAICO.ny;
-  winUV[q] = u; winUV[q + 1] = v; q += 2;
-}
-const heightAtUV = (u, v) => {
-  const fi = Math.max(0, Math.min(NX - 1e-3, u * NX)), fj = Math.max(0, Math.min(NY - 1e-3, v * NY)), i = Math.floor(fi), j = Math.floor(fj), ax = fi - i, ay = fj - j;
-  const Hh = (a, b) => heights[b * (NX + 1) + a];
-  return Hh(i, j) * (1 - ax) * (1 - ay) + Hh(i + 1, j) * ax * (1 - ay) + Hh(i, j + 1) * (1 - ax) * ay + Hh(i + 1, j + 1) * ax * ay;
-};
-const heightAtXZ = (X, Z) => { const [u, v] = xzToUV(X, Z); return heightAtUV(cl01(u), cl01(v)); };
-// altura del suelo en la escena (m); null en el mar
-function heightAt(x, z) {
-  const [u, v] = xzToUV(x, z);
-  if (u < 0 || v < 0 || u >= 1 || v >= 1) return null;
-  if (maskAlpha[Math.floor(v * H) * W + Math.floor(u * W)] < 128) return null;
-  return Math.max(0.5, heightAtUV(u, v));
-}
-
-// --- foto satelital con las vías de OpenStreetMap pintadas como caminos de arena (igual que la escena principal) ---
-const maxTex = renderer.capabilities.maxTextureSize;
-const aniso = Math.min(8, renderer.capabilities.getMaxAnisotropy());
-const ANCHO_VIA = { residential: 9, unclassified: 8, service: 6, track: 5.5, path: 3.2, footway: 3, steps: 2.6, pedestrian: 4 };
-const pintarVias = (ctx, aPx, mPorPx, escala) => {
-  const P = sintaxis.peatonal;
-  let sem = 7; const rnd = () => { sem = (sem * 16807) % 2147483647; return sem / 2147483647; };
-  const pasadas = [{ k: 1.5, col: 'rgba(110,92,64,0.3)' }, { k: 1.0, col: 'rgba(214,192,148,0.95)' }, { k: 0.55, col: 'rgba(236,222,190,0.6)' }];
-  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  for (const pas of pasadas) {
-    ctx.strokeStyle = pas.col;
-    P.coords.forEach(([a, b, c2, d], s) => {
-      const w = Math.max(1.6, ((ANCHO_VIA[P.tipo[s]] || 4) / mPorPx) * escala * pas.k);
-      const [x0, y0] = aPx(a, b), [x1, y1] = aPx(c2, d);
-      const L = Math.hypot(x1 - x0, y1 - y0), n = Math.max(1, Math.ceil(L / Math.max(2, w * 1.5)));
-      ctx.beginPath(); ctx.moveTo(x0, y0);
-      for (let k = 1; k <= n; k++) { const t = k / n, jj = k < n ? (rnd() - 0.5) * w * 0.35 : 0; ctx.lineTo(x0 + (x1 - x0) * t + jj * (-(y1 - y0) / (L || 1)), y0 + (y1 - y0) * t + jj * ((x1 - x0) / (L || 1))); }
-      ctx.lineWidth = w * (0.85 + rnd() * 0.3); ctx.stroke();
-    });
-  }
-};
-const textureFrom = (img, maxSide, vias) => {
-  const sc = Math.min(1, maxSide / Math.max(img.width, img.height));
-  const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
-  const g = c.getContext('2d'); g.drawImage(img, 0, 0, c.width, c.height); if (vias) vias(g, sc);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = aniso; return t;
-};
-progress(40, 'Pintando la foto satelital y las vías');
-await tick0();
-const satTex = textureFrom(satImg, maxTex, (ctx, sc) => pintarVias(ctx, (lon, lat) => { const [tx, ty] = ll2t(lon, lat); return [(tx - MOSAICO.x0) * 256 * sc, (ty - MOSAICO.y0) * 256 * sc]; }, mpp, sc));
-let terrainMesh, patchMesh;
-let scanMat = null, scanFrente = null;   // efecto de escaneo al materializar
-{
-  const idx = [];
-  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) { const a = j * (NX + 1) + i; idx.push(a, a + NX + 1, a + 1, a + 1, a + NX + 1, a + NX + 2); }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(tpos, 3));
-  g.setAttribute('uv', new THREE.BufferAttribute(uvSat, 2));
-  g.setAttribute('uv1', new THREE.BufferAttribute(winUV, 2));
-  g.setIndex(idx); g.computeVertexNormals();
-  terrainMesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: satTex, alphaMap: maskTex, alphaTest: 0.5, roughness: 1, metalness: 0 }));
-  terr.add(terrainMesh);
-
-  // malla de escaneo: retícula del relieve real (solo tierra), que un frente de barrido enciende al materializar
-  const L = [], st = 2, Pk = (i, j) => j * (NX + 1) + i;
-  const seg = (a, b) => { if (landV[a] < 0.5 || landV[b] < 0.5) return; L.push(tpos[a * 3], tpos[a * 3 + 1], tpos[a * 3 + 2], tpos[b * 3], tpos[b * 3 + 1], tpos[b * 3 + 2]); };
-  for (let j = 0; j <= NY; j += st) for (let i = 0; i + st <= NX; i += st) seg(Pk(i, j), Pk(i + st, j));
-  for (let i = 0; i <= NX; i += st) for (let j = 0; j + st <= NY; j += st) seg(Pk(i, j), Pk(i, j + st));
-  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(L, 3));
-  scanMat = new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-    uniforms: { uScan: { value: -1e9 }, uOp: { value: 0 }, uCol: { value: new THREE.Color(0x8fdcf5) } },
-    vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position + vec3(0., 1.2, 0.), 1.); }',
-    fragmentShader: 'uniform float uScan, uOp; uniform vec3 uCol; varying vec3 vP; void main(){ float d = uScan - vP.x; if (d < 0.) discard; float a = exp(-d / 260.) * 0.85 + 0.12; float f = exp(-d / 28.); gl_FragColor = vec4(mix(uCol, vec3(1.), f) * a * uOp, 1.); }',
-  });
-  const wire = new THREE.LineSegments(lg, scanMat); wire.renderOrder = 2; wire.frustumCulled = false; terr.add(wire);
-  const fr = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
-    uniforms: { uOp: { value: 0 } },
-    vertexShader: 'varying vec2 vU; void main(){ vU = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
-    fragmentShader: 'uniform float uOp; varying vec2 vU; void main(){ float a = pow(1. - vU.y, 2.2) * 0.55; float l = step(.5, fract(vU.x * 60.)) * .25 + .75; gl_FragColor = vec4(vec3(.56,.86,.96) * a * l * uOp, 1.); }',
-  }));
-  fr.rotation.y = Math.PI / 2; fr.scale.set(BLOCK.z1 - BLOCK.z0, 180, 1); fr.position.set(BLOCK.x0, 90, (BLOCK.z0 + BLOCK.z1) / 2); fr.visible = false; terr.add(fr);
-  scanFrente = fr;
-}
-
-// --- detalle del casco urbano (foto z18 con sus vías) ---
-const PM = GEO.mosaico, tile18 = PM.px / 256;
-{
-  const NP = IS_MOBILE ? 100 : 150;
-  const pp = new Float32Array((NP + 1) * (NP + 1) * 3), pu = new Float32Array((NP + 1) * (NP + 1) * 2), pw = new Float32Array((NP + 1) * (NP + 1) * 2);
-  for (let j = 0, a = 0, b = 0; j <= NP; j++) for (let i = 0; i <= NP; i++) {
-    const tx = (PM.x0 + (i / NP) * tile18) / 8, ty = (PM.y0 + (j / NP) * tile18) / 8;
-    const [X, Z] = tToXZ(tx, ty), u = (tx - tx0) / (tx1 - tx0), v = (ty - ty0) / (ty1 - ty0);
-    pp[a++] = X; pp[a++] = heightAtUV(cl01(u), cl01(v)) + 0.4; pp[a++] = Z;
-    pu[b] = i / NP; pu[b + 1] = 1 - j / NP; pw[b] = u; pw[b + 1] = v; b += 2;
-  }
-  const pidx = [];
-  for (let j = 0; j < NP; j++) for (let i = 0; i < NP; i++) { const a = j * (NP + 1) + i; pidx.push(a, a + NP + 1, a + 1, a + 1, a + NP + 1, a + NP + 2); }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(pp, 3)); g.setAttribute('uv', new THREE.BufferAttribute(pu, 2)); g.setAttribute('uv1', new THREE.BufferAttribute(pw, 2));
-  g.setIndex(pidx); g.computeVertexNormals();
-  const tex = textureFrom(patchImg, maxTex, (ctx, sc) => pintarVias(ctx, (lon, lat) => { const [tx, ty] = ll2t(lon, lat); return [(tx * 8 - PM.x0) * 256 * sc, (ty * 8 - PM.y0) * 256 * sc]; }, mpp / 8, sc));
-  patchMesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: tex, alphaMap: maskTex, alphaTest: 0.5, roughness: 1, metalness: 0 }));
-  terr.add(patchMesh);
-}
-
-// --- construcciones de la isla: casas a dos aguas con el color de cubierta de la foto z18 ---
-progress(50, 'Colocando las construcciones');
-await tick0();
-const houses = [];
-for (const [, refH, ring] of construcciones.buildings) {
-  let cx = 0, cy = 0;
-  const pts = ring.map(([lon, lat]) => { const [X, Z] = llToXZ(lon, lat); cx += X; cy += Z; return [X, Z]; });
-  cx /= pts.length; cy /= pts.length;
-  let sxx = 0, szz = 0, sxz = 0;
-  for (const [X, Z] of pts) { sxx += (X - cx) ** 2; szz += (Z - cy) ** 2; sxz += (X - cx) * (Z - cy); }
-  const ang = 0.5 * Math.atan2(2 * sxz, sxx - szz), ca = Math.cos(ang), sa = Math.sin(ang);
-  let minA = 1e9, maxA = -1e9, minB = 1e9, maxB = -1e9;
-  for (const [X, Z] of pts) { const a = (X - cx) * ca + (Z - cy) * sa, b = -(X - cx) * sa + (Z - cy) * ca; minA = Math.min(minA, a); maxA = Math.max(maxA, a); minB = Math.min(minB, b); maxB = Math.max(maxB, b); }
-  if (distAt(cx, cy) < 0) continue;
-  houses.push({ x: cx, z: cy, ang, w: Math.max(3, maxA - minA), d: Math.max(3, maxB - minB), h: refH || 4, y: heightAtXZ(cx, cy) });
-}
-{
-  const ESC = 2, cv = document.createElement('canvas'); cv.width = Math.round(patchImg.width / ESC); cv.height = Math.round(patchImg.height / ESC);
-  const c2 = cv.getContext('2d', { willReadFrequently: true }); c2.drawImage(patchImg, 0, 0, cv.width, cv.height); const im = c2.getImageData(0, 0, cv.width, cv.height).data;
-  houses.forEach((hh) => {
-    const [tx, ty] = xzToT(hh.x, hh.z), px = Math.floor((tx * 8 - PM.x0) * 256 * cv.width / PM.px), py = Math.floor((ty * 8 - PM.y0) * 256 * cv.height / PM.px);
-    let r = 0, g2 = 0, b2 = 0, n = 0;
-    for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) { const x = px + dx, y = py + dy; if (x < 0 || y < 0 || x >= cv.width || y >= cv.height) continue; const k = (y * cv.width + x) * 4; r += im[k]; g2 += im[k + 1]; b2 += im[k + 2]; n++; }
-    hh.col = n ? new THREE.Color().setRGB(r / n / 255, g2 / n / 255, b2 / n / 255, THREE.SRGBColorSpace) : new THREE.Color(0.72, 0.71, 0.67);
-  });
-}
-const houseMesh = (() => {
-  const P = [], R = [], K = [], I = [];
-  const v = (x, y, z, roofF, ridge) => { P.push(x, y + ridge * 0.36, z); R.push(roofF); K.push(ridge); return P.length / 3 - 1; };
-  const quad = (a, b, c, d) => I.push(a, b, c, a, c, d);
-  const h = 0.5;
-  [[[-h, -h], [h, -h]], [[h, -h], [h, h]], [[h, h], [-h, h]], [[-h, h], [-h, -h]]].forEach(([[x0, z0], [x1, z1]]) => quad(v(x0, 0, z0, 0, 0), v(x1, 0, z1, 0, 0), v(x1, 1, z1, 0, 0), v(x0, 1, z0, 0, 0)));
-  [-h, h].forEach((x) => { const a = v(x, 1, -h, 0, 0), b = v(x, 1, h, 0, 0), c = v(x, 1, 0, 0, 1); if (x < 0) I.push(a, b, c); else I.push(b, a, c); });
-  [-1, 1].forEach((s) => { const a = v(-h, 1, s * h, 1, 0), b = v(h, 1, s * h, 1, 0), c = v(h, 1, 0, 1, 1), d = v(-h, 1, 0, 1, 1); if (s > 0) quad(a, b, c, d); else quad(b, a, d, c); });
-  const g2 = new THREE.BufferGeometry(); g2.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g2.setAttribute('aRoof', new THREE.Float32BufferAttribute(R, 1)); g2.setAttribute('aRidge', new THREE.Float32BufferAttribute(K, 1)); g2.setIndex(I);
-  const geo = g2.toNonIndexed(); geo.computeVertexNormals();
-  const mat = new THREE.MeshStandardMaterial({ roughness: 0.88, metalness: 0, side: THREE.DoubleSide });
-  mat.onBeforeCompile = (sh) => {
-    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float aRoof; attribute float aRidge; varying float vRoof; varying vec2 vRU;')
-      .replace('#include <begin_vertex>', `vec3 transformed = vec3(position);
-        float sx = 1.0; float sy = 1.0; float sz = 1.0;
-        #ifdef USE_INSTANCING
-          sx = length(instanceMatrix[0].xyz); sy = length(instanceMatrix[1].xyz); sz = length(instanceMatrix[2].xyz);
-        #endif
-        transformed.y += aRidge * (0.36 * sz / max(sy, 0.01) - 0.36);
-        if (aRoof > 0.5) { transformed.x *= 1.0 + 0.7 / max(sx, 0.1); transformed.z *= 1.0 + 0.7 / max(sz, 0.1); transformed.y -= (1.0 - aRidge) * 0.06 * sz / max(sy, 0.01); }
-        vRoof = aRoof; vRU = vec2(transformed.x * sx, abs(transformed.z) * sz);`);
-    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vRoof; varying vec2 vRU; float hh2(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }')
-      .replace('#include <color_fragment>', `#include <color_fragment>
-        {
-          vec3 foto = vColor;
-          if (vRoof > 0.5) {
-            float onda = 0.5 + 0.5 * sin(vRU.x * 6.2832 / 0.177 * 0.12);
-            float junta = smoothstep(0.0, 0.03, abs(fract(vRU.y / 1.52) - 0.5) - 0.47);
-            float mancha = hh2(floor(vRU * 1.7)) * 0.5 + hh2(floor(vRU * 4.3)) * 0.5;
-            vec3 fc = vec3(0.52, 0.51, 0.48) * (0.72 + 0.28 * onda) * (0.86 + 0.14 * mancha) * (1.0 - 0.12 * junta);
-            diffuseColor.rgb = mix(fc, foto * (0.8 + 0.2 * onda), 0.5);
-          } else {
-            diffuseColor.rgb = vec3(0.74, 0.71, 0.65) * (0.9 + 0.1 * hh2(floor(vRU * 0.5)));
-          }
-        }`);
-  };
-  mat.customProgramCacheKey = () => 'casa-dos-aguas';
-  const m = new THREE.InstancedMesh(geo, mat, Math.max(1, houses.length));
-  m.frustumCulled = false;
-  return m;
-})();
-terr.add(houseMesh);
-let houseEsc = 0;
-function updateHouses(escala) {
-  const m4 = new THREE.Matrix4(), qn = new THREE.Quaternion(), upV = new THREE.Vector3(0, 1, 0), sv = new THREE.Vector3(), pv = new THREE.Vector3();
-  houses.forEach((hh, k) => {
-    const largoA = hh.w >= hh.d; qn.setFromAxisAngle(upV, largoA ? -hh.ang : -hh.ang - Math.PI / 2);   // cumbrera por el lado largo
-    pv.set(hh.x, hh.y, hh.z); sv.set((largoA ? hh.w : hh.d) * escala, hh.h * escala, (largoA ? hh.d : hh.w) * escala);
-    m4.compose(pv, qn, sv); houseMesh.setMatrixAt(k, m4); houseMesh.setColorAt(k, hh.col);
-  });
-  houseMesh.instanceMatrix.needsUpdate = true; if (houseMesh.instanceColor) houseMesh.instanceColor.needsUpdate = true;
-  houseEsc = escala;
-}
-updateHouses(CASA_ESCALA);
-
-// --- árboles reales: modelos escaneados (Island Tree 01 y 02) SOLO en copas detectadas; no se inventa ninguna posición ---
-progress(58, 'Colocando los árboles reales');
-await tick0();
-const vientoT = { value: 0 };
-const especiesArb = [];
+// --- modelo Revit: se carga primero para conocer su terreno ---
+progress(30, 'Cargando modelo 3D de la isla');
+let hModel = () => null, gltf = null;
 try {
+  gltf = await loadGLB(A + 'modelo/tierrabomba_revit.glb');
+  gltf.scene.updateMatrixWorld(true);
+  let terrainGeoRaw = null;
+  gltf.scene.traverse((o) => { if (o.isMesh && (o.name + ' ' + (o.parent ? o.parent.name : '')).toLowerCase().includes('terrain')) { terrainGeoRaw = o.geometry.clone(); terrainGeoRaw.applyMatrix4(o.matrixWorld); } });
+  if (terrainGeoRaw) {
+    const p = terrainGeoRaw.attributes.position, ix = terrainGeoRaw.index;
+    terrainGeoRaw.computeBoundingBox();
+    const bb = terrainGeoRaw.boundingBox, CELL = 8;
+    const W = Math.ceil((bb.max.x - bb.min.x) / CELL) + 1, H = Math.ceil((bb.max.y - bb.min.y) / CELL) + 1;
+    const grid = new Float32Array(W * H).fill(NaN);
+    const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+    const tri = ix ? ix.count / 3 : p.count / 3;
+    for (let t = 0; t < tri; t++) {
+      const i0 = ix ? ix.getX(t * 3) : t * 3, i1 = ix ? ix.getX(t * 3 + 1) : t * 3 + 1, i2 = ix ? ix.getX(t * 3 + 2) : t * 3 + 2;
+      a.fromBufferAttribute(p, i0); b.fromBufferAttribute(p, i1); c.fromBufferAttribute(p, i2);
+      const minX = Math.floor((Math.min(a.x, b.x, c.x) - bb.min.x) / CELL), maxX = Math.ceil((Math.max(a.x, b.x, c.x) - bb.min.x) / CELL);
+      const minY = Math.floor((Math.min(a.y, b.y, c.y) - bb.min.y) / CELL), maxY = Math.ceil((Math.max(a.y, b.y, c.y) - bb.min.y) / CELL);
+      const den = (b.y - c.y) * (a.x - c.x) + (c.x - b.x) * (a.y - c.y);
+      if (Math.abs(den) < 1e-9) continue;
+      for (let gy = minY; gy <= maxY; gy++) for (let gx = minX; gx <= maxX; gx++) {
+        const px = bb.min.x + gx * CELL, py = bb.min.y + gy * CELL;
+        const w1 = ((b.y - c.y) * (px - c.x) + (c.x - b.x) * (py - c.y)) / den;
+        const w2 = ((c.y - a.y) * (px - c.x) + (a.x - c.x) * (py - c.y)) / den;
+        const w3 = 1 - w1 - w2;
+        if (w1 < -0.001 || w2 < -0.001 || w3 < -0.001) continue;
+        const h = w1 * a.z + w2 * b.z + w3 * c.z, k = gy * W + gx;
+        if (gx >= 0 && gy >= 0 && gx < W && gy < H && !(grid[k] > h)) grid[k] = h;
+      }
+    }
+    hModel = (mx, my) => {
+      const gx = Math.round((mx - bb.min.x) / CELL), gy = Math.round((my - bb.min.y) / CELL);
+      if (gx < 0 || gy < 0 || gx >= W || gy >= H) return null;
+      const v = grid[gy * W + gx];
+      return Number.isNaN(v) ? null : v;
+    };
+  }
+} catch (e) { console.warn('Modelo Revit no disponible', e); }
+const tmpM = new THREE.Vector3();
+const revitGround = (x, z) => { tmpM.set(x, 0, z).applyMatrix4(M_REVIT_INV); return hModel(tmpM.x, tmpM.y); };
+
+// altura del suelo en la escena (metros, ya exagerada); null en el mar
+function heightAt(x, z) {
+  const r = revitGround(x, z);
+  if (r !== null && r > 0.05) return r * EX + 0.2;
+  const [u, v] = xzToTile(x, z);
+  if (landAt(u, v) < 0.5) return null;
+  return Math.max(1.5, demAt(u, v) * EX);
+}
+
+// --- terreno del bloque ---
+let scanMat = null, scanFrente = null;   // efecto de escaneo al materializar
+progress(45, 'Construyendo el relieve');
+{
+  const STEP = 26;
+  const nx = Math.round((BLOCK.x1 - BLOCK.x0) / STEP), nz = Math.round((BLOCK.z1 - BLOCK.z0) / STEP);
+  const pos = new Float32Array((nx + 1) * (nz + 1) * 3), uv = new Float32Array((nx + 1) * (nz + 1) * 2);
+  const edgeH = { n: [], s: [], w: [], e: [] };
+  for (let j = 0; j <= nz; j++) for (let i = 0; i <= nx; i++) {
+    const x = BLOCK.x0 + i * STEP, z = BLOCK.z0 + j * STEP;
+    const [u, v] = xzToTile(x, z);
+    const lm = landAt(u, v), h = demAt(u, v);
+    const yLand = Math.max(1.5, h * EX), ySea = Math.min(-2, h) * 1.4 - 2;   // fondo marino
+    const tt = Math.min(1, Math.max(0, (lm - 0.25) / 0.5)), sm = tt * tt * (3 - 2 * tt);
+    let y = ySea + (yLand - ySea) * sm;
+    const r = revitGround(x, z);
+    if (r !== null && r > 0.05) y = r * EX - 2.5;                    // bajo el modelo Revit
+    const k = j * (nx + 1) + i;
+    pos[k * 3] = x; pos[k * 3 + 1] = y; pos[k * 3 + 2] = z;
+    uv[k * 2] = u; uv[k * 2 + 1] = 1 - v;
+  }
+  const idx = new Uint32Array(nx * nz * 6); let q = 0;
+  for (let j = 0; j < nz; j++) for (let i = 0; i < nx; i++) {
+    const a = j * (nx + 1) + i, b = a + 1, d = a + nx + 1, e = d + 1;
+    idx[q++] = a; idx[q++] = d; idx[q++] = b; idx[q++] = b; idx[q++] = d; idx[q++] = e;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  g.setIndex(new THREE.BufferAttribute(idx, 1));
+  g.computeVertexNormals();
+  terr.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: satMap, roughness: 0.95, metalness: 0, color: 0xa9b4b8 }))); // satélite atenuado: los datos van encima
+
+  // malla de escaneo: retícula del relieve real cada 52 m (solo tierra), que un frente de barrido
+  // enciende al materializar, como un levantamiento láser del terreno
+  {
+    const L = []; const st = 2; const Pk = (i, j) => (j * (nx + 1) + i) * 3;
+    const seg = (a, b) => { if (pos[a + 1] < WATER_Y + 0.3 && pos[b + 1] < WATER_Y + 0.3) return; L.push(pos[a], pos[a + 1], pos[a + 2], pos[b], pos[b + 1], pos[b + 2]); };
+    for (let j = 0; j <= nz; j += st) for (let i = 0; i + st <= nx; i += st) seg(Pk(i, j), Pk(i + st, j));
+    for (let i = 0; i <= nx; i += st) for (let j = 0; j + st <= nz; j += st) seg(Pk(i, j), Pk(i, j + st));
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(L, 3));
+    scanMat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      uniforms: { uScan: { value: -1e9 }, uOp: { value: 0 }, uCol: { value: new THREE.Color(0x8fdcf5) } },
+      vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position + vec3(0., 1.2, 0.), 1.); }',
+      fragmentShader: 'uniform float uScan, uOp; uniform vec3 uCol; varying vec3 vP; void main(){ float d = uScan - vP.x; if (d < 0.) discard; float a = exp(-d / 260.) * 0.85 + 0.12; float f = exp(-d / 28.); gl_FragColor = vec4(mix(uCol, vec3(1.), f) * a * uOp, 1.); }',
+    });
+    const wire = new THREE.LineSegments(lg, scanMat); wire.renderOrder = 2; wire.frustumCulled = false; terr.add(wire);
+    // plano del frente de barrido
+    const fr = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      uniforms: { uOp: { value: 0 } },
+      vertexShader: 'varying vec2 vU; void main(){ vU = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+      fragmentShader: 'uniform float uOp; varying vec2 vU; void main(){ float a = pow(1. - vU.y, 2.2) * 0.55 + smoothstep(.985, 1., 1. - abs(vU.y - .0) ) * .0; float l = step(.5, fract(vU.x * 60.)) * .25 + .75; gl_FragColor = vec4(vec3(.56,.86,.96) * a * l * uOp, 1.); }',
+    }));
+    fr.rotation.y = Math.PI / 2; fr.scale.set(BLOCK.z1 - BLOCK.z0, 180, 1); fr.position.set(BLOCK.x0, 90, (BLOCK.z0 + BLOCK.z1) / 2); fr.visible = false; terr.add(fr);
+    scanFrente = fr;
+  }
+
+  // paredes de tierra del bloque (con franja de agua arriba donde hay mar)
+  const wallPos = [], wallCol = [], wallIdx = [];
+  const soilTop = new THREE.Color('#5d4a33'), soilBot = new THREE.Color('#24494f'), waterC = new THREE.Color('#24494f');
+  const addSide = (pts) => {
+    const base = wallPos.length / 3;
+    pts.forEach(([x, y, z]) => {
+      const top = Math.max(y, WATER_Y);
+      const wet = y < WATER_Y;
+      wallPos.push(x, top, z, x, y, z, x, BASE_Y, z);
+      const ct = wet ? waterC : soilTop;
+      wallCol.push(ct.r, ct.g, ct.b, soilTop.r, soilTop.g, soilTop.b, soilBot.r, soilBot.g, soilBot.b);
+    });
+    for (let k = 0; k < pts.length - 1; k++) {
+      const a = base + k * 3, b = a + 3;
+      wallIdx.push(a, a + 1, b, b, a + 1, b + 1, a + 1, a + 2, b + 1, b + 1, a + 2, b + 2);
+    }
+  };
+  const P = (i, j) => { const k = j * (nx + 1) + i; return [pos[k * 3], pos[k * 3 + 1], pos[k * 3 + 2]]; };
+  const side = (f) => { const a = []; f(a); return a; };
+  addSide(side(a => { for (let i = 0; i <= nx; i++) a.push(P(i, nz)); }));            // sur
+  addSide(side(a => { for (let i = nx; i >= 0; i--) a.push(P(i, 0)); }));             // norte
+  addSide(side(a => { for (let j = 0; j <= nz; j++) a.push(P(0, j)); }));             // oeste
+  addSide(side(a => { for (let j = nz; j >= 0; j--) a.push(P(nx, j)); }));            // este
+  const wg = new THREE.BufferGeometry();
+  wg.setAttribute('position', new THREE.Float32BufferAttribute(wallPos, 3));
+  wg.setAttribute('color', new THREE.Float32BufferAttribute(wallCol, 3));
+  wg.setIndex(wallIdx); wg.computeVertexNormals();
+  terr.add(new THREE.Mesh(wg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 1, metalness: 0, side: THREE.DoubleSide })));
+  // mar infinito: fondo oscuro y superficie de agua que se pierden en el horizonte
+  const SEA = 600000;
+  const seabed = new THREE.Mesh(new THREE.PlaneGeometry(SEA, SEA), new THREE.MeshStandardMaterial({ color: 0x24494f, roughness: 1, metalness: 0 }));
+  seabed.rotation.x = -Math.PI / 2; seabed.position.set((BLOCK.x0 + BLOCK.x1) / 2, BASE_Y, (BLOCK.z0 + BLOCK.z1) / 2);
+  terr.add(seabed);
+  const water = new THREE.Mesh(new THREE.PlaneGeometry(SEA, SEA),
+    new THREE.MeshStandardMaterial({ color: 0x0a2a36, transparent: true, opacity: 0.86, roughness: 0.25, metalness: 0.1, depthWrite: false }));
+  water.rotation.x = -Math.PI / 2; water.position.set((BLOCK.x0 + BLOCK.x1) / 2, WATER_Y, (BLOCK.z0 + BLOCK.z1) / 2);
+  water.renderOrder = 1;
+  terr.add(water);
+}
+
+// --- modelo Revit con el mismo relieve exagerado ---
+if (gltf) {
+  try {
+    const [hiMap, hiMask] = await Promise.all([loadTex(A + 'texturas/tierrabomba_satelite.jpg'), loadTex(A + 'texturas/tierrabomba_tierra_mascara.png')]);
+    hiMap.colorSpace = THREE.SRGBColorSpace;
+    hiMap.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    const satMat = new THREE.MeshStandardMaterial({ map: hiMap, alphaMap: hiMask, alphaTest: 0.5, roughness: 0.96, metalness: 0, color: 0xe8e8e8, side: THREE.DoubleSide });
+    const bldMat = new THREE.MeshStandardMaterial({ color: 0xf3efe6, roughness: 0.85, metalness: 0 });
+    const satUV = (geo) => {
+      const p = geo.attributes.position, uv = new Float32Array(p.count * 2);
+      const [a0, a1] = SATMAP.origin, [[i00, i01], [i10, i11]] = SATMAP.inv;
+      for (let i = 0; i < p.count; i++) {
+        const dx = p.getX(i) - a0, dy = p.getY(i) - a1;
+        uv[i * 2] = i00 * dx + i01 * dy;
+        uv[i * 2 + 1] = 1 - (i10 * dx + i11 * dy);
+      }
+      geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+    };
+    gltf.scene.traverse((o) => {
+      if (!o.isMesh) return;
+      const nm = (o.name + ' ' + (o.parent ? o.parent.name : '')).toLowerCase();
+      const geo = o.geometry.clone();
+      geo.applyMatrix4(o.matrixWorld);
+      if (geo.attributes.color) geo.deleteAttribute('color');
+      const p = geo.attributes.position;
+      const isTerrain = nm.includes('terrain');
+      let mat;
+      if (isTerrain || nm.includes('road')) { satUV(geo); mat = satMat; } else mat = bldMat;
+      for (let i = 0; i < p.count; i++) {
+        const z = p.getZ(i);
+        if (isTerrain) p.setZ(i, z * EX);
+        else { const g = hModel(p.getX(i), p.getY(i)); p.setZ(i, z + (EX - 1) * (g ?? 0)); }
+      }
+      geo.applyMatrix4(M_REVIT);
+      geo.computeVertexNormals();
+      terr.add(new THREE.Mesh(geo, mat));
+    });
+  } catch (e) { console.warn('Modelo Revit no disponible', e); }
+}
+
+// --- árboles realistas (modelos 3D con fotografía de hojas y corteza) ---
+progress(65, 'Plantando los árboles');
+try {
+  // 1) cargar los dos árboles del repositorio de la tesis, normalizados a 1 m de alto
+  const kinds = [];
   for (const id of ['island_tree_01', 'island_tree_02']) {
-    const [hojas, madera] = await Promise.all([loadGLB(BASE + `assets/modelo/arboles/${id}_L1_hojas.glb`), loadGLB(BASE + `assets/modelo/arboles/${id}_L1_madera.glb`)]);
+    const [lv, wd] = await Promise.all([loadGLB(A + `modelo/arboles/${id}_L1_hojas.glb`), loadGLB(A + `modelo/arboles/${id}_L1_madera.glb`)]);
     const parts = [];
-    for (const [gl, kind] of [[hojas, 'leaf'], [madera, 'wood']]) {
-      gl.scene.updateMatrixWorld(true);
-      gl.scene.traverse((o) => { if (o.isMesh) { const gg = o.geometry.clone(); gg.applyMatrix4(o.matrixWorld); parts.push({ geometry: gg, material: (Array.isArray(o.material) ? o.material[0] : o.material).clone(), kind }); } });
+    for (const [g, kind] of [[lv, 'leaf'], [wd, 'wood']]) {
+      g.scene.updateMatrixWorld(true);
+      g.scene.traverse((o) => { if (o.isMesh) { const gg = o.geometry.clone(); gg.applyMatrix4(o.matrixWorld); parts.push({ geo: gg, mat: (Array.isArray(o.material) ? o.material[0] : o.material).clone(), kind }); } });
     }
     const box = new THREE.Box3();
-    parts.forEach((p) => { p.geometry.computeBoundingBox(); box.union(p.geometry.boundingBox); });
+    parts.forEach(pt => { pt.geo.computeBoundingBox(); box.union(pt.geo.boundingBox); });
     const h = box.max.y - box.min.y || 1;
     const norm = new THREE.Matrix4().makeScale(1 / h, 1 / h, 1 / h).multiply(new THREE.Matrix4().makeTranslation(-(box.min.x + box.max.x) / 2, -box.min.y, -(box.min.z + box.max.z) / 2));
-    parts.forEach((p) => {
-      p.geometry.applyMatrix4(norm);
-      p.material.side = THREE.DoubleSide;
-      if (p.kind === 'leaf') { p.material.alphaTest = Math.max(p.material.alphaTest || 0, 0.4); p.material.alphaToCoverage = true; p.material.color.multiplyScalar(1.3); }
-      const k = p.kind === 'leaf' ? 1 : 0.45;
-      p.material.onBeforeCompile = (sh) => {
-        sh.uniforms.uViento = vientoT;
-        sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uViento;')
-          .replace('#include <begin_vertex>', `#include <begin_vertex>
-            #ifdef USE_INSTANCING
-            float faseV = instanceMatrix[3].x * 0.07 + instanceMatrix[3].z * 0.05;
-            #else
-            float faseV = 0.0;
-            #endif
-            float hV = max(position.y, 0.0);
-            float amV = ${(0.02 * k).toFixed(4)} * hV * hV;
-            transformed.x += sin(uViento * 1.2 + faseV) * amV + sin(uViento * 3.3 + faseV * 2.0) * amV * 0.25;
-            transformed.z += cos(uViento * 0.95 + faseV) * amV * 0.8;`);
-      };
-      p.material.customProgramCacheKey = () => `arbol-viento-${p.kind}`;
-    });
-    especiesArb.push(parts);
+    parts.forEach(pt => { pt.geo.applyMatrix4(norm); pt.mat.side = THREE.DoubleSide; if (pt.kind === 'leaf') pt.mat.alphaTest = Math.max(pt.mat.alphaTest || 0, 0.4); });
+    const half = Math.max((box.max.x - box.min.x), (box.max.z - box.min.z)) / h / 2;
+    kinds.push({ parts, half });
   }
-} catch (e) { console.warn('Modelos de árboles no disponibles', e); }
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), sc = new THREE.Vector3(), ps = new THREE.Vector3();
+  const rnd = (i) => { const r = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return r - Math.floor(r); };
 
-// posiciones: copas detectadas en la foto z18 del casco (vegetacion.json) + copas detectadas en la foto satelital z15
-const treeAll = VEG.arboles.map(([x, y, size, dense], i) => {
-  const [X, Z] = llToXZ(...modelToLL(x, y));
-  return { X, Z, i, size, dense, d: distAt(X, Z) };
-}).filter((t) => t.d > 0).map((t) => ({
-  x: t.X, y: heightAtXZ(t.X, t.Z) + 0.4, z: t.Z,
-  rot: ((Math.imul(t.i + 7, 40503) >>> 0) % 628) / 100,
-  height: 8.5 * t.size * 1.35 * (t.dense ? 0.92 : 1.05),
-  tone: ((Math.imul(t.i + 3, 69069) >>> 0) % 100) / 100,
-}));
-{
-  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-  const cx = cv.getContext('2d', { willReadFrequently: true });
-  cx.drawImage(satImg, VENTANA.left, VENTANA.top, W, H, 0, 0, W, H);
-  const d = cx.getImageData(0, 0, W, H).data, verde = new Float32Array(W * H);
-  for (let i = 0; i < W * H; i++) {
-    if (!land[i]) continue;
-    const r = d[i * 4], g = d[i * 4 + 1], b = d[i * 4 + 2], lum = (r + g + b) / 3, exg = (2 * g - r - b) / (r + g + b + 1);
-    if (lum < 138 && exg > 0.025) verde[i] = exg * (1.25 - lum / 170);
-  }
-  for (let py = 1; py < H - 1; py++) for (let px = 1; px < W - 1; px++) {
-    const i = py * W + px, v = verde[i]; if (v <= 0.02) continue;
-    let max = true;
-    for (let dy = -1; dy <= 1 && max; dy++) for (let dx = -1; dx <= 1; dx++) if ((dx || dy) && verde[i + dy * W + dx] > v) { max = false; break; }
-    if (!max) continue;
-    const tx = tx0 + (px + 0.5) / W * (tx1 - tx0), ty = ty0 + (py + 0.5) / H * (ty1 - ty0);
-    const a = tx * 8 - PM.x0, b = ty * 8 - PM.y0;
-    if (a > 0 && b > 0 && a < tile18 && b < tile18) continue;   // ya cubierto por la detección fina
-    if (distM[i] < 4) continue;
-    const [X, Z] = tToXZ(tx, ty), hh = (Math.imul(i + 11, 2654435761) >>> 0) / 4294967296;
-    treeAll.push({ x: X, y: heightAtXZ(X, Z) + 0.4, z: Z, rot: hh * 6.28, height: 8.5 * (0.9 + Math.min(0.6, v * 2.2)) * 1.35, tone: (hh * 7.3) % 1 });
-  }
-}
-const nEsp = Math.max(1, especiesArb.length);
-treeAll.forEach((t, k) => { t.sp = (Math.imul(k + 1, 2654435761) >>> 0) % nEsp; });
-function instanciarArboles(lista, celda) {
-  const bloques = new Map();
-  lista.forEach((t) => { const key = `${t.sp}:${Math.floor(t.x / celda)}:${Math.floor(t.z / celda)}`; if (!bloques.has(key)) bloques.set(key, []); bloques.get(key).push(t); });
-  const group = new THREE.Group(), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0), sc = new THREE.Vector3(), pos = new THREE.Vector3(), col = new THREE.Color();
-  for (const [key, items] of bloques) {
-    const sp = parseInt(key.split(':')[0], 10);
-    (especiesArb[sp] || []).forEach((part) => {
-      const mesh = new THREE.InstancedMesh(part.geometry, part.material, items.length);
-      items.forEach((t, k) => {
-        q.setFromAxisAngle(up, t.rot); sc.setScalar(t.height); pos.set(t.x, t.y, t.z); m4.compose(pos, q, sc); mesh.setMatrixAt(k, m4);
-        if (part.kind === 'leaf') { const v = 0.8 + t.tone * 0.28; col.setRGB(v * 0.84, v * (0.98 + t.tone * 0.06), v * 0.74); mesh.setColorAt(k, col); }
-      });
-      mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
-      mesh.computeBoundingSphere(); group.add(mesh);
+  // 2) árboles 3D completos donde está el modelo del pueblo (vegetación detectada en la imagen z18)
+  const near = [[], []];
+  const v = new THREE.Vector3();
+  VEG.arboles.forEach(([mx, my, size, dense], i) => {
+    const h = hModel(mx, my);
+    if (h === null || h < 0.1) return;
+    v.set(mx, my, h * EX).applyMatrix4(M_REVIT);
+    near[i % 2].push({ x: v.x, y: v.y - 0.1, z: v.z, rot: (i * 2.3999) % 6.283, hgt: 8.5 * size * (dense ? 0.92 : 1.05) * 1.5 });
+  });
+  kinds.forEach((k, kk) => k.parts.forEach(pt => {
+    const list = near[kk];
+    const im = new THREE.InstancedMesh(pt.geo, pt.mat, list.length);
+    list.forEach((t, j) => { q.setFromAxisAngle(up, t.rot); sc.setScalar(t.hgt); ps.set(t.x, t.y, t.z); m4.compose(ps, q, sc); im.setMatrixAt(j, m4); });
+    im.instanceMatrix.needsUpdate = true; im.computeBoundingSphere();
+    terr.add(im);
+  }));
+
+  // 3) en el resto de la isla: los mismos árboles, fotografiados desde el lado y desde arriba
+  //    (impostores en cruz: se ven como el árbol 3D sin el costo de miles de modelos)
+  const RT_W = 1024, RT_H = 512;
+  const rt = new THREE.WebGLRenderTarget(RT_W, RT_H, { samples: 4 });
+  rt.texture.generateMipmaps = true; rt.texture.minFilter = THREE.LinearMipmapLinearFilter;
+  const isc = new THREE.Scene();
+  isc.add(new THREE.HemisphereLight(0xf4f8ff, 0x3a4a2a, 2.0));
+  const dl = new THREE.DirectionalLight(0xfff4e0, 2.6); dl.position.set(-1.2, 2.2, 1.6); isc.add(dl);
+  const prevClear = renderer.getClearColor(new THREE.Color()), prevAlpha = renderer.getClearAlpha();
+  renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear();
+  const cell = RT_W / 4;   // 4 celdas: árbol 1 lado, árbol 1 arriba, árbol 2 lado, árbol 2 arriba
+  kinds.forEach((k, kk) => {
+    const grp = new THREE.Group(); k.parts.forEach(pt => grp.add(new THREE.Mesh(pt.geo, pt.mat))); isc.add(grp);
+    const m = Math.max(k.half, 0.5) * 1.02;
+    const side = new THREE.OrthographicCamera(-m, m, 1.02, -0.02, 0.01, 10); side.position.set(0, 0.5, 4); side.lookAt(0, 0.5, 0);
+    const top = new THREE.OrthographicCamera(-m, m, m, -m, 0.01, 10); top.position.set(0, 4, 0); top.up.set(0, 0, -1); top.lookAt(0, 0, 0);
+    renderer.setViewport(cell * (kk * 2), 0, cell, RT_H); renderer.setScissor(cell * (kk * 2), 0, cell, RT_H); renderer.setScissorTest(true);
+    side.left = -m; side.right = m; side.top = 1.02; side.bottom = -0.02; side.updateProjectionMatrix();
+    renderer.render(isc, side);
+    renderer.setViewport(cell * (kk * 2 + 1), RT_H / 2 - cell / 2, cell, cell); renderer.setScissor(cell * (kk * 2 + 1), RT_H / 2 - cell / 2, cell, cell);
+    renderer.render(isc, top);
+    isc.remove(grp);
+    k.m = m;
+  });
+  renderer.setScissorTest(false); renderer.setRenderTarget(null); renderer.setClearColor(prevClear, prevAlpha);
+  renderer.setViewport(0, 0, renderer.domElement.width / renderer.getPixelRatio(), renderer.domElement.height / renderer.getPixelRatio());
+
+  const impostorGeo = (kk, m) => {
+    const u0 = (kk * 2) / 4, u1 = (kk * 2 + 1) / 4, u2 = (kk * 2 + 2) / 4;
+    const vt0 = (RT_H / 2 - cell / 2) / RT_H, vt1 = (RT_H / 2 + cell / 2) / RT_H;
+    const P = [], U = [], I = [];
+    const quad = (pts, uvs) => { const b = P.length / 3; pts.forEach(p => P.push(...p)); uvs.forEach(t => U.push(...t)); I.push(b, b + 1, b + 2, b, b + 2, b + 3); };
+    const w = m;
+    quad([[-w, -0.02, 0], [w, -0.02, 0], [w, 1.02, 0], [-w, 1.02, 0]], [[u0, 0], [u1, 0], [u1, 1], [u0, 1]]);
+    quad([[0, -0.02, w], [0, -0.02, -w], [0, 1.02, -w], [0, 1.02, w]], [[u0, 0], [u1, 0], [u1, 1], [u0, 1]]);
+    quad([[-w, 0.62, w], [w, 0.62, w], [w, 0.62, -w], [-w, 0.62, -w]], [[u1, vt0], [u2, vt0], [u2, vt1], [u1, vt1]]);
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setIndex(I);
+    g.computeVertexNormals();
+    return g;
+  };
+  const impMat = new THREE.MeshBasicMaterial({ map: rt.texture, alphaTest: 0.35, side: THREE.DoubleSide, transparent: false });
+  const TREES = await fetch(A + 'data/arboles_isla.json').then(r => r.json());
+  const far = [[], []];
+  TREES.forEach((t, i) => {
+    if (revitGround(t[0], t[1]) !== null) return;            // allí ya están los árboles 3D completos
+    const h = heightAt(t[0], t[1]); if (h === null) return;
+    far[i % 2].push([t, h, i]);
+  });
+  const col = new THREE.Color(), hsl = {};
+  far.forEach((list, kk) => {
+    const im = new THREE.InstancedMesh(impostorGeo(kk, kinds[kk].m), impMat, list.length);
+    list.forEach(([t, h, i], j) => {
+      const r = rnd(i);
+      const hgt = (11 + 9 * r) * (0.85 + 0.35 * Math.min(1.2, t[5])) * 1.9;
+      q.setFromAxisAngle(up, r * 6.283); sc.setScalar(hgt); ps.set(t[0], h - 0.3, t[1]);
+      m4.compose(ps, q, sc); im.setMatrixAt(j, m4);
+      // tono muy suave según el verde de la foto satelital en ese punto
+      col.setRGB(t[2] / 255, t[3] / 255, t[4] / 255, THREE.SRGBColorSpace).getHSL(hsl);
+      col.setRGB(1.18 + 0.15 * r, 1.26 + 0.12 * r, 1.08 + 0.1 * r);   // aclara la foto del árbol
+      im.setColorAt(j, col);
     });
-  }
-  return group;
-}
-// cerca del punto que mira la cámara: los modelos escaneados; en el resto, la misma copa fotografiada (impostor)
-const TREE_CERCA = IS_MOBILE ? 900 : 2600, R_CERCA = IS_MOBILE ? 900 : 1400;
-let treesGroup = new THREE.Group(), treeCentro = [Infinity, Infinity], rCorte = 0;
-terr.add(treesGroup);
-const cercanos = (cx2, cz2) => {
-  const l = treeAll.map((tr) => [tr, (tr.x - cx2) ** 2 + (tr.z - cz2) ** 2]).filter((e) => e[1] < R_CERCA * R_CERCA).sort((a, b) => a[1] - b[1]);
-  const sel = l.slice(0, TREE_CERCA);
-  rCorte = sel.length < l.length ? Math.sqrt(sel[sel.length - 1][1]) + 0.5 : R_CERCA;
-  return sel.map((e) => e[0]);
-};
-const uLejos = { uCentro: { value: new THREE.Vector2() }, uR: { value: 0 } };
-{
-  const copas = new THREE.Group();
-  const porEsp = especiesArb.map(() => []);
-  treeAll.forEach((t) => porEsp[t.sp % Math.max(1, porEsp.length)] && porEsp[t.sp % porEsp.length].push(t));
-  especiesArb.forEach((parts, e) => {
-    const esc = new THREE.Scene();
-    esc.add(new THREE.HemisphereLight(0xdff0ff, 0x4a4030, 1.25));
-    const luz = new THREE.DirectionalLight(0xfff0d8, 2.2); luz.position.set(-1, 1.6, 1.2); esc.add(luz);
-    const box = new THREE.Box3();
-    parts.forEach((pt) => { esc.add(new THREE.Mesh(pt.geometry, pt.material)); pt.geometry.computeBoundingBox(); box.union(pt.geometry.boundingBox); });
-    const lado = Math.max(1, Math.max(box.max.x - box.min.x, box.max.z - box.min.z));
-    const cam = new THREE.OrthographicCamera(-lado / 2, lado / 2, 1.02, -0.02, 0.01, 10); cam.position.set(0, 0.5, 4); cam.lookAt(0, 0.5, 0);
-    const RT = 512, rt = new THREE.WebGLRenderTarget(Math.round(RT * lado / 1.04), RT, { samples: 4 });
-    rt.texture.colorSpace = THREE.SRGBColorSpace;
-    const prevC = new THREE.Color(); renderer.getClearColor(prevC); const prevA = renderer.getClearAlpha();
-    renderer.setRenderTarget(rt); renderer.setClearColor(0x000000, 0); renderer.clear(); renderer.render(esc, cam);
-    renderer.setRenderTarget(null); renderer.setClearColor(prevC, prevA);
-    rt.texture.generateMipmaps = true; rt.texture.minFilter = THREE.LinearMipmapLinearFilter; rt.texture.anisotropy = aniso;
-    const a = new THREE.PlaneGeometry(lado, 1); a.translate(0, 0.5, 0);
-    const b = a.clone(); b.rotateY(Math.PI / 2);
-    const geo = mergeGeometries([a, b]);
-    const nrm = geo.attributes.normal; for (let v = 0; v < nrm.count; v++) nrm.setXYZ(v, 0, 1, 0);   // luz pareja: la foto ya trae su sombreado
-    const lista = porEsp[e];
-    const mat = new THREE.MeshLambertMaterial({ map: rt.texture, alphaTest: 0.45, alphaToCoverage: true, side: THREE.DoubleSide });
-    mat.onBeforeCompile = (sh) => {
-      sh.uniforms.uCentro = uLejos.uCentro; sh.uniforms.uR = uLejos.uR;
-      sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform vec2 uCentro; uniform float uR;')
-        .replace('#include <begin_vertex>', '#include <begin_vertex>\n vec2 pI = instanceMatrix[3].xz;\n if (length(pI - uCentro) < uR) transformed *= 0.0;');
-    };
-    mat.customProgramCacheKey = () => `impostor-${e}`;
-    const im = new THREE.InstancedMesh(geo, mat, Math.max(1, lista.length));
-    const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), c = new THREE.Color(), up = new THREE.Vector3(0, 1, 0);
-    lista.forEach((t, k) => { q.setFromAxisAngle(up, t.rot); s.setScalar(t.height); p.set(t.x, t.y, t.z); m4.compose(p, q, s); im.setMatrixAt(k, m4); const v = 0.84 + t.tone * 0.3; c.setRGB(v * 0.84, v * 1.0, v * 0.74); im.setColorAt(k, c); });
     im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true;
-    im.frustumCulled = false;
-    copas.add(im);
+    im.computeBoundingSphere();
+    terr.add(im);
   });
-  terr.add(copas);
-}
-function actualizarArboles(lx, lz, dist) {   // lx, lz, dist en metros
-  treesGroup.visible = dist < 3500;
-  if (treesGroup.visible && Math.hypot(lx - treeCentro[0], lz - treeCentro[1]) > R_CERCA * 0.35) {
-    treeCentro = [lx, lz];
-    terr.remove(treesGroup); treesGroup.traverse((o) => { if (o.isInstancedMesh) o.dispose(); });
-    treesGroup = instanciarArboles(cercanos(lx, lz), 200); terr.add(treesGroup);
-  }
-  uLejos.uCentro.value.set(treeCentro[0], treeCentro[1]);
-  uLejos.uR.value = treesGroup.visible ? rCorte : 0;
-}
-
-// --- contexto: toda Cartagena con foto aérea (Esri World Imagery z14) recortada a la tierra, y edificios del Catastro Multipropósito 2026 ---
-progress(66, 'Construyendo Cartagena');
-await tick0();
-let ctxMesh, edificios;
-{
-  const cx0 = 4748 * 2, cx1 = 4760 * 2, cy0 = 7711 * 2, cy1 = 7723 * 2;
-  const P00 = tToXZ(cx0, cy0), P10 = tToXZ(cx1, cy0), P01 = tToXZ(cx0, cy1), P11 = tToXZ(cx1, cy1);
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([P00[0], 1, P00[1], P10[0], 1, P10[1], P01[0], 1, P01[1], P11[0], 1, P11[1]]), 3));
-  g.setAttribute('normal', new THREE.BufferAttribute(new Float32Array([0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0]), 3));
-  g.setAttribute('uv', new THREE.BufferAttribute(new Float32Array([0, 1, 1, 1, 0, 0, 1, 0]), 2));
-  g.setIndex([0, 2, 1, 1, 2, 3]);
-  const mc = document.createElement('canvas'); mc.width = ctgImg.width; mc.height = ctgImg.height;
-  const m2 = mc.getContext('2d'); m2.fillStyle = '#000'; m2.fillRect(0, 0, mc.width, mc.height); m2.fillStyle = '#fff';
-  const aPx = (lon, lat) => { const [tx, ty] = ll2t(lon, lat); return [(tx - cx0) / (cx1 - cx0) * mc.width, (ty - cy0) / (cy1 - cy0) * mc.height]; };
-  m2.beginPath();
-  ctxJson.tierras.forEach((ring) => {
-    let sx = 0, sy = 0; ring.forEach(([lo, la]) => { sx += lo; sy += la; }); sx /= ring.length; sy /= ring.length;
-    if (sy < 10.388 && sx < -75.536) return;   // Tierra Bomba ya está modelada
-    ring.forEach(([lo, la], k) => { const [px, py] = aPx(lo, la); if (k) m2.lineTo(px, py); else m2.moveTo(px, py); }); m2.closePath();
-  });
-  m2.fill('evenodd');
-  const ctxTex = new THREE.Texture(ctgImg); ctxTex.colorSpace = THREE.SRGBColorSpace; ctxTex.anisotropy = aniso; ctxTex.needsUpdate = true;
-  ctxMesh = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: ctxTex, alphaMap: new THREE.CanvasTexture(mc), alphaTest: 0.5, roughness: 1, metalness: 0, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }));
-  ctxMesh.renderOrder = 1;
-  terr.add(ctxMesh);
-  const edGeo = new THREE.BoxGeometry(1, 1, 1); edGeo.translate(0, 0.5, 0);
-  edificios = new THREE.InstancedMesh(edGeo, new THREE.MeshStandardMaterial({ color: 0xe9e3d6, roughness: 0.85, metalness: 0 }), ctxJson.edificios.length);
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0), c = new THREE.Color();
-  ctxJson.edificios.forEach(([lo, la, w, d, ang, h, alto], k) => {
-    const [X, Z] = llToXZ(lo, la);
-    q.setFromAxisAngle(up, ang); s.set(w, Math.max(3, h) * 1.3, d); p.set(X, 1, Z); m4.compose(p, q, s); edificios.setMatrixAt(k, m4);
-    const v = alto ? 0.95 : 0.78 + ((k * 2654435761) % 1000) / 1000 * 0.16; c.setRGB(v, v * 0.98, v * 0.93); edificios.setColorAt(k, c);
-  });
-  edificios.instanceMatrix.needsUpdate = true; edificios.instanceColor.needsUpdate = true;
-  edificios.frustumCulled = false;
-  terr.add(edificios);
-}
-
-// --- cielo físico y nubes (mismos parámetros que la escena principal) ---
-const sunDir = new THREE.Vector3().setFromSphericalCoords(1, THREE.MathUtils.degToRad(90 - 38), THREE.MathUtils.degToRad(215));
-sun.position.copy(sunDir).multiplyScalar(800);
-const sky = new Sky();
-sky.scale.setScalar(45000);
-{
-  const su = sky.material.uniforms;
-  su.turbidity.value = 2; su.rayleigh.value = 2.4; su.mieCoefficient.value = 0.004; su.mieDirectionalG.value = 0.82;
-  su.sunPosition.value.copy(sunDir);
-  su.uAlpha = { value: 0 };
-  sky.material.fragmentShader = 'uniform float uAlpha;\n' + sky.material.fragmentShader.replace('gl_FragColor = vec4( retColor, 1.0 );', 'gl_FragColor = vec4( retColor, uAlpha );');
-  sky.material.transparent = true;
-}
-sky.renderOrder = -2; sky.frustumCulled = false; sky.visible = false;
-scene.add(sky);
-const nubesU = { uT: { value: 0 }, uSol: { value: sunDir.clone() }, uColSol: { value: new THREE.Color(1, 0.95, 0.85) }, uK: { value: 0 } };
-const nubes = new THREE.Mesh(new THREE.SphereGeometry(15000, 48, 24), new THREE.ShaderMaterial({
-  uniforms: nubesU, side: THREE.BackSide, transparent: true, depthWrite: false, fog: false,
-  vertexShader: 'varying vec3 vD; void main(){ vD = normalize((modelMatrix * vec4(position, 1.0)).xyz - cameraPosition); vec4 p = projectionMatrix * viewMatrix * modelMatrix * vec4(position, 1.0); gl_Position = p.xyww; }',
-  fragmentShader: `uniform float uT; uniform vec3 uSol; uniform vec3 uColSol; uniform float uK; varying vec3 vD;
-    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-    float n(vec2 p){ vec2 i = floor(p); vec2 f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1,0)), u.x), mix(h(i + vec2(0,1)), h(i + vec2(1,1)), u.x), u.y); }
-    float fbm(vec2 p){ float s = 0.0; float a = 0.5; mat2 m = mat2(1.6, 1.2, -1.2, 1.6); for (int i = 0; i < 6; i++) { s += a * n(p); p = m * p; a *= 0.5; } return s; }
-    void main(){
-      vec3 d = normalize(vD); if (d.y < 0.005) discard;
-      vec2 p = d.xz / (d.y + 0.08) * 1.4 + vec2(uT * 0.006, uT * 0.002);
-      float base = fbm(p);
-      float cob = smoothstep(0.42, 0.7, base + 0.06 * fbm(p * 3.0 + 7.0));
-      if (cob < 0.01) discard;
-      vec2 ps = p + normalize(uSol.xz + 1e-4) * 0.08;
-      float dens2 = fbm(ps);
-      float luz = clamp(0.55 + (base - dens2) * 4.0, 0.0, 1.0);
-      float frente = pow(max(dot(d, uSol), 0.0), 6.0);
-      vec3 sombra = vec3(0.5, 0.55, 0.62);
-      vec3 lit = mix(vec3(1.0), uColSol * 1.15, 0.35);
-      vec3 col = mix(sombra, lit, luz) + uColSol * frente * 0.6;
-      float horiz = smoothstep(0.005, 0.12, d.y);
-      gl_FragColor = vec4(col, cob * horiz * uK * 0.92);
-    }`,
-}));
-nubes.renderOrder = -1; nubes.frustumCulled = false; nubes.visible = false;
-scene.add(nubes);
-
-// --- agua realista (la misma de la escena principal): reflejo plano, color del mar de la foto satelital, Fresnel, destellos y espuma ---
-progress(74, 'Preparando el agua');
-await tick0();
-const shoreTex = (() => {
-  const SH = 2, sw = Math.ceil(W / SH), sh2 = Math.ceil(H / SH);
-  const marArr = new Uint8Array(W * H); for (let i = 0; i < W * H; i++) marArr[i] = land[i] ? 0 : 1;
-  const sqMar = edt(W, H, marArr);
-  const d = new Uint8Array(sw * sh2 * 4);
-  for (let y = 0; y < sh2; y++) for (let x = 0; x < sw; x++) { const dm = Math.sqrt(sqMar[Math.min(H - 1, y * SH) * W + Math.min(W - 1, x * SH)]) * mpp, o = (y * sw + x) * 4; d[o] = Math.round(255 * Math.min(1, dm / 900)); d[o + 3] = 255; }
-  const t = new THREE.DataTexture(d, sw, sh2, THREE.RGBAFormat); t.minFilter = t.magFilter = THREE.LinearFilter; t.generateMipmaps = false; t.needsUpdate = true; return t;
-})();
-const reflOn = !IS_MOBILE;
-const reflRT = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, depthBuffer: true });
-reflRT.texture.generateMipmaps = false;
-const reflCam = new THREE.PerspectiveCamera();
-const reflTexMat = new THREE.Matrix4();
-const waterU = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {
-  uTime: { value: 0 }, uShore: { value: null }, uSun: { value: sunDir.clone() }, uS: { value: S },
-  uFit: { value: TFIT }, uWin: { value: new THREE.Vector4(tx0, ty0, tx1 - tx0, ty1 - ty0) }, uMos: { value: new THREE.Vector4(MOSAICO.x0, MOSAICO.y0, MOSAICO.nx, MOSAICO.ny) },
-  uDeep: { value: new THREE.Color(0x06293a) }, uShallow: { value: new THREE.Color(0x2f8a8c) },
-  uHorizon: { value: new THREE.Color(0xa9cfdc) }, uZenith: { value: new THREE.Color(0x2c6fb0) },
-  uRefl: { value: null }, uTexMat: { value: new THREE.Matrix4() }, uReflOn: { value: reflOn ? 1 : 0 }, uSat: { value: null },
-}]);
-waterU.uShore.value = shoreTex; waterU.uRefl.value = reflRT.texture; waterU.uTexMat.value = reflTexMat; waterU.uSat.value = satTex;
-const waterMat = new THREE.ShaderMaterial({
-  uniforms: waterU, fog: true,
-  vertexShader: `
-    #include <common>
-    #include <fog_pars_vertex>
-    #include <logdepthbuf_pars_vertex>
-    varying vec3 vWorld;
-    void main() {
-      vec4 wp = modelMatrix * vec4(position, 1.0);
-      vWorld = wp.xyz;
-      vec4 mvPosition = viewMatrix * wp;
-      gl_Position = projectionMatrix * mvPosition;
-      #include <logdepthbuf_vertex>
-      #include <fog_vertex>
-    }`,
-  fragmentShader: `
-    uniform float uTime; uniform sampler2D uShore; uniform vec3 uSun; uniform float uS; uniform vec4 uFit; uniform vec4 uWin; uniform vec4 uMos;
-    uniform vec3 uDeep; uniform vec3 uShallow; uniform vec3 uHorizon; uniform vec3 uZenith;
-    uniform sampler2D uRefl; uniform mat4 uTexMat; uniform float uReflOn; uniform sampler2D uSat;
-    varying vec3 vWorld;
-    #include <common>
-    #include <fog_pars_fragment>
-    #include <logdepthbuf_pars_fragment>
-    float hash1(float x) { return fract(sin(x * 127.1) * 43758.5453); }
-    float ondas(vec2 x) {
-      float s = 0.0;
-      s += sin(dot(x, vec2(0.83, 0.56)) * 1.0 + 1.3);
-      s += sin(dot(x, vec2(-0.47, 0.88)) * 1.37 + 4.1);
-      s += sin(dot(x, vec2(0.21, -0.98)) * 1.91 + 2.2);
-      s += sin(dot(x, vec2(-0.95, -0.31)) * 2.63 + 0.7);
-      s += sin(dot(x, vec2(0.64, -0.77)) * 3.47 + 5.3);
-      return 0.5 + 0.5 * s / 5.0;
-    }
-    void main() {
-      #include <logdepthbuf_fragment>
-      // todo en metros, como en la escena principal
-      float dc = length(cameraPosition - vWorld) / uS;
-      vec2 p = vWorld.xz / uS;
-      float lod = 1.0 - smoothstep(300.0, 3200.0, dc);
-      float mpx = dc * 0.0011;
-      float zona = 0.55 + 0.45 * ondas(p / 700.0 + vec2(uTime * 0.008, 0.0));
-      vec2 g = vec2(0.0); float cresta = 0.0; float sTot = 0.0;
-      for (int i = 0; i < 7; i++) {
-        float fi = float(i);
-        float ang = 2.2 + (hash1(fi + 1.3) - 0.5) * 1.4;
-        vec2 dd = vec2(cos(ang), sin(ang));
-        float L = mix(26.0, 210.0, pow(hash1(fi + 7.7), 1.3));
-        float kk = 6.2832 / L;
-        float ph = dot(dd, p) * kk - uTime * sqrt(9.8 * kk) + hash1(fi + 3.1) * 6.2832;
-        float s = 0.042 * (1.0 - smoothstep(L * 0.05, L * 0.14, mpx));
-        g += dd * cos(ph) * s; cresta += sin(ph) * s; sTot += s;
-      }
-      g *= zona; cresta = sTot > 0.0 ? cresta / sTot * zona : 0.0;
-      vec2 rizo = vec2(ondas(p / 3.4 + vec2(uTime * 0.8, 0.0)), ondas(p.yx / 2.8 + vec2(3.1, -uTime * 0.7))) - 0.5;
-      g += rizo * 0.045 * (1.0 - smoothstep(40.0, 220.0, dc));
-      vec2 n2 = g * 4.0;
-      vec2 gc = g * 0.55; float lg = length(gc); if (lg > 0.065) gc *= 0.065 / lg;
-      vec3 n = normalize(vec3(-gc.x, 1.0, -gc.y));
-      vec3 V = normalize(cameraPosition - vWorld);
-      float cosT = max(dot(n, V), 0.0);
-      float F = 0.02 + 0.98 * pow(1.0 - cosT, 5.0);
-      vec3 R = reflect(-V, n);
-      R.y = abs(R.y);
-      vec3 skyA = mix(uHorizon, uZenith, pow(clamp(R.y, 0.0, 1.0), 0.45));
-      vec4 rp = uTexMat * vec4(vWorld, 1.0);
-      vec2 ruv = rp.xy / rp.w + n.xz * (0.035 / (1.0 + dc / 2500.0));
-      vec4 rt = texture2D(uRefl, clamp(ruv, 0.001, 0.999));
-      vec3 refl = mix(skyA, min(rt.rgb, vec3(0.85)), rt.a * uReflOn);
-      refl = min(refl, vec3(0.62, 0.72, 0.8)); refl *= vec3(0.74, 0.84, 0.92);
-      // posición en teselas z15
-      vec2 tt = vec2(uFit.x + uFit.y * p.x, uFit.z + uFit.w * p.y);
-      vec2 uv = (tt - uWin.xy) / uWin.zw;
-      float inWin = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
-      float dm = texture2D(uShore, clamp(uv, 0.0, 1.0)).r * 900.0;
-      vec2 eb = min(uv, 1.0 - uv);
-      float borde = smoothstep(0.0, 0.05, min(eb.x, eb.y)) * inWin;
-      dm = mix(900.0, dm, borde);
-      vec2 suv = vec2((tt.x - uMos.x) / uMos.z, 1.0 - (tt.y - uMos.y) / uMos.w);
-      vec3 sat = texture2D(uSat, clamp(suv + n.xz * 0.0006, 0.0, 1.0)).rgb;
-      float lumS = dot(sat, vec3(0.3, 0.59, 0.11));
-      sat *= min(1.0, 0.075 / max(lumS, 1e-4));
-      sat = mix(sat, sat * vec3(0.75, 1.0, 1.1), 0.6);
-      float bordeAncho = smoothstep(0.0, 0.008, min(eb.x, eb.y)) * inWin;
-      float cercaCam = mix(0.32, 1.0, 1.0 - smoothstep(900.0, 2600.0, dc));
-      float costa = (1.0 - smoothstep(40.0, 320.0, dm)) * bordeAncho * cercaCam;
-      float var = ondas(p / 900.0 + vec2(uTime * 0.003, 0.0));
-      vec3 hondo = uDeep * (0.88 + 0.24 * var);
-      vec3 body = mix(hondo, sat * 1.05, costa);
-      body *= 0.86 + 0.22 * (n2.x + n2.y) * 0.5;
-      body += uShallow * 0.05 * max(0.0, n2.x + n2.y);
-      body *= 1.0 + 0.09 * cresta;
-      vec3 col = mix(body, refl, clamp(F, 0.0, 1.0));
-      float sd = max(dot(R, uSun), 0.0);
-      col += vec3(1.0, 0.94, 0.84) * pow(sd, 700.0) * 1.1 * lod * lod * smoothstep(0.15, 0.6, 1.0 - cosT);
-      float ws = 0.5 + 0.5 * sin(dm / 5.0 - uTime * 1.1 + n2.x * 3.0);
-      float rompe = (1.0 - smoothstep(0.0, 14.0, dm)) * (0.35 + 0.65 * ws) * borde;
-      col = mix(col, vec3(0.86, 0.9, 0.9), clamp(rompe * 0.45, 0.0, 0.45));
-      gl_FragColor = vec4(col, 1.0);
-      #include <tonemapping_fragment>
-      #include <colorspace_fragment>
-      #include <fog_fragment>
-    }`,
-});
-const water = new THREE.Mesh(new THREE.PlaneGeometry(800000, 800000), waterMat);
-water.rotation.x = -Math.PI / 2; water.position.set((BLOCK.x0 + BLOCK.x1) / 2, WATER_Y, (BLOCK.z0 + BLOCK.z1) / 2);
-terr.add(water);
-// cámara espejo: posición, mira y vector "arriba" reflejados en el plano del mar (y = 0); solo se reflejan el suelo y Cartagena
-const rClear = new THREE.Color(), rPos = new THREE.Vector3(), rLook = new THREE.Vector3(), rRot = new THREE.Matrix4(), rUp = new THREE.Vector3();
-const BIAS = new THREE.Matrix4().set(0.5, 0, 0, 0.5, 0, 0.5, 0, 0.5, 0, 0, 0.5, 0.5, 0, 0, 0, 1);
-function renderReflejo(cam) {
-  cam.updateMatrixWorld();
-  rPos.setFromMatrixPosition(cam.matrixWorld);
-  if (rPos.y <= 0.05) return;
-  rRot.extractRotation(cam.matrixWorld);
-  rLook.set(0, 0, -1).applyMatrix4(rRot).add(rPos);
-  rUp.set(0, 1, 0).applyMatrix4(rRot);
-  reflCam.position.set(rPos.x, -rPos.y, rPos.z); reflCam.up.set(rUp.x, -rUp.y, rUp.z); reflCam.lookAt(rLook.x, -rLook.y, rLook.z);
-  reflCam.near = cam.near; reflCam.far = cam.far; reflCam.updateMatrixWorld();
-  reflCam.projectionMatrix.copy(cam.projectionMatrix);
-  reflTexMat.copy(BIAS).multiply(reflCam.projectionMatrix).multiply(reflCam.matrixWorldInverse);
-  const vis = [...scene.children, ...terr.children].map((o) => [o, o.visible]);
-  vis.forEach(([o]) => { o.visible = false; });
-  terr.visible = true; terrainMesh.visible = true; patchMesh.visible = true; ctxMesh.visible = true;
-  scene.children.forEach((o) => { if (o.isLight) o.visible = true; });
-  const prev = renderer.getRenderTarget(); renderer.getClearColor(rClear); const ca = renderer.getClearAlpha(); const bg = scene.background; scene.background = null;
-  renderer.setClearColor(0x000000, 0); renderer.setRenderTarget(reflRT); renderer.clear(); renderer.render(scene, reflCam);
-  renderer.setRenderTarget(prev); renderer.setClearColor(rClear, ca); scene.background = bg;
-  vis.forEach(([o, v]) => { o.visible = v; });
-}
+} catch (e) { console.warn('Árboles no disponibles', e); }
 
 // ======================================================================
 // Posiciones en el territorio: cada especie sobre su lugar de registro,
@@ -1219,14 +857,14 @@ function layoutTerritory() {
 }
 const stems = new THREE.LineSegments(
   new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(stemPos, 3)),
-  new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, toneMapped: false })
+  new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false })
 );
 scene.add(stems);
 // haces de luz: cada especie baja a su punto de registro durante la materialización
 const laserPos = new Float32Array(species.length * 6), laserCol = new Float32Array(species.length * 6);
 const laserGeo = new THREE.BufferGeometry();
 laserGeo.setAttribute('position', new THREE.BufferAttribute(laserPos, 3)); laserGeo.setAttribute('color', new THREE.BufferAttribute(laserCol, 3));
-const laserMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, toneMapped: false });
+const laserMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
 const laser = new THREE.LineSegments(laserGeo, laserMat); laser.frustumCulled = false; laser.renderOrder = 4; scene.add(laser);
 const hud = $('hud');
 
@@ -1235,7 +873,7 @@ const mallaTer = (() => {
   const P = []; const y = WATER_Y * S + 0.6; const x0 = BLOCK.x0 * S, x1 = BLOCK.x1 * S, z0 = BLOCK.z0 * S, z1 = BLOCK.z1 * S; const d = 500 * S;
   for (let x = Math.ceil(x0 / d) * d; x <= x1; x += d) P.push(x, y, z0, x, y, z1);
   for (let z = Math.ceil(z0 / d) * d; z <= z1; z += d) P.push(x0, y, z, x1, y, z);
-  const m = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(P, 3)), new THREE.LineBasicMaterial({ color: 0xc8d6dc, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
+  const m = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(P, 3)), new THREE.LineBasicMaterial({ color: 0xc8d6dc, transparent: true, opacity: 0, depthWrite: false }));
   m.visible = false; scene.add(m); return m;
 })();// puntos de registro sobre el suelo
 const obsGeo = new THREE.BufferGeometry();
@@ -1250,11 +888,11 @@ const obsGeo = new THREE.BufferGeometry();
   obsGeo.setAttribute('color', new THREE.Float32BufferAttribute(c, 3));
 }
 const dotTex = (() => { const cv = document.createElement('canvas'); cv.width = cv.height = 64; const g = cv.getContext('2d'); g.beginPath(); g.arc(32, 32, 26, 0, 7); g.fillStyle = '#fff'; g.fill(); g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,.85)'; g.stroke(); const t = new THREE.CanvasTexture(cv); return t; })();
-const obsPts = new THREE.Points(obsGeo, new THREE.PointsMaterial({ size: IS_MOBILE ? 9 : 10, sizeAttenuation: false, vertexColors: true, map: dotTex, alphaTest: 0.3, transparent: true, opacity: 0, depthWrite: false, depthTest: false, toneMapped: false }));
+const obsPts = new THREE.Points(obsGeo, new THREE.PointsMaterial({ size: IS_MOBILE ? 9 : 10, sizeAttenuation: false, vertexColors: true, map: dotTex, alphaTest: 0.3, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
 obsPts.renderOrder = 2;
 scene.add(obsPts);
 const selGeo = new THREE.BufferGeometry();
-const selPts = new THREE.Points(selGeo, new THREE.PointsMaterial({ size: 18, sizeAttenuation: false, color: 0xffffff, map: dotTex, alphaTest: 0.3, transparent: true, opacity: 0, depthWrite: false, depthTest: false, toneMapped: false }));
+const selPts = new THREE.Points(selGeo, new THREE.PointsMaterial({ size: 18, sizeAttenuation: false, color: 0xffffff, map: dotTex, alphaTest: 0.3, transparent: true, opacity: 0, depthWrite: false, depthTest: false }));
 selPts.renderOrder = 10;
 scene.add(selPts);
 
@@ -1309,7 +947,6 @@ function resize() {
   renderer.setSize(w, h, false);
   camera.aspect = w / h; camera.clearViewOffset();
   if (window.__eMat) window.__eMat.resolution.set(w, h);
-  if (typeof reflRT !== 'undefined') reflRT.setSize(Math.max(2, Math.round(w * 0.6)), Math.max(2, Math.round(h * 0.6)));
   camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', () => { resize(); if (!fly) flyTo(morph > 0.5 ? territoryView() : swarmView(), 0.6); });
@@ -1334,8 +971,8 @@ REL.rel.forEach(([a, b, tys, nreg, carib, fuentes, infer]) => {
 });
 // retícula polar técnica: meridianos y paralelos cada 30°, y un ecuador con marcas cada 10°
 const rejilla = new THREE.Group(); // sin retícula esférica alrededor de la red
-const rejillaMat = new THREE.LineBasicMaterial({ color: 0xc8d6dc, transparent: true, opacity: 0.11, depthWrite: false, fog: false, toneMapped: false });
-const anilloMat = new THREE.LineBasicMaterial({ color: 0xff6b4a, transparent: true, opacity: 0.35, depthWrite: false, fog: false, toneMapped: false });
+const rejillaMat = new THREE.LineBasicMaterial({ color: 0xc8d6dc, transparent: true, opacity: 0.11, depthWrite: false, fog: false });
+const anilloMat = new THREE.LineBasicMaterial({ color: 0xff6b4a, transparent: true, opacity: 0.35, depthWrite: false, fog: false });
 {
   const R = SPH_R * 1.22; const P = []; const M = 96;
   for (let la = -60; la <= 60; la += 30) { const y = R * Math.sin(la * Math.PI / 180); const r = R * Math.cos(la * Math.PI / 180); for (let i = 0; i < M; i++) { const a0 = i / M * Math.PI * 2, a1 = (i + 1) / M * Math.PI * 2; P.push(r * Math.cos(a0), y, r * Math.sin(a0), r * Math.cos(a1), y, r * Math.sin(a1)); } }
@@ -1349,7 +986,7 @@ const ePos = new Float32Array(edges.length * 6), eCol = new Float32Array(edges.l
 const eGeo = new LineSegmentsGeometry();
 eGeo.setPositions(ePos);
 eGeo.setColors(eCol);
-const eMat = new LineMaterial({ vertexColors: true, linewidth: 0.8, transparent: true, opacity: 0.26, depthWrite: false, fog: false, toneMapped: false });
+const eMat = new LineMaterial({ vertexColors: true, linewidth: 0.8, transparent: true, opacity: 0.26, depthWrite: false, fog: false });
 window.__eMat = eMat;
 eMat.resolution.set(stage.clientWidth, stage.clientHeight);
 const eLines = new LineSegments2(eGeo, eMat);
@@ -1626,8 +1263,7 @@ const ease = (t) => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 const clamp01 = (t) => Math.max(0, Math.min(1, t));
 let swarmAngle = 0, last = performance.now();
 const tmpV = new THREE.Vector3();
-const FOG_SW = { near: 0, far: 0 }, FOG_TE = { near: 1000, far: 20000 };   // bruma lejana como la escena principal
-let cuadro = 0, fpsN = 0, fpsT = performance.now();
+const FOG_SW = { near: 0, far: 0 }, FOG_TE = { near: 3000, far: 9000 };
 
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
@@ -1650,7 +1286,6 @@ function frame(now) {
     if (fly.t >= 1) fly = null;
   }
   controls.enabled = !fly;
-  controls.maxPolarAngle = morph > 0.5 ? Math.PI * 0.48 : Math.PI;   // en el territorio la cámara no baja del nivel del mar
 
   // niebla: oculta la isla mientras se ve la red
   const sv = swarmView();
@@ -1658,23 +1293,6 @@ function frame(now) {
   const fm = ease(clamp01(morph * 1.3));
   scene.fog.near = THREE.MathUtils.lerp(FOG_SW.near, FOG_TE.near, fm);
   scene.fog.far = THREE.MathUtils.lerp(FOG_SW.far, FOG_TE.far, fm);
-  scene.fog.color.copy(FONDO_RED).lerp(NIEBLA_DIA, fm); scene.background.copy(scene.fog.color);
-  // cielo, nubes, agua, viento y árboles del territorio (como la escena principal)
-  {
-    const tS = now / 1000;
-    sky.material.uniforms.uAlpha.value = fm; sky.visible = fm > 0.01;
-    nubes.position.copy(camera.position); nubesU.uT.value = tS * 0.02; nubesU.uK.value = fm; nubes.visible = fm > 0.01;
-    waterU.uTime.value = tS; vientoT.value = tS;
-    if (fm > 0.3) {
-      const dCam = camera.position.distanceTo(controls.target) / S;
-      actualizarArboles(controls.target.x / S, controls.target.z / S, dCam);
-      const esc = THREE.MathUtils.clamp(dCam / 3800, 1, CASA_ESCALA);   // casas algo más grandes de lejos, para que se lean
-      if (Math.abs(esc - houseEsc) / houseEsc > 0.05) updateHouses(esc);
-    }
-    fpsN++;
-    if (now - fpsT > 3000) { const fps = fpsN * 1000 / (now - fpsT); fpsT = now; fpsN = 0; if (fps < 24 && fm > 0.9 && waterU.uReflOn.value > 0) waterU.uReflOn.value = 0; }
-    if (reflOn && waterU.uReflOn.value > 0 && fm > 0.5 && (cuadro++ % 2 === 0)) renderReflejo(camera);
-  }
 
   layoutTerritory();
   // retícula polar alrededor de la red (se apaga al materializar)
