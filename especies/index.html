@@ -143,6 +143,7 @@ button{font-family:inherit;cursor:pointer}
 #go:hover{filter:brightness(1.1)}
 
 /* ---------- tooltip ---------- */
+#hud{position:absolute;left:50%;top:84px;padding:8px 14px 9px;background:rgba(4,6,7,.78);border:1px solid rgba(207,238,250,.22);transform:translateX(-50%);z-index:40;pointer-events:none;font:400 11px/1.6 "Geist Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:#cfeefa;text-align:center;opacity:0;transition:opacity .3s;white-space:nowrap}#hud b{color:#ff6b4a;font-weight:400}@media(max-width:760px){#hud{top:64px;width:88%;white-space:normal;font-size:9.5px}#hud .bar{width:70%}}#hud .bar{display:block;height:2px;margin:6px auto 0;width:260px;background:rgba(207,238,250,.18)}#hud .bar i{display:block;height:100%;background:#cfeefa}
 #tip{position:absolute;z-index:50;pointer-events:none;display:none;padding:9px 12px;max-width:280px}
 #tip .t1{font-size:15px;font-weight:800}
 #tip .t2{font:500 12px "Geist Mono",monospace;color:var(--ink-dim);margin-top:2px}
@@ -277,6 +278,7 @@ html,body{background:var(--bg);font-weight:400}
   <div id="stage">
     <canvas id="c"></canvas>
     <div id="tip" class="glass"></div>
+    <div id="hud" aria-hidden="true"></div>
     <div id="veil"><div class="t">Isla de Tierra Bomba</div><div class="bar"><i id="vbar"></i></div><div class="s" id="vtxt">Cargando especies</div></div>
     <div id="err"></div>
   </div>
@@ -569,6 +571,7 @@ function heightAt(x, z) {
 }
 
 // --- terreno del bloque ---
+let scanMat = null, scanFrente = null;   // efecto de escaneo al materializar
 progress(45, 'Construyendo el relieve');
 {
   const STEP = 26;
@@ -599,6 +602,32 @@ progress(45, 'Construyendo el relieve');
   g.setIndex(new THREE.BufferAttribute(idx, 1));
   g.computeVertexNormals();
   terr.add(new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: satMap, roughness: 0.95, metalness: 0, color: 0xa9b4b8 }))); // satélite atenuado: los datos van encima
+
+  // malla de escaneo: retícula del relieve real cada 52 m (solo tierra), que un frente de barrido
+  // enciende al materializar, como un levantamiento láser del terreno
+  {
+    const L = []; const st = 2; const Pk = (i, j) => (j * (nx + 1) + i) * 3;
+    const seg = (a, b) => { if (pos[a + 1] < WATER_Y + 0.3 && pos[b + 1] < WATER_Y + 0.3) return; L.push(pos[a], pos[a + 1], pos[a + 2], pos[b], pos[b + 1], pos[b + 2]); };
+    for (let j = 0; j <= nz; j += st) for (let i = 0; i + st <= nx; i += st) seg(Pk(i, j), Pk(i + st, j));
+    for (let i = 0; i <= nx; i += st) for (let j = 0; j + st <= nz; j += st) seg(Pk(i, j), Pk(i, j + st));
+    const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(L, 3));
+    scanMat = new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      uniforms: { uScan: { value: -1e9 }, uOp: { value: 0 }, uCol: { value: new THREE.Color(0x8fdcf5) } },
+      vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position + vec3(0., 1.2, 0.), 1.); }',
+      fragmentShader: 'uniform float uScan, uOp; uniform vec3 uCol; varying vec3 vP; void main(){ float d = uScan - vP.x; if (d < 0.) discard; float a = exp(-d / 260.) * 0.85 + 0.12; float f = exp(-d / 28.); gl_FragColor = vec4(mix(uCol, vec3(1.), f) * a * uOp, 1.); }',
+    });
+    const wire = new THREE.LineSegments(lg, scanMat); wire.renderOrder = 2; wire.frustumCulled = false; terr.add(wire);
+    // plano del frente de barrido
+    const fr = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({
+      transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      uniforms: { uOp: { value: 0 } },
+      vertexShader: 'varying vec2 vU; void main(){ vU = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }',
+      fragmentShader: 'uniform float uOp; varying vec2 vU; void main(){ float a = pow(1. - vU.y, 2.2) * 0.55 + smoothstep(.985, 1., 1. - abs(vU.y - .0) ) * .0; float l = step(.5, fract(vU.x * 60.)) * .25 + .75; gl_FragColor = vec4(vec3(.56,.86,.96) * a * l * uOp, 1.); }',
+    }));
+    fr.rotation.y = Math.PI / 2; fr.scale.set(BLOCK.z1 - BLOCK.z0, 180, 1); fr.position.set(BLOCK.x0, 90, (BLOCK.z0 + BLOCK.z1) / 2); fr.visible = false; terr.add(fr);
+    scanFrente = fr;
+  }
 
   // paredes de tierra del bloque (con franja de agua arriba donde hay mar)
   const wallPos = [], wallCol = [], wallIdx = [];
@@ -831,6 +860,13 @@ const stems = new THREE.LineSegments(
   new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false })
 );
 scene.add(stems);
+// haces de luz: cada especie baja a su punto de registro durante la materialización
+const laserPos = new Float32Array(species.length * 6), laserCol = new Float32Array(species.length * 6);
+const laserGeo = new THREE.BufferGeometry();
+laserGeo.setAttribute('position', new THREE.BufferAttribute(laserPos, 3)); laserGeo.setAttribute('color', new THREE.BufferAttribute(laserCol, 3));
+const laserMat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, fog: false });
+const laser = new THREE.LineSegments(laserGeo, laserMat); laser.frustumCulled = false; laser.renderOrder = 4; scene.add(laser);
+const hud = $('hud');
 
 // retícula de coordenadas sobre el territorio, cada 500 m (estética de plano técnico)
 const mallaTer = (() => {
@@ -934,7 +970,7 @@ REL.rel.forEach(([a, b, tys, nreg, carib, fuentes, infer]) => {
   (nb.edges = nb.edges || []).push(e);
 });
 // retícula polar técnica: meridianos y paralelos cada 30°, y un ecuador con marcas cada 10°
-const rejilla = new THREE.Group(); scene.add(rejilla);
+const rejilla = new THREE.Group(); // sin retícula esférica alrededor de la red
 const rejillaMat = new THREE.LineBasicMaterial({ color: 0xc8d6dc, transparent: true, opacity: 0.11, depthWrite: false, fog: false });
 const anilloMat = new THREE.LineBasicMaterial({ color: 0xff6b4a, transparent: true, opacity: 0.35, depthWrite: false, fog: false });
 {
@@ -1281,6 +1317,30 @@ function frame(now) {
     n.spr.renderOrder = n === selected ? 6 : 3;   // siempre por encima del agua
   }
   updateEdgePositions();
+  // escaneo del relieve, haces de luz y lectura técnica durante la materialización
+  {
+    const sc = clamp01((morph - 0.12) / 0.8);
+    if (scanMat) { const ix0 = (ISLAND_C.x - ISLAND_C.userData.x * 0.6) / S, ix1 = (ISLAND_C.x + ISLAND_C.userData.x * 0.6) / S; scanMat.uniforms.uScan.value = THREE.MathUtils.lerp(ix0, ix1 + 600, ease(sc)); scanMat.uniforms.uOp.value = clamp01(morph / 0.15) * (1 - 0.7 * clamp01((morph - 0.92) / 0.08)); }
+    if (scanFrente) { scanFrente.visible = sc > 0.001 && sc < 0.999; scanFrente.position.x = scanMat.uniforms.uScan.value; scanFrente.material.uniforms.uOp.value = Math.sin(Math.PI * sc); }
+    const lz = Math.sin(Math.PI * clamp01(morph * 1.1)); laserMat.opacity = 0.45 * lz; laser.visible = lz > 0.01;
+    if (laser.visible) {
+      let k = 0; const cc = new THREE.Color();
+      for (const n of nodes) {
+        if (!n.on) continue;
+        const p = n.spr.position; const g = n.cl;
+        const tx = p.x + net.position.x, ty = p.y + net.position.y, tz = p.z + net.position.z; laserPos.set([g.x + (tx - g.x) * 0.3, g.y + (ty - g.y) * 0.3, g.z + (tz - g.z) * 0.3, g.x, g.y, g.z], k * 6);
+        cc.set(CATS[n.sp.cat].color); laserCol.set([cc.r, cc.g, cc.b, cc.r * 0.25, cc.g * 0.25, cc.b * 0.25], k * 6); k++;
+      }
+      laserGeo.setDrawRange(0, k * 2); laserGeo.attributes.position.needsUpdate = true; laserGeo.attributes.color.needsUpdate = true;
+    }
+    const enCurso = morph > 0.002 && morph < 0.998;
+    hud.style.opacity = enCurso ? 1 : 0;
+    if (enCurso) {
+      const lon = (scanMat ? scanMat.uniforms.uScan.value : 0) / GEO.kx + GEO.lon0;
+      const nOn = nodes.filter((n) => n.on).length;
+      hud.innerHTML = `<b>${morphTarget > 0.5 ? 'Materializando' : 'Volviendo a la red'}</b> · escaneo del relieve ${Math.round(sc * 100)} % · lon ${lon.toFixed(4)}°<br>${nOn} especies georreferenciadas sobre la isla<span class="bar"><i style="width:${Math.round(morph * 100)}%"></i></span>`;
+    }
+  }
   eMat.opacity = (eMat.userData.base ?? 0.62) * (selected ? 1 : 1 - 0.5 * clamp01(morph));
   const tv = clamp01((morph - 0.55) / 0.45);
   stems.material.opacity = 0.45 * tv; mallaTer.material.opacity = 0.16 * tv; mallaTer.visible = tv > 0.01;
