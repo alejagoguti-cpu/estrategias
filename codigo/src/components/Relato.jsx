@@ -467,17 +467,9 @@ function PanelCartografia({ paso, idx, total, onIrPaso }) {
               <span className="text-white/50 text-[10px] mt-1 block">relaciones</span>
             </div>
           </div>
-          <a
-            href="#especies"
-            onClick={(e) => {
-              e.preventDefault();
-              const el = document.getElementById('especies');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="mt-2.5 flex items-center justify-center gap-1.5 w-full rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 py-1.5 text-xs font-medium transition-colors"
-          >
-            Abrir visor 3D completo de la Red ↗
-          </a>
+          <p className="mt-2 text-[11px] text-emerald-300/85 leading-snug">
+            Visualizador 3D interactivo activo en pantalla con grupos taxonómicos, filtros y relaciones ecológicas.
+          </p>
         </div>
       )}
 
@@ -994,6 +986,7 @@ export default function Relato({ api, sinEscena }) {
   const [version, setVersion] = useState(0);
   const [explorar, setExplorar] = useState(false);
   const [panelOculto, setPanelOculto] = useState(false);
+  const [verFichaBiotica, setVerFichaBiotica] = useState(false);
   const ctrlRef = useRef(ctrl);
   ctrlRef.current = ctrl;
   const S = useRef({ cap: 'portada', pasoIdx: 0, p: 0, cartoIdx: 0 });
@@ -1182,10 +1175,54 @@ export default function Relato({ api, sinEscena }) {
         </>
       )}
 
+      {/* 03 · Visor interactivo real de la Red de Interacciones Bióticas: LITERALLY APPEARS on Capa 03 */}
+      <div
+        className={`fixed inset-0 z-30 transition-opacity duration-500 ${
+          cap === 'problema' && cartoIdx === 3
+            ? 'opacity-100 pointer-events-auto visible'
+            : 'opacity-0 pointer-events-none invisible'
+        }`}
+      >
+        <iframe
+          src={`${import.meta.env.BASE_URL}especies/`}
+          title="Red de interacciones bióticas de Tierra Bomba"
+          className="w-full h-full border-0 bg-[#040607]"
+          allow="fullscreen"
+        />
+        {/* Barra superior flotante de cambio de capa dentro de la Capa Biótica */}
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 p-1 rounded-full bg-black/90 backdrop-blur border border-white/20 shadow-2xl">
+          {PASOS_CARTOGRAFIA.map((p, i) => (
+            <button
+              key={p.id}
+              type="button"
+              className={`h-7 px-3 rounded-full text-xs font-medium transition-all ${
+                i === 3
+                  ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/60 shadow-lg'
+                  : 'text-white/70 hover:text-white hover:bg-white/10'
+              }`}
+              onClick={() => irACartoPaso(i)}
+            >
+              {p.pasoNum} · {p.corto}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setVerFichaBiotica((v) => !v)}
+            className={`h-7 px-3 rounded-full text-xs font-medium transition-all border ${
+              verFichaBiotica
+                ? 'bg-arcilla text-white border-arcilla'
+                : 'text-white/70 border-white/20 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            {verFichaBiotica ? '✕ Ocultar Ficha' : 'ℹ Ficha Técnica'}
+          </button>
+        </div>
+      </div>
+
       {/* paneles flotantes */}
       {api && cap === 'problema' && (
         <>
-          {!panelOculto && (
+          {(cartoIdx !== 3 || verFichaBiotica) && !panelOculto && (
             <PanelCartografia
               paso={PASOS_CARTOGRAFIA[cartoIdx]}
               idx={cartoIdx}
