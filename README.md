@@ -2,9 +2,9 @@
 
 Presentación en 3D de la tesis *Planificación y adaptación territorial frente a la pérdida de suelo costero en Tierra Bomba* (Alejandra Gómez · Ana Casas, Arquitectura y Urbanismo, 2026).
 
-Sitio: https://alejagoguti-cpu.github.io/tesis_tercer_corte/
+Sitio: https://alejagoguti-cpu.github.io/estrategias/
 
-Versión nueva con otro diseño (negro, Inter, acento verde azulado, paneles redondeados): https://alejagoguti-cpu.github.io/tesis_tercer_corte/nuevo/ (código en `nuevo/codigo/`).
+Versión nueva con otro diseño (negro, Inter, acento verde azulado, paneles redondeados): https://alejagoguti-cpu.github.io/estrategias/nuevo/ (código en `nuevo/codigo/`).
 
 ## Qué cuenta
 
@@ -50,7 +50,7 @@ Abrir directamente en el territorio: https://anasoficasca-code.github.io/tierrab
 
 ## Red de actores de Bavaria Común
 
-Visor interactivo (fondo negro) de la red de actores exportada desde Gephi: https://alejagoguti-cpu.github.io/tesis_tercer_corte/red/ . 57 actores y 120 relaciones. El archivo .gephi guarda el grafo en binario; ed/fuente/leer.mjs lo lee y escribe ed.json, y plantilla.html es la página (d3-force sobre canvas) que se rellena con esos datos. La dirección de cada relación es fuente → destino tal como está en el archivo; los nombres de las redes (OG, OE1–OE3) y de los tipos de relación son descriptivos, deducidos de los códigos y de los actores.
+Visor interactivo (fondo negro) de la red de actores exportada desde Gephi: https://alejagoguti-cpu.github.io/estrategias/red/ . 57 actores y 120 relaciones. El archivo .gephi guarda el grafo en binario; ed/fuente/leer.mjs lo lee y escribe ed.json, y plantilla.html es la página (d3-force sobre canvas) que se rellena con esos datos. La dirección de cada relación es fuente → destino tal como está en el archivo; los nombres de las redes (OG, OE1–OE3) y de los tipos de relación son descriptivos, deducidos de los códigos y de los actores.
 
 
 ## Erosión e inundación con datos oficiales (MIDAS e INVEMAR)
@@ -63,7 +63,7 @@ El escenario por defecto del capítulo 3 usa las capas de cambio climático de M
 
 ## Análisis territorial (vista aparte)
 
-https://alejagoguti-cpu.github.io/tesis_tercer_corte/analisis/ : lectura territorial de la isla en doce capas sobre una malla de 47 m (relieve, costa, amenaza y retroceso por erosión, zona inundable de MIDAS, construcciones, sintaxis espacial, muelles, árboles y especies), sus relaciones, cinco índices exploratorios (pesos iguales, no validados) y el relieve en 3D. Las capas se generan con `codigo/scripts/capas_analisis.mjs` y quedan en `analisis/capas.json`.
+https://alejagoguti-cpu.github.io/estrategias/analisis/ : lectura territorial de la isla en doce capas sobre una malla de 47 m (relieve, costa, amenaza y retroceso por erosión, zona inundable de MIDAS, construcciones, sintaxis espacial, muelles, árboles y especies), sus relaciones, cinco índices exploratorios (pesos iguales, no validados) y el relieve en 3D. Las capas se generan con `codigo/scripts/capas_analisis.mjs` y quedan en `analisis/capas.json`.
 
 
 ## Muelles y rutas de lancha
