@@ -9,7 +9,7 @@ import RedEspecies from './RedEspecies.jsx';
 import Lectura from './Lectura.jsx';
 import Tramas from './Tramas.jsx';
 import Fases from './Fases.jsx';
-import PaisajeAdaptativo, { HumedalFitofiltracion, ViviendaModular, Colegio, Huerta, Parque } from './PaisajeAdaptativo.jsx';
+import PaisajeAdaptativo, { HumedalFitofiltracion, ViviendaModular, Colegio, Huerta, Parque, ColegioLadera, ConjuntoVivienda } from './PaisajeAdaptativo.jsx';
 import { PLAN_PASOS, planEstado } from './Plan.jsx';
 import { PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from '../lib/plan.js';
 
@@ -45,7 +45,9 @@ const CAPITULOS = [
   { id: 'huerta', n: '12', nombre: 'Huerta comunitaria', corto: 'Huerta' },
   { id: 'parque', n: '13', nombre: 'Parque', corto: 'Parque' },
   { id: 'fases', n: '14', nombre: 'Fases', corto: 'Fases' },
-  { id: 'cierre', n: '15', nombre: 'Lo que sigue', corto: 'Cierre' },
+  { id: 'colegio-ladera', n: '15', nombre: 'Colegio en ladera', corto: 'Ladera' },
+  { id: 'conjunto', n: '16', nombre: 'Conjunto de vivienda', corto: 'Conjunto' },
+  { id: 'cierre', n: '17', nombre: 'Lo que sigue', corto: 'Cierre' },
 ];
 
 const RADIOS = [
@@ -1211,6 +1213,8 @@ export default function Relato({ api, sinEscena }) {
       <Huerta />
       <Parque />
       <Fases />
+      <ColegioLadera />
+      <ConjuntoVivienda />
       <Cierre api={api} version={version} />
     </div>
   );

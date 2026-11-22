@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import Personas, { Defs } from './Personas.jsx';
 
 // Fases de implementación (sección final): cuatro paneles verticales como una lámina de fases. Cada panel muestra
 // el recorrido realista de esa etapa, un plano de la isla que se va completando y llamadas con contorno coral.
@@ -9,44 +10,28 @@ const FASES = [
   {
     n: 1, anio: 2, titulo: 'Puentes y pasarelas', img: 'puentes', ir: 'paisaje-adaptativo', filtro: 'grayscale(.55) contrast(1.05) brightness(.95)',
     texto: 'Primero se conecta la isla con el agua sin rellenar el borde: pasarelas palafíticas sobre la marisma y puentes peatonales entre poblados. El enrocado permeable empieza a frenar la erosión y el manglar se siembra entre los pilotes.',
-    llamadas: [{ x: 50, y: 72, w: 46, h: 16, t: 'Pasarela palafítica +2,10 m' }, { x: 18, y: 50, w: 22, h: 10, t: 'Manglar sembrado' }],
-    mapa: ['puentes'],
+    llamadas: [{ x: 18, y: 50, w: 22, h: 10, t: 'Manglar sembrado' }],
+    personas: [{ tipo: 'pescador', x: 40, y: 92, alto: 34, rotulo: 'Pescador con atarraya', k: 0 }, { tipo: 'colegial', x: 66, y: 84, alto: 20, voltear: true, k: 1 }],
   },
   {
     n: 2, anio: 4, titulo: 'Humedal de fitofiltración', img: 'humedal', ir: 'humedal', filtro: 'grayscale(.32) saturate(.9)',
     texto: 'Con la isla conectada, en la meseta se excavan las lagunas de retención: guardan la lluvia, la limpian entre juncos y lirios acuáticos y recargan el acuífero. El agua deja de bajar como escorrentía sobre los poblados.',
-    llamadas: [{ x: 50, y: 62, w: 52, h: 12, t: 'Puente sobre la laguna' }, { x: 16, y: 74, w: 26, h: 8, t: 'Lirio acuático · juncos' }],
-    mapa: ['puentes', 'humedal'],
+    llamadas: [{ x: 16, y: 74, w: 26, h: 8, t: 'Lirio acuático · juncos' }],
+    personas: [{ tipo: 'palenquera', x: 52, y: 90, alto: 36, rotulo: 'Palenquera', k: 1 }, { tipo: 'abuelo', x: 74, y: 76, alto: 22, voltear: true, k: 2 }],
   },
   {
     n: 3, anio: 6, titulo: 'Viviendas modulares', img: 'viviendas', ir: 'vivienda', filtro: 'grayscale(.12) saturate(1.02)',
     texto: 'Las familias del borde que se pierde se reubican en la meseta segura (+22 m) en viviendas de módulos de 3,6 m que captan lluvia y sol. El mismo módulo se repite en hilera o en L según cada familia.',
-    llamadas: [{ x: 46, y: 43, w: 62, h: 14, t: 'Módulos de 3,6 m' }, { x: 30, y: 53, w: 40, h: 6, t: 'Deck +0,45 m' }],
-    mapa: ['puentes', 'humedal', 'viviendas'],
+    llamadas: [{ x: 46, y: 43, w: 62, h: 14, t: 'Módulos de 3,6 m' }],
+    personas: [{ tipo: 'madre', x: 34, y: 90, alto: 32, rotulo: 'Familia reubicada', k: 0 }, { tipo: 'nina', x: 47, y: 90, alto: 30, k: 3 }],
   },
   {
     n: 4, anio: 10, titulo: 'Colegio y vida en común', img: 'colegio', ir: 'colegio', filtro: 'saturate(1.12) contrast(1.03)',
     texto: 'A los diez años la meseta ya es un barrio: el colegio de tierra bajo su cubierta de sombra, la huerta comunitaria y el parque en el bosque seco. El borde costero quedó como parque inundable y el ecosistema se reconecta.',
-    llamadas: [{ x: 55, y: 36, w: 56, h: 18, t: 'Aulas de tierra' }, { x: 50, y: 70, w: 40, h: 12, t: 'Patio y galería' }],
-    mapa: ['puentes', 'humedal', 'viviendas', 'colegio'],
+    llamadas: [{ x: 55, y: 36, w: 56, h: 18, t: 'Aulas de tierra' }],
+    personas: [{ tipo: 'maestra', x: 30, y: 92, alto: 32, rotulo: 'Maestra', k: 2 }, { tipo: 'colegiala', x: 50, y: 90, alto: 24, k: 0 }, { tipo: 'colegial', x: 64, y: 88, alto: 23, voltear: true, k: 3 }],
   },
 ];
-// plano esquemático de Tierra Bomba (contorno simplificado) con lo construido en cada fase
-const CAPAS = {
-  puentes: <g stroke="#f2a65a" strokeWidth="1.6" fill="none" strokeLinecap="round"><path d="M18,30 C14,44 14,58 20,72" strokeDasharray="2 1.5" /><path d="M62,18 C70,30 74,40 72,52" strokeDasharray="2 1.5" /><path d="M28,84 C38,90 50,92 58,86" strokeDasharray="2 1.5" /></g>,
-  humedal: <g fill="#49c6e5" opacity="0.9"><ellipse cx="42" cy="44" rx="5" ry="3.4" /><ellipse cx="36" cy="54" rx="3.6" ry="2.6" /><ellipse cx="48" cy="58" rx="3" ry="2.2" /></g>,
-  viviendas: <g fill="#e8eef0">{[[30, 34], [34, 34], [38, 34], [52, 40], [56, 40], [52, 44], [30, 64], [34, 64], [38, 64]].map(([x, y]) => <rect key={`${x}${y}`} x={x} y={y} width="3" height="3" />)}</g>,
-  colegio: <g><rect x="44" y="66" width="10" height="5" fill="#ff6b4a" /><circle cx="58" cy="70" r="3" fill="#7fc04a" /><rect x="40" y="73" width="6" height="4" fill="#c8e05a" /></g>,
-};
-function Plano({ capas, verde }) {
-  return (
-    <svg viewBox="0 0 100 100" className="h-full w-full" aria-hidden="true">
-      <path d="M40,8 C56,6 70,12 74,26 C80,40 76,56 70,70 C64,84 52,94 38,92 C24,90 14,78 14,62 C14,46 20,34 26,22 C30,14 34,9 40,8Z" fill={`rgba(120,200,90,${verde})`} stroke="rgba(255,255,255,.85)" strokeWidth="0.9" />
-      {capas.map((c) => <g key={c}>{CAPAS[c]}</g>)}
-    </svg>
-  );
-}
-
 export default function Fases() {
   const [anio, setAnio] = useState(0);
   const [foco, setFoco] = useState(null);
@@ -60,6 +45,7 @@ export default function Fases() {
 
   return (
     <section id="fases" ref={caja} className="relative bg-tinta px-4 pb-16 pt-24 text-papel sm:px-8 lg:px-10" aria-label="Fases de implementación del plan en Tierra Bomba">
+      <Defs />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="etiqueta text-arcilla">14 · Fases</p>
@@ -90,15 +76,12 @@ export default function Fases() {
               <img src={`${BASE}datos/fases/${f.img}.webp`} alt={`Fase ${f.n}: ${f.titulo}`} loading="lazy" className="absolute inset-0 h-full w-full object-cover transition-[filter,transform] duration-700 group-hover:scale-[1.03]" style={{ filter: hecha ? f.filtro : 'grayscale(1) brightness(.45)' }} />
               <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/10 to-black/40" />
               {/* cabecera */}
-              <div className="absolute inset-x-0 top-0 p-4 pr-[34%]">
+              <div className="absolute inset-x-0 top-0 p-4 pr-6">
                 <h3 className="font-['Barlow_Condensed'] text-[1.75rem] font-light uppercase leading-none tracking-tight">Fase {f.n} : año {f.anio}</h3>
                 <p className="mt-1 text-[13px] font-medium text-arcilla">{f.titulo}</p>
                 <p className={`mt-2 text-[12px] leading-snug text-white/85 transition-opacity duration-500 ${hecha ? 'opacity-100' : 'opacity-40'}`}>{f.texto}</p>
               </div>
-              {/* plano de la isla */}
-              <div className="absolute right-3 top-3 aspect-square w-[30%] max-w-[120px] rounded-sm bg-black/30 p-1 ring-1 ring-white/25 backdrop-blur-[2px]" style={{ transform: 'perspective(300px) rotateX(28deg) rotateZ(-8deg)' }}>
-                <Plano capas={hecha ? f.mapa : f.mapa.slice(0, -1)} verde={hecha ? 0.15 + i * 0.12 : 0.05} />
-              </div>
+              {hecha && <Personas lista={f.personas} />}
               {/* llamadas con contorno coral */}
               {hecha && f.llamadas.map((l, k) => (
                 <div key={k} className="entra pointer-events-none absolute" style={{ left: `${l.x - l.w / 2}%`, top: `${l.y - l.h / 2}%`, width: `${l.w}%`, height: `${l.h}%` }}>
@@ -112,7 +95,7 @@ export default function Fases() {
           );
         })}
       </div>
-      <p className="mt-3 text-[10px] text-white/40">Imágenes: los recorridos realistas de cada sección. Plano de la isla esquemático; los plazos son los propuestos para cada fase.</p>
+      <p className="mt-3 text-[10px] text-white/40">Imágenes: los recorridos realistas de cada sección. Personas ilustradas; los plazos son los propuestos para cada fase.</p>
     </section>
   );
 }

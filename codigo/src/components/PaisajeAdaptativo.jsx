@@ -11,6 +11,10 @@ import { corteColegio } from '../lib/cortes/colegio.jsx';
 const escenaColegio = () => import('../lib/inmersivo/colegio.js');
 import { corteParque } from '../lib/cortes/parque.jsx';
 const escenaParque = () => import('../lib/inmersivo/parque.js');
+import { corteLadera } from '../lib/cortes/ladera.jsx';
+const escenaLadera = () => import('../lib/inmersivo/ladera.js');
+import { corteConjunto } from '../lib/cortes/conjunto.jsx';
+const escenaConjunto = () => import('../lib/inmersivo/conjunto.js');
 import { corteHuerta } from '../lib/cortes/huerta.jsx';
 const escenaHuerta = () => import('../lib/inmersivo/huerta.js');
 
@@ -131,6 +135,30 @@ export function Parque() {
       aria="Parque de juego natural en el bosque seco de Tierra Bomba"
       leyenda="Un parque de juego natural en un claro del bosque seco: red de trepar, torre, troncos de equilibrio, pilotes y túnel sobre un piso de viruta que amortigua las caídas, con bancas a la sombra."
       nota="Corte esquemático. Juegos de madera, cuerda y acero modelados para el recorrido; texturas escaneadas de Poly Haven (CC0). Interacciones de la base de especies de la isla."
+    />
+  );
+}
+
+export function ColegioLadera() {
+  return (
+    <SeccionPaisaje
+      id="colegio-ladera" etiqueta="15 · Colegio en ladera" titulo="Aulas sobre pilotes entre el bosque"
+      cfg={corteLadera} construir={escenaLadera}
+      aria="Colegio en ladera sobre pilotes en el bosque de Tierra Bomba"
+      leyenda="Dos barras de aulas escalonadas sobre pilotes dejan pasar el bosque por debajo. Balcones corridos, fachadas de listones de madera, cubiertas flotantes con paneles solares y escaleras exteriores entre niveles."
+      nota="Corte esquemático. Estructura de acero y madera modelada para el recorrido; texturas escaneadas de Poly Haven (CC0). Interacciones de la base de especies de la isla."
+    />
+  );
+}
+
+export function ConjuntoVivienda() {
+  return (
+    <SeccionPaisaje
+      id="conjunto" etiqueta="16 · Conjunto de vivienda" titulo="Bloques alrededor de un eje de agua y jardín"
+      cfg={corteConjunto} construir={escenaConjunto}
+      aria="Conjunto de vivienda alrededor de un canal de agua en la meseta de Tierra Bomba"
+      leyenda="Dos hileras de bloques blancos de cuatro pisos, escalonados, se abren a un eje central con un canal que retiene la lluvia, jardín y árboles de sombra. Balcones, terrazas con pérgola y ventilación cruzada."
+      nota="Corte esquemático. Bloques, canal y jardín modelados para el recorrido; texturas escaneadas de Poly Haven (CC0). Interacción de garzas registrada en la base de especies de la isla (iNaturalist)."
     />
   );
 }
