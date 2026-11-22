@@ -7,7 +7,7 @@
 <title>Red de interacciones bióticas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400&family=Geist:ital,wght@0,300..700;1,400&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400&family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#040607;
@@ -198,84 +198,197 @@ button{font-family:inherit;cursor:pointer}
 @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
 #left,#left *{scrollbar-width:none}#left::-webkit-scrollbar,#left *::-webkit-scrollbar{display:none;width:0;height:0}
 #left{max-height:calc(100% - 80px)}
-/* ---------- diagramación de la presentación: mismo fondo, líneas finas, Barlow Condensed, Geist y Geist Mono, acento coral ---------- */
-:root{--bg:#040607;--ink:#e8eef0;--ink-dim:#a7b3b8;--ink-3:#6f7c82;--line:rgb(214 230 236 / .12);--line-m:rgb(214 230 236 / .22);--glass:rgb(6 9 11 / .86);--accent:#ff6b4a;--accent-soft:rgb(255 107 74 / .12);--tit:"Barlow Condensed","Arial Narrow",sans-serif;--mono:"Geist Mono",ui-monospace,monospace}
-html,body{background:var(--bg);font-weight:400}
-.glass{border-radius:0;box-shadow:none;border:1px solid var(--line);background:var(--glass);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-#top{top:16px;left:18px;right:18px}
-.brand{font:300 22px/1 var(--tit);text-transform:uppercase;letter-spacing:.02em;padding:10px 14px}
-.brand b{font-weight:300;color:var(--accent)}
-#q{border-radius:0;background:var(--glass);border:1px solid var(--line-m);font:400 12.5px "Geist",sans-serif}
+/* ---------- diagramación del sitio: paneles de vidrio, Geist + Geist Mono + Barlow Condensed, paleta de la tesis ---------- */
+:root{
+  --bg:#040607;--bg2:#0b0f10;--ink:#f4f1ea;--ink-2:#e9e4da;--ink-dim:rgb(233 228 218 / .70);--ink-3:rgb(233 228 218 / .46);
+  --line:rgb(255 255 255 / .09);--line-m:rgb(255 255 255 / .14);
+  --accent:#ff6b4a;--accent-soft:rgb(255 107 74 / .14);
+  --panel:linear-gradient(180deg,rgb(34 38 44 / .74),rgb(14 17 20 / .72));
+  --card:rgb(255 255 255 / .06);--card-l:rgb(255 255 255 / .09);
+  --tit:"Barlow Condensed","Arial Narrow",sans-serif;--mono:"Geist Mono",ui-monospace,monospace;--sans:"Geist",system-ui,-apple-system,"Segoe UI",sans-serif
+}
+html,body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-weight:400}
+.glass{background:var(--panel);backdrop-filter:blur(30px) saturate(1.8);-webkit-backdrop-filter:blur(30px) saturate(1.8);border:1px solid var(--line-m);border-radius:20px;box-shadow:inset 0 1px 0 rgb(255 255 255 / .12),0 20px 50px rgb(0 0 0 / .38)}
+.ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none;display:block}
+.eb{font:400 10px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
+.big{font:300 34px/.95 var(--tit);color:var(--ink);letter-spacing:.01em;font-variant-numeric:tabular-nums}
+
+/* cabecera */
+#top{top:16px;left:16px;right:16px;gap:8px}
+.brand{display:flex;align-items:center;gap:11px;padding:7px 18px 7px 7px;border-radius:999px;font:500 14px/1.15 var(--sans);text-transform:none;letter-spacing:0;color:var(--ink)}
+.brand .bi{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);border:1px solid rgb(255 107 74 / .32);flex:none}
+.brand .eb{display:block;font-size:9.5px;margin-bottom:2px}
+.brand b{font-weight:500;color:var(--accent)}
+.searchwrap > .ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--ink-3);pointer-events:none;z-index:1}
+#q{width:250px;border-radius:999px;background:var(--panel);backdrop-filter:blur(30px) saturate(1.8);-webkit-backdrop-filter:blur(30px) saturate(1.8);border:1px solid var(--line-m);box-shadow:inset 0 1px 0 rgb(255 255 255 / .10),0 20px 50px rgb(0 0 0 / .30);color:var(--ink);font:400 13px var(--sans);padding:12px 16px 12px 38px}
+#q:focus{border-color:rgb(255 107 74 / .55)}
 #q::placeholder{color:var(--ink-3)}
-.qr{border-radius:0}.qr .t1{font-weight:500}
-.btn{border-radius:0;background:var(--glass);border:1px solid var(--line-m);color:var(--ink-dim);font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.1em;padding:10px 13px}
-.btn:hover{color:var(--ink);border-color:var(--ink-dim)}
-.btn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
-#left,#src,#insp{top:76px}
-#left{left:18px;width:310px;padding:18px}
-#src,#insp{right:18px}
-.ph h2,.relh{font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--ink-dim)}
+#qres{top:50px;width:320px;padding:6px;border-radius:16px}
+.qr{border-radius:12px;padding:7px 8px}
+.qr:hover,.qr.act{background:var(--card)}
+.qr img{width:34px;height:34px;border:1.5px solid var(--c)}
+.qr .t1{font:500 13px var(--sans)}
+.qr .t2{font:400 11px var(--mono);color:var(--ink-3);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:7px;border-radius:999px;background:var(--panel);backdrop-filter:blur(30px) saturate(1.8);-webkit-backdrop-filter:blur(30px) saturate(1.8);border:1px solid var(--line-m);box-shadow:inset 0 1px 0 rgb(255 255 255 / .10),0 20px 50px rgb(0 0 0 / .30);color:var(--ink-dim);font:400 10.5px var(--mono);text-transform:uppercase;letter-spacing:.1em;padding:11px 15px}
+.btn:hover{color:var(--ink);border-color:rgb(255 255 255 / .28)}
+.btn.on{background:var(--accent-soft);border-color:rgb(255 107 74 / .45);color:var(--ink)}
+.btn.on .ico{color:var(--accent)}
+
+/* paneles */
+#left,#src,#insp{top:80px}
+#left{left:16px;width:324px;padding:16px;max-height:calc(100% - 176px)}
+#src,#insp{right:16px;width:350px;max-height:calc(100% - 176px)}
+#src{padding:16px}
+.ph{margin-bottom:10px}
+.ph h2,.relh{display:flex;align-items:center;gap:8px;font:400 10.5px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-dim)}
+.ph h2 .ico,.relh .ico{color:var(--accent);width:15px;height:15px}
+.tbars .eb{display:block;margin-bottom:2px}
 .relh{margin:18px 0 8px}
-.ph .mini button{border-radius:0;font:400 10.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
-.ph .mini button:hover{color:var(--ink);border-color:var(--ink-dim)}
-.cat,.ty,.sw,.totals div,.facts > div{border-radius:0;background:transparent;border:1px solid var(--line)}
-.cat::before{width:2px}
-.cat .nm{font-weight:500}.cat .ct,.ty b{font:400 12px var(--mono)}
-.cat img,.qr img,.rel img{border-width:1px}
-.ty{font-weight:400}.ty i{border-radius:0;width:8px;height:8px}
-.sw{font-weight:400}.sw .knob{border-radius:0}.sw .knob::after{border-radius:0}
-.sec{border-top:1px solid var(--line)}
-.totals{border-top:1px solid var(--line)}
-.totals b{font:300 28px/1 var(--tit);color:var(--accent)}
-.totals span{font:400 10.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);display:block;margin-top:4px}
-.credits{color:var(--ink-3);font-size:10.5px}
-.donut svg text{font-family:var(--mono)!important;font-weight:400!important}.cat .nm,.qr .t1{font-weight:500!important}
-.lg i{border-radius:0}.lg b{font:400 12px var(--mono)}
-.stbl th{font:400 10.5px var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
+.ph .mini{gap:4px}
+.ph .mini button{border-radius:999px;background:transparent;border:1px solid var(--line-m);font:400 9.5px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);padding:5px 9px}
+.ph .mini button:hover{color:var(--ink);border-color:rgb(255 255 255 / .3)}
+.cat,.ty,.sw,.totals div,.facts > div,.kpis > div{background:var(--card);border:1px solid var(--card-l);border-radius:14px}
+.cat::before{display:none}
+.cat:hover,.ty:hover,.sw:hover{border-color:rgb(255 255 255 / .2)}
+.cat.off,.ty.off{opacity:.34}
+.cat img,.rel img{border-width:1.5px}
+.cat .nm{font:500 12.5px var(--sans)!important;color:var(--ink)}
+.cat .ct,.ty b{font:400 11.5px var(--mono);color:var(--ink-dim)}
+#catlist{gap:6px}
+#catlist .cat{padding:7px 9px 7px 7px}
+.types{gap:5px}
+.ty{gap:10px;padding:9px 11px;font:400 12.5px/1.25 var(--sans);color:var(--ink-2)}
+.ty i{width:18px;height:3px;border-radius:3px;background:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 16%,transparent)}
+.sw{padding:9px 11px;font:500 12.5px var(--sans);gap:11px}
+.sw .knob{border-radius:999px;background:rgb(255 255 255 / .16)}
+.sw .knob::after{border-radius:50%;background:var(--ink)}
+.sw.on .knob{background:var(--accent)}
+.sw small{font:400 11px var(--sans);color:var(--ink-3);margin-top:2px}
+.sec{border-top:1px solid var(--line);margin-top:16px;padding-top:14px}
+.totals,.totals.t3{border-top:0;margin-top:14px;padding-top:0;gap:6px;grid-template-columns:1fr 1fr 1fr}
+.totals div{padding:10px 11px}
+.totals b,.totals.t3 b{display:block;font:300 32px/.95 var(--tit);color:var(--ink);font-variant-numeric:tabular-nums}
+.totals div:last-child b{color:var(--accent)}
+.totals span{font:400 9.5px/1.35 var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3);display:block;margin-top:6px}
+.credits{color:var(--ink-3);font:400 10.5px/1.55 var(--sans);margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+
+/* fuentes */
+.kpis{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin:4px 0 12px}
+.kpis > div{padding:10px 11px}
+.kpis .eb{margin-top:6px;display:block}
+.kpis .acc .big{color:var(--accent)}
+.donut{gap:14px;padding:12px;background:var(--card);border:1px solid var(--card-l);border-radius:14px}
+.donut svg{width:118px;height:118px}
+.lg{flex:1;min-width:0}
+.lg div{font:400 12px/1.3 var(--sans);color:var(--ink-2);margin:6px 0;gap:8px}
+.lg i{width:8px;height:8px;border-radius:50%}
+.lg b{font:400 11.5px var(--mono);color:var(--ink-dim)}
+.stbl th{font:400 10px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
 .stbl td.n{font:400 12px var(--mono)}
-.rel{border-radius:0}.rel .r1{font-weight:500}.rel .tag{font-weight:500}
-.rel .cb{border-radius:0;font:500 10px var(--mono);color:#040607}
-#insp .ph-img{border-radius:0}
-#insp h3{font:300 32px/1 var(--tit);text-transform:uppercase;letter-spacing:.01em}
-#insp .sci{font:italic 400 13px "Geist",sans-serif}
-.chip{border-radius:0;font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.08em}
-.chip i{border-radius:0}
-.facts .k{font:400 10.5px var(--mono);text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
-.facts .v{font-weight:500}
-.acts a,.acts button{border-radius:0;font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.1em;background:transparent;border:1px solid var(--line-m)}
-.acts .pri{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
-.x{border-radius:0;background:var(--glass);border:1px solid var(--line-m);font-size:14px}
-#mode{border-radius:0;bottom:22px;gap:16px;padding:8px 8px 8px 18px}
-#mode .lb{font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
+.note{font:400 12px/1.5 var(--sans);color:var(--ink-dim)}
+
+/* ficha de especie */
+#insp{padding:0;overflow-x:hidden}
+#insp .ph-img{height:190px;border-radius:19px 19px 0 0;background:var(--bg2)}
+#insp .body{padding:14px 16px 16px}
+#insp .eb.top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+#insp .eb.top i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+#insp h3{font:500 22px/1.15 var(--sans);letter-spacing:-.01em;text-transform:none;color:var(--ink)}
+#insp .sci{font:400 11.5px var(--mono);letter-spacing:.02em;color:var(--ink-3);margin-top:5px}
+.chip{border-radius:999px;font:400 9.5px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 14%,transparent);padding:5px 10px}
+.chip i{border-radius:50%;width:6px;height:6px}
+#insp .kpis{margin:14px 0 0}
+.tbars{margin-top:8px;padding:10px 12px;background:var(--card);border:1px solid var(--card-l);border-radius:14px}
+.tbars .r{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;margin:7px 0}
+.tbars .r span{font:400 12px/1.25 var(--sans);color:var(--ink-2)}
+.tbars .r b{font:400 11.5px var(--mono);color:var(--ink-dim);font-weight:400}
+.tbars .r em{grid-column:1/-1;display:block;height:3px;border-radius:3px;background:rgb(255 255 255 / .07);font-style:normal;overflow:hidden}
+.tbars .r em i{display:block;height:100%;border-radius:3px;background:var(--t)}
+.facts{gap:6px;margin-top:8px}
+.facts > div{padding:9px 11px}
+.facts .k{font:400 9.5px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
+.facts .v{font:500 13px/1.3 var(--sans);color:var(--ink);margin-top:4px}
+.acts{gap:6px;margin-top:12px}
+.acts a,.acts button{display:inline-flex;align-items:center;justify-content:center;gap:7px;border-radius:999px;font:400 10px var(--mono);text-transform:uppercase;letter-spacing:.1em;background:var(--card);border:1px solid var(--line-m);color:var(--ink-2);padding:11px 12px}
+.acts a:hover,.acts button:hover{border-color:rgb(255 255 255 / .3);color:var(--ink)}
+.acts .pri{background:var(--accent);border-color:var(--accent);color:#160904}
+.acts .pri:hover{color:#160904;filter:brightness(1.07)}
+.x{top:12px;right:12px;z-index:2;display:grid;place-items:center;border-radius:50%;background:rgb(14 17 20 / .7);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line-m);color:var(--ink)}
+.rel{border-radius:14px;padding:9px 10px;margin-bottom:6px;background:var(--card);border:1px solid var(--card-l)}
+.rel:hover{background:rgb(255 255 255 / .09)}
+.rel img{width:36px;height:36px}
+.rel .r1{font:500 13px var(--sans);color:var(--ink)}
+.rel .r2{font:400 11.5px/1.45 var(--sans);color:var(--ink-3)}
+.rel .tag{display:inline-flex;align-items:center;gap:6px;font:400 11.5px var(--sans);color:var(--ink-2);margin:3px 10px 0 0}
+.rel .tag::before{content:"";width:12px;height:2px;border-radius:2px;background:var(--t)}
+.rel .cb{border-radius:999px;font:400 9px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--accent);background:var(--accent-soft);border:1px solid rgb(255 107 74 / .35);padding:2px 7px;margin-left:6px;vertical-align:2px}
+
+/* barra de modo */
+#mode{border-radius:999px;bottom:20px;gap:14px;padding:7px 7px 7px 20px}
+#mode .lb{font:400 10px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
 #mode .lb.on{color:var(--ink)}
-#morph{height:1px;border-radius:0;background:var(--line-m)}
-#morph::-webkit-slider-thumb{width:12px;height:12px;border-radius:0;border:0;background:var(--accent)}
-#morph::-moz-range-thumb{width:12px;height:12px;border-radius:0;border:0;background:var(--accent)}
-#go{border-radius:0;background:transparent;border:1px solid var(--accent);color:var(--ink);font:400 11.5px var(--mono);text-transform:uppercase;letter-spacing:.14em;padding:12px 20px;transition:background .25s}
-#go:hover{filter:none;background:var(--accent-soft)}
-#tip{border-radius:0}#tip .t1{font:300 20px/1.05 var(--tit);text-transform:uppercase}#tip .t2{font:italic 400 12px "Geist",sans-serif}#tip .t3{font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.06em}
-#veil{background:var(--bg)}#veil .t{font:300 30px var(--tit);text-transform:uppercase;letter-spacing:.02em}
-#veil .bar{border-radius:0;height:1px;background:var(--line-m)}#veil .s{font:400 11px var(--mono);text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3)}
+#morph{height:2px;border-radius:2px;background:rgb(255 255 255 / .18)}
+#morph::-webkit-slider-thumb{width:16px;height:16px;border-radius:50%;border:3px solid var(--bg2);background:var(--accent);box-shadow:0 0 0 1px rgb(255 107 74 / .5)}
+#morph::-moz-range-thumb{width:16px;height:16px;border-radius:50%;border:3px solid var(--bg2);background:var(--accent)}
+#go{border-radius:999px;background:var(--accent);border:0;color:#160904;font:500 10.5px var(--mono);text-transform:uppercase;letter-spacing:.1em;padding:12px 20px;transition:filter .2s}
+#go:hover{filter:brightness(1.07)}
+
+/* lectura técnica y tooltip */
+#hud{top:84px;padding:9px 16px 10px;border-radius:16px;background:var(--panel);backdrop-filter:blur(30px) saturate(1.8);-webkit-backdrop-filter:blur(30px) saturate(1.8);border:1px solid var(--line-m);box-shadow:inset 0 1px 0 rgb(255 255 255 / .12),0 20px 50px rgb(0 0 0 / .38);font:400 10.5px/1.6 var(--mono);letter-spacing:.1em;color:var(--ink-2)}
+#hud b{color:var(--accent);font-weight:400}
+#hud .bar{height:2px;border-radius:2px;background:rgb(255 255 255 / .12);margin-top:7px}
+#hud .bar i{background:var(--accent);border-radius:2px}
+#tip{border-radius:14px;padding:10px 13px}
+#tip .t1{font:500 14px/1.2 var(--sans);text-transform:none;color:var(--ink)}
+#tip .t2{font:400 11px var(--mono);color:var(--ink-3);margin-top:3px}
+#tip .t3{display:flex;align-items:center;gap:7px;font:400 9.5px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-2);margin-top:7px}
+#tip .t3::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+#veil{background:var(--bg)}
+#veil .t{font:300 26px var(--sans);letter-spacing:-.01em;text-transform:none}
+#veil .bar{border-radius:2px;height:2px;background:var(--line-m)}
+#veil .bar i{background:var(--accent)}
+#veil .s{font:400 10px var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
+#err{border-radius:999px;font:400 11px var(--mono)}
+
+/* celular: paneles abajo, apilados como tarjetas */
 @media (max-width:760px){
-  #top,#dock,#mode,#left,#insp,#src{background:var(--bg)!important}
-  #top{left:0;right:0;top:0}
-  .brand{font-size:19px;padding:2px 0;min-width:0;overflow:hidden;text-overflow:ellipsis;border:0;background:none}
+  #top{left:0;right:0;top:0;background:var(--bg);border-bottom:0;padding:calc(env(safe-area-inset-top) + 10px) 12px 8px;gap:8px}
+  .brand{flex:1;min-width:0;padding:6px 14px 6px 6px;font-size:13.5px;background:var(--panel);border:1px solid var(--line-m)}
+  .brand > div{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brand .bi{width:28px;height:28px}
   #top .spacer{display:none}
-  #btnReset{flex:none}
-  #mode{border-bottom:1px solid var(--line)}
-}</style>
+  #btnReset{flex:none;padding:11px 13px}
+  #btnReset span{display:none}
+  .searchwrap{order:3;width:100%}
+  #q{width:100%;font-size:16px;padding:11px 16px 11px 38px}
+  #qres{width:100%;top:48px}
+  #dock{background:var(--bg);border-top:0;height:46dvh;padding:4px 10px calc(env(safe-area-inset-bottom) + 10px);gap:8px;overflow-y:auto;overflow-x:hidden}
+  #mode{position:static;transform:none;border-radius:999px;background:var(--panel);border:1px solid var(--line-m);box-shadow:inset 0 1px 0 rgb(255 255 255 / .12);padding:6px 6px 6px 16px;flex:none}
+  #left,#insp,#src{position:static;width:auto;max-height:none;flex:none;overflow:visible;background:var(--panel);border:1px solid var(--line-m)!important;border-radius:18px;box-shadow:inset 0 1px 0 rgb(255 255 255 / .12)}
+  #left,#src{padding:14px}
+  #insp{overflow:hidden}
+  #insp .ph-img{height:160px;border-radius:17px 17px 0 0}
+  #insp h3{font-size:20px}
+  .big,.totals b,.totals.t3 b{font-size:28px}
+  .types{grid-template-columns:1fr 1fr}
+  .ty{font-size:12px;padding:8px 10px}
+  #hud{top:12px;width:calc(100% - 24px);white-space:normal;font-size:9.5px}
+  .kpis > div,.totals div{padding:9px 10px}
+}
+</style>
 </head>
 <body>
 <div id="app">
   <header id="top">
-    <div class="brand glass">Red de interacciones <b>bióticas</b></div>
+    <div class="brand glass"><span class="bi"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="6" r="2.2"/><circle cx="19" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7 7l3.8 8.9M17 7l-3.8 8.9M7.2 6h9.6"/></svg></span><div><span class="eb">Isla de Tierra Bomba</span>Red de interacciones <b>bióticas</b></div></div>
     <div class="searchwrap">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
       <input id="q" type="search" placeholder="Buscar especie" autocomplete="off" spellcheck="false">
       <div id="qres" class="glass"></div>
     </div>
     <div class="spacer"></div>
-    <button class="btn on" id="btnSpin">Giro 3D</button>
-    <button class="btn" id="btnReset">Restablecer</button>
+    <button class="btn on" id="btnSpin"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.4-5.7"/><path d="M20 4v4.5h-4.5"/></svg>Giro 3D</button>
+    <button class="btn" id="btnReset" aria-label="Restablecer"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/></svg><span>Restablecer</span></button>
   </header>
 
   <div id="stage">
@@ -296,16 +409,16 @@ html,body{background:var(--bg);font-weight:400}
     <aside id="insp" class="glass"></aside>
     <aside id="src" class="glass"></aside>
     <aside id="left" class="glass">
-      <div class="ph"><h2>Grupos de especies</h2><div class="mini"><button id="allOn">Todas</button><button id="allOff">Ninguna</button></div></div>
+      <div class="ph"><h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M3 13l9 5 9-5"/></svg>Grupos de especies</h2><div class="mini"><button id="allOn">Todas</button><button id="allOff">Ninguna</button></div></div>
       <div id="catlist"></div>
       <div class="sec">
-        <div class="ph"><h2>Tipos de relación</h2><div class="mini"><button id="tyOn">Todas</button><button id="tyOff">Ninguna</button></div></div>
+        <div class="ph"><h2><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17c4-10 12-10 16 0"/><circle cx="4" cy="17" r="1.8"/><circle cx="20" cy="17" r="1.8"/></svg>Tipos de relación</h2><div class="mini"><button id="tyOn">Todas</button><button id="tyOff">Ninguna</button></div></div>
         <div class="types" id="tylist"></div>
       </div>
       <div class="totals t3">
-        <div><b id="tSp">0</b><span>especies visibles</span></div>
-        <div><b id="tOb">0</b><span>registros de las especies</span></div>
-        <div><b id="tRe">0</b><span>relaciones visibles</span></div>
+        <div><b id="tSp">0</b><span>Especies</span></div>
+        <div><b id="tOb">0</b><span>Registros</span></div>
+        <div><b id="tRe">0</b><span>Relaciones</span></div>
       </div>
       <div class="credits">Registros de especies: iNaturalist. Relaciones: GloBI, Global Biotic Interactions. Imagen satelital: Esri World Imagery. Relieve: Terrarium (AWS). Vías: OpenStreetMap. Edificios de Cartagena: Catastro Multipropósito 2026. Modelo 3D y árboles: tesis Tierra Bomba (Gómez y Casas).</div>
     </aside>
@@ -335,17 +448,29 @@ const S = 0.1;                      // 1 unidad de escena = 10 m
 const IS_MOBILE = window.matchMedia('(max-width:760px)').matches;
 const A = 'https://anasoficasca-code.github.io/tierrabomba/assets/';
 const CATS = [
-  { name:'Aves',      sub:'Costeras, marinas y de manglar', color:'#7badc7' },
-  { name:'Flora',     sub:'Árboles, manglar y pastos marinos', color:'#98b48f' },
-  { name:'Insectos',  sub:'Mariposas, hormigas, libélulas', color:'#d1b77b' },
-  { name:'Peces',     sub:'Arrecife y pradera marina',     color:'#6ab2b0' },
-  { name:'Moluscos',  sub:'Caracoles, bivalvos, pulpos',   color:'#cf9cb1' },
-  { name:'Arácnidos', sub:'Arañas y escorpiones',          color:'#bca691' },
-  { name:'Mamíferos', sub:'Terrestres y marinos',          color:'#cc9474' },
-  { name:'Reptiles',  sub:'Iguanas, lagartos, tortugas',   color:'#a595ca' },
-  { name:'Anfibios',  sub:'Ranas y sapos',                 color:'#7bc0a2' },
-  { name:'Hongos',    sub:'Hongos y líquenes',             color:'#d2cfc5' }
+  // paleta de la tesis (coral, teal, arena, azul suave, verde), apagada para que no se vea neón
+  { name:'Aves',      sub:'Costeras, marinas y de manglar', color:'#6cbcd8' },
+  { name:'Flora',     sub:'Árboles, manglar y pastos marinos', color:'#9cc463' },
+  { name:'Insectos',  sub:'Mariposas, hormigas, libélulas', color:'#e8c47e' },
+  { name:'Peces',     sub:'Arrecife y pradera marina',     color:'#3fbfa3' },
+  { name:'Moluscos',  sub:'Caracoles, bivalvos, pulpos',   color:'#ef8f78' },
+  { name:'Arácnidos', sub:'Arañas y escorpiones',          color:'#b9a184' },
+  { name:'Mamíferos', sub:'Terrestres y marinos',          color:'#d0674a' },
+  { name:'Reptiles',  sub:'Iguanas, lagartos, tortugas',   color:'#8fa6b8' },
+  { name:'Anfibios',  sub:'Ranas y sapos',                 color:'#8ad6c4' },
+  { name:'Hongos',    sub:'Hongos y líquenes',             color:'#d8d1c2' }
 ];
+// íconos de línea (trazo 1.5)
+const ICO = {
+  pin: '<path d="M12 21s-6-5.6-6-10.5a6 6 0 0 1 12 0C18 15.4 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.2"/>',
+  ext: '<path d="M14 4h6v6M20 4l-8 8M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  x: '<path d="M6 6l12 12M18 6L6 18"/>',
+  db: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',
+  link: '<path d="M4 17c4-10 12-10 16 0"/><circle cx="4" cy="17" r="1.8"/><circle cx="20" cy="17" r="1.8"/>'
+};
+const ico = (k) => `<svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${ICO[k]}</svg>`;
+// la letra del sitio también en los textos dibujados en canvas
+try { await Promise.race([Promise.all([document.fonts.load('500 22px "Geist"'), document.fonts.load('300 30px "Barlow Condensed"'), document.fonts.load('400 10px "Geist Mono"')]), new Promise(r => setTimeout(r, 1500))]); } catch (e) {}
 const RANK_ES = { species:'Especie', subspecies:'Subespecie', genus:'Género', family:'Familia', order:'Orden', subfamily:'Subfamilia', tribe:'Tribu', class:'Clase', superfamily:'Superfamilia', suborder:'Suborden', infraorder:'Infraorden', phylum:'Filo', kingdom:'Reino', subclass:'Subclase', hybrid:'Híbrido', variety:'Variedad', complex:'Complejo', section:'Sección', subgenus:'Subgénero', subtribe:'Subtribu', infraclass:'Infraclase', superorder:'Superorden', zoosection:'Zoosección', epifamily:'Epifamilia' };
 
 const $ = (id) => document.getElementById(id);
@@ -421,8 +546,8 @@ function ballTexture(sp) {
   tex.colorSpace = THREE.SRGBColorSpace;
   // anillo fino con marcas de mira (estética técnica)
   const ring = () => { g.beginPath(); g.arc(N/2, N/2, N/2 - 8, 0, Math.PI * 2); g.lineWidth = 3.5; g.strokeStyle = col; g.stroke(); g.lineWidth = 3; for (let q = 0; q < 4; q++) { const a = q * Math.PI / 2; g.beginPath(); g.moveTo(N/2 + Math.cos(a) * (N/2 - 7), N/2 + Math.sin(a) * (N/2 - 7)); g.lineTo(N/2 + Math.cos(a) * (N/2 - 1), N/2 + Math.sin(a) * (N/2 - 1)); g.stroke(); } };
-  g.beginPath(); g.arc(N/2, N/2, N/2 - 6, 0, Math.PI * 2); g.fillStyle = '#0b1117'; g.fill();
-  g.fillStyle = '#fff'; g.font = 'bold 22px Inter, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.beginPath(); g.arc(N/2, N/2, N/2 - 6, 0, Math.PI * 2); g.fillStyle = '#0b0f10'; g.fill();
+  g.fillStyle = '#f4f1ea'; g.font = '500 22px "Geist", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillText(sp.es.slice(0, 11), N/2, N/2);
   ring();
   const img = new Image(); img.crossOrigin = 'anonymous';
@@ -1238,7 +1363,7 @@ const mallaTer = (() => {
   const P = []; const y = WATER_Y * S + 0.6; const x0 = BLOCK.x0 * S, x1 = BLOCK.x1 * S, z0 = BLOCK.z0 * S, z1 = BLOCK.z1 * S; const d = 500 * S;
   for (let x = Math.ceil(x0 / d) * d; x <= x1; x += d) P.push(x, y, z0, x, y, z1);
   for (let z = Math.ceil(z0 / d) * d; z <= z1; z += d) P.push(x0, y, z, x1, y, z);
-  const m = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(P, 3)), new THREE.LineBasicMaterial({ color: 0xc8d6dc, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
+  const m = new THREE.LineSegments(new THREE.BufferGeometry().setAttribute('position', new THREE.Float32BufferAttribute(P, 3)), new THREE.LineBasicMaterial({ color: 0xe9e4da, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
   m.visible = false; scene.add(m); return m;
 })();// puntos de registro sobre el suelo
 const obsGeo = new THREE.BufferGeometry();
@@ -1322,7 +1447,7 @@ resize();
 // ======================================================================
 // Relaciones entre especies (GloBI)
 // ======================================================================
-const TYPES = REL.tipos.map((name, i) => ({ name, color: ['#b46163', '#d2a863', '#cc87ab', '#91b856', '#a394cf', '#62bbb0', '#cacfd6', '#66adcc'][i] }));
+const TYPES = REL.tipos.map((name, i) => ({ name, color: ['#ff6b4a', '#a9cf5c', '#f2cf94', '#c99a5b', '#9a8fb5', '#2fd1b0', '#49c6e5', '#d8d1c2'][i] }));
 const byTid = new Map(species.map(s => [s.tid, s.node]));
 const edges = [];
 REL.rel.forEach(([a, b, tys, nreg, carib, fuentes, infer]) => {
@@ -1337,7 +1462,7 @@ REL.rel.forEach(([a, b, tys, nreg, carib, fuentes, infer]) => {
 });
 // retícula polar técnica: meridianos y paralelos cada 30°, y un ecuador con marcas cada 10°
 const rejilla = new THREE.Group(); // sin retícula esférica alrededor de la red
-const rejillaMat = new THREE.LineBasicMaterial({ color: 0xc8d6dc, transparent: true, opacity: 0.11, depthWrite: false, fog: false, toneMapped: false });
+const rejillaMat = new THREE.LineBasicMaterial({ color: 0xe9e4da, transparent: true, opacity: 0.11, depthWrite: false, fog: false, toneMapped: false });
 const anilloMat = new THREE.LineBasicMaterial({ color: 0xff6b4a, transparent: true, opacity: 0.35, depthWrite: false, fog: false, toneMapped: false });
 {
   const R = SPH_R * 1.22; const P = []; const M = 96;
@@ -1360,7 +1485,7 @@ eLines.frustumCulled = false;
 eLines.renderOrder = 2;
 net.add(eLines);
 const eColTmp = new THREE.Color();
-const EDGE_SOFT = new THREE.Color('#C9D2DC');
+const EDGE_SOFT = new THREE.Color('#e9e4da');
 function edgeVisible(e) {
   if (!e.a.on || !e.b.on) return false;
   return e.tys.some(t => typeOn[t]);
@@ -1408,7 +1533,7 @@ $('tyOff').onclick = () => { typeOn.fill(false); tyList.querySelectorAll('.ty').
 
 // panel de fuentes: de dónde viene la información
 {
-  const GROUPS = [['iNaturalist', '#2e8aa0'], ['Artículos científicos', '#ff6b4a'], ['Bases de datos científicas', '#8fb39a'], ['Colecciones de museos', '#f2cf94']];
+  const GROUPS = [['iNaturalist', '#49c6e5'], ['Artículos científicos', '#ff6b4a'], ['Bases de datos científicas', '#2fd1b0'], ['Colecciones de museos', '#f2cf94']];
   const tot = REL.fuentes.reduce((s, f) => s + f[2], 0);
   const g = GROUPS.map(([k, c]) => ({ k, c, v: REL.fuentes.filter(f => f[1] === k).reduce((s, f) => s + f[2], 0), n: REL.fuentes.filter(f => f[1] === k).length }));
   let a0 = -Math.PI / 2;
@@ -1419,15 +1544,23 @@ $('tyOff').onclick = () => { typeOn.fill(false); tyList.querySelectorAll('.ty').
     const [x0, y0] = p(a0, R), [x1, y1] = p(a1, R), [x2, y2] = p(a1, r), [x3, y3] = p(a0, r);
     const d = `M${x0},${y0} A${R},${R} 0 ${large} 1 ${x1},${y1} L${x2},${y2} A${r},${r} 0 ${large} 0 ${x3},${y3} Z`;
     a0 = a1;
-    return `<path d="${d}" fill="${x.c}" stroke="#05090e" stroke-width="2"/>`;
+    return `<path d="${d}" fill="${x.c}" stroke="#15191d" stroke-width="2"/>`;
   }).join('');
   const pct = (v) => Math.round(v / tot * 100) + '%';
   const top = REL.fuentes.slice(0, 10);
+  const nTy = TYPES.filter((t, i) => edges.some(e => e.tys.includes(i))).length;
   $('src').innerHTML = `
+    <div class="ph"><h2>${ico('link')}Relaciones en la isla</h2></div>
+    <div class="kpis">
+      <div class="acc"><div class="big">${edges.length.toLocaleString('es-CO')}</div><span class="eb">Relaciones</span></div>
+      <div><div class="big">${nTy}</div><span class="eb">Tipos</span></div>
+      <div><div class="big">${REL.fuentes.length}</div><span class="eb">Fuentes</span></div>
+    </div>
+    <div class="ph"><h2>${ico('db')}Origen de los registros</h2></div>
     <div class="donut">
       <svg viewBox="0 0 118 118" role="img" aria-label="Registros de interacción por tipo de fuente">${arcs}
-        <text x="59" y="56" text-anchor="middle" fill="#f1f5f9" font-family="Geist" font-weight="800" font-size="17">${tot.toLocaleString('es-CO')}</text>
-        <text x="59" y="72" text-anchor="middle" fill="#9aa7b4" font-family="Geist" font-size="10">registros</text></svg>
+        <text x="59" y="62" text-anchor="middle" fill="#f4f1ea" font-family="Barlow Condensed" font-weight="300" font-size="22">${tot.toLocaleString('es-CO')}</text>
+        <text x="59" y="75" text-anchor="middle" fill="rgba(233,228,218,.5)" font-family="Geist Mono" font-size="6.5" letter-spacing=".6">REGISTROS</text></svg>
       <div class="lg">${g.map(x => `<div><i style="background:${x.c}"></i>${x.k}<b>${pct(x.v)}</b></div>`).join('')}</div>
     </div>`;
 }
@@ -1488,24 +1621,34 @@ function select(node, fly = false) {
   const per = sp.d0 && sp.d1 ? (sp.d0.slice(0, 7) === sp.d1.slice(0, 7) ? fmtDate(sp.d0) : fmtDate(sp.d0) + ' a ' + fmtDate(sp.d1)) : 'Sin fecha';
   const same = node.cluster ? node.cluster.length - 1 : 0;
   insp.style.setProperty('--c', c.color);
+  // relaciones visibles de la especie, por tipo
+  const visE = (node.edges || []).filter(e => e.on);
+  const tyCount = TYPES.map(() => 0);
+  visE.forEach(e => e.tys.forEach(t => { if (typeOn[t]) tyCount[t]++; }));
+  const tyMax = Math.max(1, ...tyCount);
+  const tbars = tyCount.some(v => v) ? `<div class="tbars"><span class="eb">Relaciones por tipo</span>${tyCount.map((v, t) => v ? `<div class="r" style="--t:${TYPES[t].color}"><span>${TYPES[t].name}</span><b>${v}</b><em><i style="width:${Math.round(v / tyMax * 100)}%"></i></em></div>` : '').join('')}</div>` : '';
   insp.innerHTML = `
-    <button class="x" id="xClose" aria-label="Cerrar">&times;</button>
+    <button class="x" id="xClose" aria-label="Cerrar">${ico('x')}</button>
     <img class="ph-img" src="${sp.mimg || (A + 'fotos/' + sp.tid + '.webp')}" onerror="this.onerror=null;this.src='${A}fotos/${sp.tid}.webp'" alt="${sp.es}">
     <div class="body">
+      <div class="eb top"><i></i>${c.name} · ${RANK_ES[sp.rank] || sp.rank || '-'}</div>
       <h3>${sp.es}</h3>
       <div class="sci">${sp.sci}</div>
-      <span class="chip"><i></i>${c.name}</span>
+      <div class="kpis">
+        <div><div class="big">${sp.n}</div><span class="eb">Registros</span></div>
+        <div class="acc"><div class="big">${visE.length}</div><span class="eb">Relaciones</span></div>
+        <div><div class="big">${node.partners.size}</div><span class="eb">Especies</span></div>
+      </div>
+      ${tbars}
       <div class="facts">
-        <div><div class="k">Registros en la isla</div><div class="v">${sp.n}</div></div>
-        <div><div class="k">Nivel taxonómico</div><div class="v">${RANK_ES[sp.rank] || sp.rank || '-'}</div></div>
         <div class="wide"><div class="k">Lugar del registro</div><div class="v">${sp.place || 'Tierra Bomba'}</div></div>
         <div><div class="k">Periodo</div><div class="v">${per}</div></div>
         <div><div class="k">Relaciones documentadas</div><div class="v">${(node.edges || []).length}</div></div>
         ${sp.cons ? `<div class="wide"><div class="k">Estado de conservación</div><div class="v">${sp.cons}</div></div>` : ''}
       </div>
       <div class="acts">
-        <button class="pri" id="bLoc">${morph > 0.5 ? 'Acercar en la isla' : 'Ver en la isla'}</button>
-        <a href="https://www.inaturalist.org/taxa/${sp.tid}" target="_blank" rel="noopener">Ficha en iNaturalist</a>
+        <button class="pri" id="bLoc">${ico('pin')}<span>${morph > 0.5 ? 'Acercar en la isla' : 'Ver en la isla'}</span></button>
+        <a href="https://www.inaturalist.org/taxa/${sp.tid}" target="_blank" rel="noopener">${ico('ext')}iNaturalist</a>
       </div>
       ${relList(node)}
     </div>`;
@@ -1523,8 +1666,8 @@ function select(node, fly = false) {
 function relList(node) {
   const list = (node.edges || []).filter(e => e.on).map(e => ({ e, o: e.a === node ? e.b : e.a }))
     .sort((x, y) => (y.e.carib > 0) - (x.e.carib > 0) || y.e.nreg - x.e.nreg);
-  if (!list.length) return `<div class="relh">Relaciones</div><div class="note">No hay relaciones documentadas en GloBI con otras especies de la isla${(node.edges || []).length ? ' con los filtros actuales' : ''}.</div>`;
-  return `<div class="relh">Relaciones con otras especies (${list.length})</div>` + list.map(({ e, o }) => {
+  if (!list.length) return `<div class="relh">${ico('link')}Relaciones</div><div class="note">No hay relaciones documentadas en GloBI con otras especies de la isla${(node.edges || []).length ? ' con los filtros actuales' : ''}.</div>`;
+  return `<div class="relh">${ico('link')}Con quién se relaciona · ${list.length}</div>` + list.map(({ e, o }) => {
     const tys = e.tys.filter(t => typeOn[t]).map(t => `<span class="tag" style="--t:${TYPES[t].color}">${TYPES[t].name}</span>`).join('');
     return `<div class="rel" data-t="${o.sp.tid}" style="--c:${CATS[o.sp.cat].color}"><img src="${A}fotos/${o.sp.tid}.webp" alt=""><div><div class="r1">${o.sp.es}${e.carib ? '<span class="cb">Caribe</span>' : ''}</div><div class="r2">${tys}</div>${e.infer ? '<div class="r2">Tipo asignado según los grupos de las especies.</div>' : ''}<div class="r2">Fuente: ${e.fuentes.slice(0, 2).join('; ')}${e.fuentes.length > 2 ? ` y ${e.fuentes.length - 2} más` : ''}. ${e.nreg} ${e.nreg === 1 ? 'registro' : 'registros'}.</div></div></div>`;
   }).join('');
@@ -1568,7 +1711,7 @@ function setMorphTarget(t, cb) {
   flyTo(t > 0.5 ? territoryView() : swarmView(), 2.2);
   go.textContent = t > 0.5 ? 'Volver a la red' : 'Materializar';
   $('lbNet').classList.toggle('on', t < 0.5); $('lbTer').classList.toggle('on', t > 0.5);
-  if (selected) { const b = $('bLoc'); if (b) b.textContent = t > 0.5 ? 'Acercar en la isla' : 'Ver en la isla'; }
+  if (selected) { const b = document.querySelector('#bLoc span'); if (b) b.textContent = t > 0.5 ? 'Acercar en la isla' : 'Ver en la isla'; }
 }
 go.onclick = () => setMorphTarget(morph > 0.5 || morphTarget > 0.5 ? 0 : 1);
 slider.addEventListener('input', () => {
