@@ -29,25 +29,17 @@ const NODOS_PROBLEMA = [
 ];
 const CAPITULOS = [
   { id: 'portada', n: '00', nombre: 'Portada', corto: 'Inicio' },
-  { id: 'problema', n: '01', nombre: 'Cartografía Operativa Multicapa', corto: 'Cartografía' },
-  { id: 'social', n: '02', nombre: 'Lo social', corto: 'Social' },
-  { id: 'lectura', n: '02', nombre: 'Lectura territorial', corto: 'Capas' },
-  { id: 'erosion', n: '03', nombre: 'Si no se frena la erosión', corto: 'Erosión' },
-  { id: 'vias', n: '04', nombre: 'Las vías', corto: 'Vías' },
-  { id: 'sintaxis', n: '05', nombre: 'Sintaxis espacial', corto: 'Sintaxis' },
-  { id: 'plan', n: '06', nombre: 'Plan maestro', corto: 'Plan' },
-  { id: 'tramas', n: '07', nombre: 'Especies de la isla', corto: 'Especies' },
-  { id: 'especies', n: '07', nombre: 'Red de especies', corto: 'Red' },
-  { id: 'paisaje-adaptativo', n: '08', nombre: 'Paisaje adaptativo', corto: 'Adaptativo' },
-  { id: 'humedal', n: '09', nombre: 'Humedal de fitofiltración', corto: 'Humedal' },
-  { id: 'vivienda', n: '10', nombre: 'Vivienda modular', corto: 'Vivienda' },
-  { id: 'colegio', n: '11', nombre: 'Colegio', corto: 'Colegio' },
-  { id: 'huerta', n: '12', nombre: 'Huerta comunitaria', corto: 'Huerta' },
-  { id: 'parque', n: '13', nombre: 'Parque', corto: 'Parque' },
-  { id: 'fases', n: '14', nombre: 'Fases', corto: 'Fases' },
-  { id: 'colegio-ladera', n: '15', nombre: 'Colegio en ladera', corto: 'Ladera' },
-  { id: 'conjunto', n: '16', nombre: 'Conjunto de vivienda', corto: 'Conjunto' },
-  { id: 'cierre', n: '17', nombre: 'Lo que sigue', corto: 'Cierre' },
+  { id: 'especies', n: '01', nombre: 'Red de especies', corto: 'Red' },
+  { id: 'paisaje-adaptativo', n: '02', nombre: 'Paisaje adaptativo', corto: 'Adaptativo' },
+  { id: 'humedal', n: '03', nombre: 'Humedal de fitofiltración', corto: 'Humedal' },
+  { id: 'vivienda', n: '04', nombre: 'Vivienda modular', corto: 'Vivienda' },
+  { id: 'colegio', n: '05', nombre: 'Colegio', corto: 'Colegio' },
+  { id: 'huerta', n: '06', nombre: 'Huerta comunitaria', corto: 'Huerta' },
+  { id: 'parque', n: '07', nombre: 'Parque', corto: 'Parque' },
+  { id: 'fases', n: '08', nombre: 'Fases', corto: 'Fases' },
+  { id: 'colegio-ladera', n: '09', nombre: 'Colegio en ladera', corto: 'Ladera' },
+  { id: 'conjunto', n: '10', nombre: 'Conjunto de vivienda', corto: 'Conjunto' },
+  { id: 'cierre', n: '11', nombre: 'Lo que sigue', corto: 'Cierre' },
 ];
 
 const RADIOS = [
@@ -807,7 +799,7 @@ function Cierre({ api, version }) {
   return (
     <section id="cierre" className="relative border-t border-[var(--linea)] bg-tinta text-papel">
       <div className="mx-auto max-w-[1640px] px-5 lg:px-16 py-24 sm:px-10 sm:py-32">
-        <p className="etiqueta text-arcilla">08 · Lo que sigue</p>
+        <p className="etiqueta text-arcilla">11 · Lo que sigue</p>
         <h2 className="mt-4 max-w-6xl text-3xl font-semibold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">Lo que muestran los números, y lo que falta.</h2>
 
         <div className="mt-14 grid gap-12 lg:grid-cols-2">
@@ -1093,118 +1085,6 @@ export default function Relato({ api, sinEscena }) {
         </div>
       </section>
 
-      {/* 01 · Cartografía Operativa Multicapa · Despiece Axonométrico */}
-      <section
-        id="problema"
-        style={{ height: `${PASOS_CARTOGRAFIA.length * ALTO_PASO}svh` }}
-        aria-label="Cartografía Operativa Multicapa: Despiece axonométrico del territorio"
-      />
-      {/* árbol causal de problemas */}
-      <Porques />
-
-      {/* 02 · lo social */}
-      {/* la isla y sus cuatro sectores, en puntos */}
-      <Sectores />
-      <Social />
-      <Lectura />
-      {/* 02 · erosión (la escena la mueve el scroll) */}
-      <section id="erosion" style={{ height: '520svh' }} aria-label="Simulación de la erosión a 10, 20 y 30 años" />
-      {/* 03 · vías */}
-      <section id="vias" style={{ height: '150svh' }} aria-label="Todas las vías de la isla" />
-      {/* 04 · sintaxis */}
-      <section id="sintaxis" style={{ height: `${PASOS.length * ALTO_PASO}svh` }} aria-label="Sintaxis espacial" />
-
-      {/* 06 · plan maestro 3D (la escena la mueve el scroll) */}
-      <section id="plan" style={{ height: `${PLAN_PASOS.length * ALTO_PASO}svh` }} aria-label="Plan maestro en 3D" />
-
-      {/* zoom y exploración del mapa 3D */}
-      {api && ['problema', 'erosion', 'vias', 'sintaxis', 'plan'].includes(cap) && <ControlesVista api={api} explorar={explorar} setExplorar={setExplorar} panelOculto={panelOculto} setPanelOculto={setPanelOculto} />}
-      {api && explorar && ['problema', 'erosion', 'vias', 'sintaxis', 'plan'].includes(cap) && <CapaExplorar api={api} />}
-      {api && cap === 'plan' && (
-        <>
-          {!panelOculto && <PanelPlan paso={PLAN_PASOS[planIdx]} idx={planIdx} stats={stats} version={version} />}
-          <IndicePlan activo={planIdx} />
-        </>
-      )}
-
-      {/* 03 · Visor interactivo real de la Red de Interacciones Bióticas: LITERALLY APPEARS on Capa 03 */}
-      <div
-        className={`fixed inset-0 z-30 transition-opacity duration-500 ${
-          cap === 'problema' && cartoIdx === IDX_BIOTICA
-            ? 'opacity-100 pointer-events-auto visible'
-            : 'opacity-0 pointer-events-none invisible'
-        }`}
-      >
-        <iframe
-          src={`${import.meta.env.BASE_URL}especies/`}
-          title="Red de interacciones bióticas de Tierra Bomba"
-          className="w-full h-full border-0 bg-[#040607]"
-          allow="fullscreen"
-        />
-        {/* Barra superior flotante de cambio de capa dentro de la Capa Biótica */}
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40 flex items-center gap-1.5 p-1 rounded-full bg-black/90 backdrop-blur border border-white/20 shadow-2xl">
-          {PASOS_CARTOGRAFIA.map((p, i) => (
-            <button
-              key={p.id}
-              type="button"
-              className={`h-7 px-3 rounded-full text-xs font-medium transition-all ${
-                i === IDX_BIOTICA
-                  ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/60 shadow-lg'
-                  : 'text-white/70 hover:text-white hover:bg-white/10'
-              }`}
-              onClick={() => irACartoPaso(i)}
-            >
-              {p.pasoNum} · {p.corto}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setVerFichaBiotica((v) => !v)}
-            className={`h-7 px-3 rounded-full text-xs font-medium transition-all border ${
-              verFichaBiotica
-                ? 'bg-arcilla text-white border-arcilla'
-                : 'text-white/70 border-white/20 hover:text-white hover:bg-white/10'
-            }`}
-          >
-            {verFichaBiotica ? '✕ Ocultar Ficha' : 'ℹ Ficha Técnica'}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const el = document.getElementById('paisaje-adaptativo');
-              if (el) el.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="h-7 px-3 rounded-full text-xs font-medium transition-all bg-emerald-600/30 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-600/50 hover:text-white flex items-center gap-1"
-          >
-            🌊 Corte Adaptativo ↓
-          </button>
-        </div>
-      </div>
-
-      {/* paneles flotantes */}
-      {api && cap === 'problema' && (
-        <>
-          {(cartoIdx !== IDX_BIOTICA || verFichaBiotica) && !panelOculto && (
-            <PanelCartografia
-              paso={PASOS_CARTOGRAFIA[cartoIdx]}
-              idx={cartoIdx}
-              total={PASOS_CARTOGRAFIA.length}
-              onIrPaso={irACartoPaso}
-            />
-          )}
-          <IndiceCartografia activo={cartoIdx} onIr={irACartoPaso} />
-        </>
-      )}
-      {api && !panelOculto && cap === 'erosion' && <PanelErosion key={version} stats={stats} anio={anio} modo={modo} ctrl={ctrl} setCtrl={setCtrl} />}
-      {api && !panelOculto && cap === 'vias' && <PanelVias stats={stats} datos={datos} />}
-      {api && cap === 'sintaxis' && (
-        <>
-          {!panelOculto && <PanelSintaxis paso={PASOS[pasoIdx]} datos={datos} stats={stats} ctrl={ctrl} setCtrl={setCtrl} lanchas={api.lanchas} />}
-          <Indice activo={pasoIdx} onIr={irAPaso} />
-        </>
-      )}
-
-      <Tramas />
       <RedEspecies />
       <PaisajeAdaptativo />
       <HumedalFitofiltracion />

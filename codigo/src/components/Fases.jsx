@@ -48,7 +48,7 @@ export default function Fases() {
       <Defs />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="etiqueta text-arcilla">14 · Fases</p>
+          <p className="etiqueta text-arcilla">08 · Fases</p>
           <h2 className="mt-3 text-3xl leading-[1.02] sm:text-4xl">Diez años para transformar la isla</h2>
         </div>
         <p className="max-w-md text-[13px] leading-snug text-white/65">Cada fase prepara la siguiente: primero el agua y la conexión, luego el suelo seguro y, al final, la vida en común. Pase el cursor o toque un panel; mueva la línea de tiempo.</p>

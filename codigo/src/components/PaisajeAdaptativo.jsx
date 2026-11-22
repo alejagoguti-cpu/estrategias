@@ -22,8 +22,8 @@ const escenaHuerta = () => import('../lib/inmersivo/huerta.js');
 // Secciones de paisaje: a la izquierda un corte vivo dibujado con puntos (estética del manglar de «Tramas»,
 // especies en movimiento e interacciones con doble clic); a la derecha un recorrido en primera persona con
 // materiales reales (Poly Haven + modelos y renders de Blender).
-//  08 · Paisaje adaptativo: marisma intermareal, pasarela elevada y mirador con banco solar frente a Cartagena.
-//  09 · Humedal de fitofiltración: lagunas de retención, juncos, lirio acuático, puente y sendero.
+//  02 · Paisaje adaptativo: marisma intermareal, pasarela elevada y mirador con banco solar frente a Cartagena.
+//  03 · Humedal de fitofiltración: lagunas de retención, juncos, lirio acuático, puente y sendero.
 // =============================================================================
 
 const BASE = import.meta.env.BASE_URL;
@@ -94,7 +94,7 @@ export function HumedalFitofiltracion() {
 export function ViviendaModular() {
   return (
     <SeccionPaisaje
-      id="vivienda" etiqueta="10 · Vivienda modular" titulo="Una casa que se arma por módulos y se replica"
+      id="vivienda" etiqueta="04 · Vivienda modular" titulo="Una casa que se arma por módulos y se replica"
       cfg={corteCasa} construir={escenaCasa}
       aria="Vivienda modular y replicable en la meseta de Tierra Bomba"
       leyenda="Cinco módulos de 3,6 m sobre la meseta segura: zaguán abierto para la brisa, cubiertas que captan lluvia y sol, celosía de ladrillo que da sombra. El mismo módulo se repite en hilera o en L."
@@ -106,7 +106,7 @@ export function ViviendaModular() {
 export function Colegio() {
   return (
     <SeccionPaisaje
-      id="colegio" etiqueta="11 · Colegio" titulo="Aulas de tierra bajo una cubierta que da sombra"
+      id="colegio" etiqueta="05 · Colegio" titulo="Aulas de tierra bajo una cubierta que da sombra"
       cfg={corteColegio} construir={escenaColegio}
       aria="Colegio de bloque de tierra con cubierta flotante en Tierra Bomba"
       leyenda="Aulas de bloque de tierra comprimida bajo una gran cubierta flotante que da sombra y deja salir el aire caliente. La galería de madera, el patio de adoquín y el árbol de sombra son el lugar de encuentro."
@@ -118,7 +118,7 @@ export function Colegio() {
 export function Huerta() {
   return (
     <SeccionPaisaje
-      id="huerta" etiqueta="12 · Huerta comunitaria" titulo="Un vivero para sembrar la comida y el bosque"
+      id="huerta" etiqueta="06 · Huerta comunitaria" titulo="Un vivero para sembrar la comida y el bosque"
       cfg={corteHuerta} construir={escenaHuerta}
       aria="Huerta y vivero comunitario de Tierra Bomba"
       leyenda="El invernadero protege las plántulas del sol y la lluvia fuerte; afuera, bancales elevados de madera sobre mantillo, caminos de grava y un maizal. Riego por goteo desde el tanque de lluvia y un seto para los polinizadores."
@@ -130,7 +130,7 @@ export function Huerta() {
 export function Parque() {
   return (
     <SeccionPaisaje
-      id="parque" etiqueta="13 · Parque" titulo="Un claro en el bosque para jugar"
+      id="parque" etiqueta="07 · Parque" titulo="Un claro en el bosque para jugar"
       cfg={corteParque} construir={escenaParque}
       aria="Parque de juego natural en el bosque seco de Tierra Bomba"
       leyenda="Un parque de juego natural en un claro del bosque seco: red de trepar, torre, troncos de equilibrio, pilotes y túnel sobre un piso de viruta que amortigua las caídas, con bancas a la sombra."
@@ -142,7 +142,7 @@ export function Parque() {
 export function ColegioLadera() {
   return (
     <SeccionPaisaje
-      id="colegio-ladera" etiqueta="15 · Colegio en ladera" titulo="Aulas sobre pilotes entre el bosque"
+      id="colegio-ladera" etiqueta="09 · Colegio en ladera" titulo="Aulas sobre pilotes entre el bosque"
       cfg={corteLadera} construir={escenaLadera}
       aria="Colegio en ladera sobre pilotes en el bosque de Tierra Bomba"
       leyenda="Dos barras de aulas escalonadas sobre pilotes dejan pasar el bosque por debajo. Balcones corridos, fachadas de listones de madera, cubiertas flotantes con paneles solares y escaleras exteriores entre niveles."
@@ -154,7 +154,7 @@ export function ColegioLadera() {
 export function ConjuntoVivienda() {
   return (
     <SeccionPaisaje
-      id="conjunto" etiqueta="16 · Conjunto de vivienda" titulo="Bloques alrededor de un eje de agua y jardín"
+      id="conjunto" etiqueta="10 · Conjunto de vivienda" titulo="Bloques alrededor de un eje de agua y jardín"
       cfg={corteConjunto} construir={escenaConjunto}
       aria="Conjunto de vivienda alrededor de un canal de agua en la meseta de Tierra Bomba"
       leyenda="Dos hileras de bloques blancos de cuatro pisos, escalonados, se abren a un eje central con un canal que retiene la lluvia, jardín y árboles de sombra. Balcones, terrazas con pérgola y ventilación cruzada."
