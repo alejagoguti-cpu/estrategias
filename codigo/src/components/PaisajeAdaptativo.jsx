@@ -7,6 +7,8 @@ import escenaMarisma from '../lib/inmersivo/marisma.js';
 import escenaHumedal from '../lib/inmersivo/humedal.js';
 import { corteCasa } from '../lib/cortes/casa.jsx';
 import escenaCasa from '../lib/inmersivo/casa.js';
+import { corteColegio } from '../lib/cortes/colegio.jsx';
+import escenaColegio from '../lib/inmersivo/colegio.js';
 
 // =============================================================================
 // Secciones de paisaje: a la izquierda un corte vivo dibujado con puntos (estética del manglar de «Tramas»,
@@ -89,6 +91,18 @@ export function ViviendaModular() {
       aria="Vivienda modular y replicable en la meseta de Tierra Bomba"
       leyenda="Cinco módulos de 3,6 m sobre la meseta segura: zaguán abierto para la brisa, cubiertas que captan lluvia y sol, celosía de ladrillo que da sombra. El mismo módulo se repite en hilera o en L."
       nota="Corte esquemático. Módulo de 3,6 × 3,6 m; captación de lluvia hacia cisterna con rebose al humedal (09). Muebles: Poly Haven (CC0). Especies e interacciones de la base de especies de la isla (iNaturalist, Poelen 2014, Bello et al. 2017, Ollerton et al. 2019)."
+    />
+  );
+}
+
+export function Colegio() {
+  return (
+    <SeccionPaisaje
+      id="colegio" etiqueta="11 · Colegio" titulo="Aulas de tierra bajo una cubierta que da sombra"
+      cfg={corteColegio} construir={escenaColegio}
+      aria="Colegio de bloque de tierra con cubierta flotante en Tierra Bomba"
+      leyenda="Aulas de bloque de tierra comprimida bajo una gran cubierta flotante que da sombra y deja salir el aire caliente. La galería de madera, el patio de adoquín y el árbol de sombra son el lugar de encuentro."
+      nota="Corte esquemático. Muros de bloque de tierra comprimida (BTC), cubierta de lámina sobre cerchas de madera, captación de lluvia a tanque. Mobiliario y texturas: Poly Haven (CC0). Especies e interacciones de la base de especies de la isla."
     />
   );
 }

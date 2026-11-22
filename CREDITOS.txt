@@ -51,3 +51,7 @@ VIVIENDA MODULAR  (capitulo 10)
   Poly Haven (CC0): muebles Sofa 02, Sofa 03, Modern Arm Chair 01, Modern Coffee Table 01, Mid-Century Lounge Chair,
   Outdoor Table Chair Set 01, Dining Table, Dining Chair 02, Ottoman 01, Side Table 01, Potted Plant 02/04, Planter Pot Clay;
   texturas Plastered Wall 04 y Red Brick. Casa, celosia, cubiertas y paneles modelados para el recorrido (referencia de la autora).
+
+COLEGIO  (capitulo 11)
+  Poly Haven (CC0): School Chair 01, Wooden Table 01, Tree Stump 01; texturas Clay Block Wall y Red Brick Pavers.
+  Aulas, cerchas, cubierta de lamina y tanque modelados para el recorrido (referencia de la autora).
