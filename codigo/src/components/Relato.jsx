@@ -8,6 +8,7 @@ import Porques from './Porques.jsx';
 import RedEspecies from './RedEspecies.jsx';
 import Lectura from './Lectura.jsx';
 import Tramas from './Tramas.jsx';
+import CartografiaMulticapa from './CartografiaMulticapa.jsx';
 import { PLAN_PASOS, planEstado } from './Plan.jsx';
 import { PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from '../lib/plan.js';
 
@@ -27,7 +28,7 @@ const NODOS_PROBLEMA = [
 ];
 const CAPITULOS = [
   { id: 'portada', n: '00', nombre: 'Portada', corto: 'Inicio' },
-  { id: 'problema', n: '01', nombre: 'El problema', corto: 'Problema' },
+  { id: 'problema', n: '01', nombre: 'Cartografía Operativa Multicapa', corto: 'Cartografía' },
   { id: 'social', n: '02', nombre: 'Lo social', corto: 'Social' },
   { id: 'lectura', n: '02', nombre: 'Lectura territorial', corto: 'Capas' },
   { id: 'erosion', n: '03', nombre: 'Si no se frena la erosión', corto: 'Erosión' },
@@ -867,17 +868,10 @@ export default function Relato({ api, sinEscena }) {
         </div>
       </section>
 
-      {/* 01 · problema: enunciado + red de relaciones */}
+      {/* 01 · Cartografía Operativa Multicapa · Despiece Axonométrico */}
       <section id="problema" className="relative">
-        <div className="relative flex min-h-[130svh] items-center">
-          <div className="absolute inset-0 bg-tinta/45" />
-          <div className="relative w-full max-w-[44rem] px-5 py-24 sm:px-12 lg:ml-[5vw]">
-            <p className="etiqueta text-arcilla">01 · Formulación del problema</p>
-            <ScrollWords text={PROBLEMA} className="mt-6 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl lg:text-5xl" />
-            {sinEscena && <p className="mt-8 text-sm text-white/60">Este dispositivo no pudo mostrar la vista 3D; se muestra la imagen satelital y los datos.</p>}
-          </div>
-        </div>
-        {/* el problema desplegado, en vidrio sobre la isla */}
+        <CartografiaMulticapa />
+        {/* árbol causal de problemas */}
         <Porques />
       </section>
 
