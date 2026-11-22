@@ -964,20 +964,21 @@ export default function Relato({ api, sinEscena }) {
   const [panelOculto, setPanelOculto] = useState(false);
   const ctrlRef = useRef(ctrl);
   ctrlRef.current = ctrl;
-  const S = useRef({ cap: 'portada', pasoIdx: 0, p: 0 });
+  const S = useRef({ cap: 'portada', pasoIdx: 0, p: 0, cartoIdx: 0 });
   const apiRef = useRef(api);
   apiRef.current = api;
 
   const aplicar = useCallback(() => {
     const a = apiRef.current;
     if (!a) return;
-    const { cap: c, pasoIdx: pi, p } = S.current;
+    const { cap: c, pasoIdx: pi, p, cartoIdx: sCarto } = S.current;
     const k = ctrlRef.current;
     const base = { modelo: k.modelo, nivelManual: k.nivel, cam: 'hero', year: 0, modo: 'perdida', red: null, capa: 'tipo', radio: 'n', calles: 0, casas: 1, dim: 0, rutas: 0, contexto: 0, plan: null, midas: false, cartoCapa: -1 };
     let est = base;
     if (c === 'portada') est = base;
     else if (c === 'problema') {
-      const ps = PASOS_CARTOGRAFIA[cartoIdx || 0] || PASOS_CARTOGRAFIA[0];
+      const ci = sCarto !== undefined ? sCarto : (cartoIdx || 0);
+      const ps = PASOS_CARTOGRAFIA[ci] || PASOS_CARTOGRAFIA[0];
       est = {
         ...base,
         cam: ps.cam || 'carto_intro',
@@ -991,7 +992,7 @@ export default function Relato({ api, sinEscena }) {
         contexto: ps.contexto || 0,
         dim: ps.dim || 0.1,
         midas: !!ps.midas,
-        cartoCapa: ps.cartoCapa ?? cartoIdx ?? 0,
+        cartoCapa: ci,
       };
     } else if (c === 'erosion') {
       const y = 30 * ease(clamp01((p - 0.08) / 0.76));
@@ -1030,16 +1031,17 @@ export default function Relato({ api, sinEscena }) {
       const total = Math.max(1, r.height - vh);
       const p = clamp01(-r.top / total);
       let pi = S.current.pasoIdx;
+      let ci = S.current.cartoIdx ?? 0;
       if (actual === 'problema') {
-        const ic = Math.min(PASOS_CARTOGRAFIA.length - 1, Math.floor(p * PASOS_CARTOGRAFIA.length));
-        setCartoIdx((x) => (x === ic ? x : ic));
+        ci = Math.min(PASOS_CARTOGRAFIA.length - 1, Math.floor(p * PASOS_CARTOGRAFIA.length));
+        setCartoIdx((x) => (x === ci ? x : ci));
       }
       if (actual === 'sintaxis') pi = Math.min(PASOS.length - 1, Math.floor(p * PASOS.length));
       if (actual === 'plan') {
         const ip = Math.min(PLAN_PASOS.length - 1, Math.floor(p * PLAN_PASOS.length));
         setPlanIdx((x) => (x === ip ? x : ip));
       }
-      S.current = { cap: actual, pasoIdx: pi, p };
+      S.current = { cap: actual, pasoIdx: pi, p, cartoIdx: ci };
       const tot = document.documentElement.scrollHeight - vh;
       document.documentElement.style.setProperty('--p', tot > 0 ? String(clamp01(window.scrollY / tot)) : '0');
       setCap((x) => (x === actual ? x : actual));
@@ -1063,6 +1065,9 @@ export default function Relato({ api, sinEscena }) {
   useEffect(() => { api?.alCambiarModelo(() => setVersion((v) => v + 1)); }, [api]);
 
   const irACartoPaso = (i) => {
+    S.current.cartoIdx = i;
+    setCartoIdx(i);
+    aplicar();
     const el = document.getElementById('problema');
     const vh = window.innerHeight;
     const top = window.scrollY + el.getBoundingClientRect().top + ((i + 0.5) / PASOS_CARTOGRAFIA.length) * (el.offsetHeight - vh);
