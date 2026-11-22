@@ -91,18 +91,18 @@ function pintarIguana(x) { x.translate(52, 12); x.fillStyle = '#5f9b3a'; x.fill(
 // ---------- especies y su movimiento ----------
 // mira: hacia dónde mira la foto (1 derecha, -1 izquierda). anc: 'pie' apoya en el punto, 'centro' vuela.
 const ESPECIES = [
-  { id: 'fragata1', src: 'fragata', w: 124, mira: -1, anc: 'centro', sci: 'Fregata magnificens', aleteo: 0.1, mov: (t) => { const x = 1280 - ((t * 26) % 1480); return { x, y: 160 + Math.sin(t * 0.5) * 14, dir: -1, fase: t * 1.6 }; } },
-  { id: 'fragata2', src: 'fragata', w: 64, mira: -1, anc: 'centro', aleteo: 0.1, mov: (t) => { const x = 1280 - ((t * 31 + 520) % 1480); return { x, y: 112 + Math.sin(t * 0.7 + 1) * 10, dir: -1, fase: t * 1.9 }; } },
-  { id: 'pelicano', src: 'pelicano', w: 128, mira: -1, anc: 'centro', sci: 'Pelecanus occidentalis', aleteo: 0.16, mov: (t) => { const x = -140 + ((t * 30 + 360) % 1500); return { x, y: 282 + Math.sin(t * 0.8) * 8, dir: 1, fase: t * 2.4 }; } },
-  { id: 'albaVuelo', src: 'alba_vuelo', w: 98, mira: -1, anc: 'centro', sci: 'Ardea alba', aleteo: 0.3, mov: (t) => { const x = 1300 - ((t * 38 + 900) % 1500); return { x, y: 330 - Math.sin(t * 0.6) * 22, dir: -1, fase: t * 4.2 }; } },
-  { id: 'martin', src: 'martin_vuelo', w: 72, mira: -1, anc: 'centro', sci: 'Megaceryle torquata', aleteo: 0.35, mov: (t) => { const v = vaiven(t, 380, 760, 70); return { x: v.x, y: 338 + Math.abs(Math.sin(t * 1.1)) * -26 + Math.sin(t * 7) * 2, dir: v.dir, fase: t * 9 }; } },
-  { id: 'garza', src: 'garza', w: 86, mira: 1, anc: 'pie', sci: 'Egretta thula', mov: (t) => { const v = vaiven(t, 120, 300, 7); const picoteo = Math.pow(Math.max(0, Math.sin(t * 0.9)), 14) * 7; return { x: v.x, y: Math.min(suelo(v.x), 506) + picoteo, dir: v.dir, paso: Math.sin(t * 3) * 1.2 }; } },
-  { id: 'alba', src: 'alba', w: 22, mira: 1, anc: 'pie', sci: 'Ardea alba', mov: (t) => { const v = vaiven(t, 360, 432, 4, 20); return { x: v.x, y: suelo(v.x) + 2, dir: v.dir, paso: Math.sin(t * 2.6) * 0.8 }; } },
-  ...[0, 1, 2, 3, 4, 5, 6].map((i) => ({ id: `sardina${i}`, src: 'sardina', w: 26 + (i % 3) * 7, mira: 1, anc: 'centro', sci: i === 0 ? 'Opisthonema oglinum' : null, rotuloAbajo: true, mov: (t) => { const v = vaiven(t, 100, 330 - (i % 3) * 20, 24 + i * 3, i * 47); return { x: v.x, y: 494 + (i % 4) * 6 + Math.sin(t * 2 + i) * 3, dir: v.dir, nado: t * 8 + i }; } })),
-  { id: 'tortuga', pintar: pintarTortuga, cw: 48, ch: 34, w: 46, mira: 1, anc: 'centro', sci: 'Chelonia mydas', rotuloAbajo: true, mov: (t) => { const v = vaiven(t, 120, 300, 9, 140); return { x: v.x, y: 502 + Math.sin(t * 0.9) * 4, dir: v.dir, nado: t * 2.5 }; } },
-  { id: 'cangrejo', pintar: pintarCangrejo, cw: 36, ch: 26, w: 32, mira: 1, anc: 'pie', sci: 'Cardisoma guanhumi', sinVoltear: true, mov: (t) => { const v = vaiven(t, 418, 468, 16); const pausa = Math.sin(t * 0.7) > 0.4; const x = pausa ? 443 + Math.sin(t * 0.7) * 25 : v.x; return { x, y: suelo(x) - 1, dir: 1, paso: Math.sin(t * 22) * 0.8 }; } },
-  { id: 'iguana', pintar: pintarIguana, cw: 92, ch: 26, w: 76, mira: 1, anc: 'pie', sci: 'Iguana iguana', inclina: true, mov: (t) => { const v = vaiven(t, 860, 990, 6, 30); return { x: v.x, y: suelo(v.x) - 2, dir: v.dir, paso: Math.sin(t * 5) * 0.6 }; } },
-  { id: 'monarca', src: 'monarca', w: 28, mira: 1, anc: 'centro', sci: 'Danaus plexippus', mariposa: true, mov: (t) => ({ x: 965 + Math.sin(t * 0.55) * 70 + Math.sin(t * 1.7) * 12, y: 278 + Math.sin(t * 1.3) * 22 + Math.sin(t * 4.1) * 5, dir: Math.cos(t * 0.55) > 0 ? 1 : -1, fase: t * 16 }) },
+  { id: 'fragata1', src: 'fragata', w: 190, mira: -1, anc: 'centro', sci: 'Fregata magnificens', aleteo: 0.1, mov: (t) => { const x = 1280 - ((t * 26) % 1480); return { x, y: 160 + Math.sin(t * 0.5) * 14, dir: -1, fase: t * 1.6 }; } },
+  { id: 'fragata2', src: 'fragata', w: 104, mira: -1, anc: 'centro', aleteo: 0.1, mov: (t) => { const x = 1280 - ((t * 31 + 520) % 1480); return { x, y: 112 + Math.sin(t * 0.7 + 1) * 10, dir: -1, fase: t * 1.9 }; } },
+  { id: 'pelicano', src: 'pelicano', w: 196, mira: -1, anc: 'centro', sci: 'Pelecanus occidentalis', aleteo: 0.16, mov: (t) => { const x = -140 + ((t * 30 + 360) % 1500); return { x, y: 282 + Math.sin(t * 0.8) * 8, dir: 1, fase: t * 2.4 }; } },
+  { id: 'albaVuelo', src: 'alba_vuelo', w: 156, mira: -1, anc: 'centro', sci: 'Ardea alba', aleteo: 0.3, mov: (t) => { const x = 1300 - ((t * 38 + 900) % 1500); return { x, y: 330 - Math.sin(t * 0.6) * 22, dir: -1, fase: t * 4.2 }; } },
+  { id: 'martin', src: 'martin_vuelo', w: 112, mira: -1, anc: 'centro', sci: 'Megaceryle torquata', aleteo: 0.35, mov: (t) => { const v = vaiven(t, 380, 760, 70); return { x: v.x, y: 338 + Math.abs(Math.sin(t * 1.1)) * -26 + Math.sin(t * 7) * 2, dir: v.dir, fase: t * 9 }; } },
+  { id: 'garza', src: 'garza', w: 132, mira: 1, anc: 'pie', sci: 'Egretta thula', mov: (t) => { const v = vaiven(t, 120, 300, 7); const picoteo = Math.pow(Math.max(0, Math.sin(t * 0.9)), 14) * 7; return { x: v.x, y: Math.min(suelo(v.x), 506) + picoteo, dir: v.dir, paso: Math.sin(t * 3) * 1.2 }; } },
+  { id: 'alba', src: 'alba', w: 40, mira: 1, anc: 'pie', sci: 'Ardea alba', mov: (t) => { const v = vaiven(t, 360, 432, 4, 20); return { x: v.x, y: suelo(v.x) + 2, dir: v.dir, paso: Math.sin(t * 2.6) * 0.8 }; } },
+  ...[0, 1, 2, 3, 4, 5, 6].map((i) => ({ id: `sardina${i}`, src: 'sardina', w: 40 + (i % 3) * 9, mira: 1, anc: 'centro', sci: i === 0 ? 'Opisthonema oglinum' : null, rotuloAbajo: true, mov: (t) => { const v = vaiven(t, 100, 330 - (i % 3) * 20, 24 + i * 3, i * 47); return { x: v.x, y: 494 + (i % 4) * 6 + Math.sin(t * 2 + i) * 3, dir: v.dir, nado: t * 8 + i }; } })),
+  { id: 'tortuga', pintar: pintarTortuga, cw: 48, ch: 34, w: 72, mira: 1, anc: 'centro', sci: 'Chelonia mydas', rotuloAbajo: true, mov: (t) => { const v = vaiven(t, 120, 300, 9, 140); return { x: v.x, y: 502 + Math.sin(t * 0.9) * 4, dir: v.dir, nado: t * 2.5 }; } },
+  { id: 'cangrejo', pintar: pintarCangrejo, cw: 36, ch: 26, w: 48, mira: 1, anc: 'pie', sci: 'Cardisoma guanhumi', sinVoltear: true, mov: (t) => { const v = vaiven(t, 418, 468, 16); const pausa = Math.sin(t * 0.7) > 0.4; const x = pausa ? 443 + Math.sin(t * 0.7) * 25 : v.x; return { x, y: suelo(x) - 1, dir: 1, paso: Math.sin(t * 22) * 0.8 }; } },
+  { id: 'iguana', pintar: pintarIguana, cw: 92, ch: 26, w: 112, mira: 1, anc: 'pie', sci: 'Iguana iguana', inclina: true, mov: (t) => { const v = vaiven(t, 860, 990, 6, 30); return { x: v.x, y: suelo(v.x) - 2, dir: v.dir, paso: Math.sin(t * 5) * 0.6 }; } },
+  { id: 'monarca', src: 'monarca', w: 44, mira: 1, anc: 'centro', sci: 'Danaus plexippus', mariposa: true, mov: (t) => ({ x: 965 + Math.sin(t * 0.55) * 70 + Math.sin(t * 1.7) * 12, y: 278 + Math.sin(t * 1.3) * 22 + Math.sin(t * 4.1) * 5, dir: Math.cos(t * 0.55) > 0 ? 1 : -1, fase: t * 16 }) },
 ];
 // rótulos fijos (vegetación)
 export const ROTULOS_FIJOS = [
@@ -155,7 +155,7 @@ export default function CorteVivo() {
     especies.forEach((e) => {
       const listo = (img) => {
         const w = e.w; const h = img ? (w * img.height) / img.width : (w * e.ch) / e.cw; e.alto = h;
-        const paso = w < 40 ? 1.5 : w < 80 ? 1.9 : 2.2;
+        const paso = w < 60 ? 1.05 : w < 120 ? 1.3 : 1.5;
         const pts = muestrear(w, h, paso, (x) => { if (img) x.drawImage(img, 0, 0, w, h); else { x.scale(w / e.cw, w / e.cw); e.pintar(x); } });
         e.pts = pts.map((p) => ({ ...p, x: p.x - w / 2, y: e.anc === 'pie' ? p.y - h : p.y - h / 2 }));
       };
@@ -212,10 +212,10 @@ export default function CorteVivo() {
           if (d.b === 'sardina') {
             const ataque = uI > 2.2 ? Math.pow(Math.max(0, Math.sin(uI * 2.2)), 10) * 10 : 0;
             objetivo[d.a] = { x: P, y: pie(d.a, P) + ataque, dir: 1 };
-            for (let i = 0; i < 7; i++) { const sp = Math.sin(uI * 1.6 + i * 0.9); objetivo[`sardina${i}`] = { x: P + 34 + Math.cos(uI * 1.4 + i) * 16 - ataque * 0.8, y: 497 + (i % 4) * 5 + Math.sin(uI * 2 + i) * 3, dir: sp > 0 ? 1 : -1 }; }
+            for (let i = 0; i < 7; i++) { const sp = Math.sin(uI * 1.6 + i * 0.9); objetivo[`sardina${i}`] = { x: P + 52 + Math.cos(uI * 1.4 + i) * 20 - ataque * 1.2, y: 497 + (i % 4) * 5 + Math.sin(uI * 2 + i) * 3, dir: sp > 0 ? 1 : -1 }; }
           } else if (d.modo === 'compite') {
             const lado = A.x < P ? 1 : -1; const B0 = M[d.b];
-            objetivo[d.a] = d.a === 'pelicano' ? { x: P - lado * 46, y: 466, dir: lado, fase: uI * 0.8 } : { x: P - lado * 10, y: pie(d.a, P - lado * 10), dir: lado };
+            objetivo[d.a] = d.a === 'pelicano' ? { x: P - lado * 70, y: 456, dir: lado, fase: uI * 0.8 } : { x: P - lado * 10, y: pie(d.a, P - lado * 10), dir: lado };
             const xb = clamp(P + lado * 75 * suave((uI - 1.4) / 2), 112, 440); objetivo[d.b] = { x: xb, y: pie(d.b, xb), dir: lado, paso: B0.paso };
           } else if (d.modo === 'caza') { // garza blanca en vuelo sobre la iguana, que huye talud arriba
             const B0 = M[d.b]; const xb = clamp(B0.x + 55 * suave((uI - 1.5) / 2.5), 860, 1040); objetivo[d.b] = { x: xb, y: pie(d.b, xb), dir: 1, paso: B0.paso };
@@ -257,7 +257,7 @@ export default function CorteVivo() {
           if (m.nado != null) py += Math.sin(m.nado + p.x * 0.25) * 0.9;
           if (m.paso != null && py > -e.alto * 0.35) px += m.paso * (p.f > 3.14 ? 1 : -1) * 0.6;
           const rx = px * ca - py * sa; const ry = px * sa + py * ca;
-          cx.globalAlpha = 0.95 * atenuado; cx.fillStyle = p.c; punto(cx, m.x + rx, m.y + ry, 1.0 * p.r);
+          cx.globalAlpha = 0.95 * atenuado; cx.fillStyle = p.c; punto(cx, m.x + rx, m.y + ry, 0.78 * p.r);
         }
         if (e.sci) { const abajo = e.rotuloAbajo; cx.globalAlpha = 0.72 * atenuado; cx.fillStyle = '#d6ebef'; cx.fillText(e.sci, m.x, abajo ? m.y + e.alto / 2 + 14 : m.y + (e.anc === 'pie' ? -e.alto - 7 : -e.alto / 2 - 7)); }
       }
