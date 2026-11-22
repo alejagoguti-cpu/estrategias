@@ -7,6 +7,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { BASE, prepararEspecies, instanciarArboles, vientoT } from './arboles.js';
 import { rampa, percentil } from './paleta.js';
 import { MESETA, ESCUELA, VIVIENDAS, PARQUE, HUMEDAL, VIAS, CORREDORES, PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from './plan.js';
+import { crearCartografia3D } from './cartografia3d.js';
 
 // =============================================================================
 // Escena 3D única de la presentación (Tierra Bomba).
@@ -1739,6 +1740,19 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     Object.entries(porClase).forEach(([clase, ls]) => trazoMidas(ls, new THREE.Color(COLOR_CLASE_EROSION[clase] || '#cccccc').getHex(), 5));
   }
 
+  // ---------- Cartografía Operativa Multicapa 3D (Capítulo 01: vectores y capas activas) ----------
+  const carto3D = crearCartografia3D({
+    scene,
+    heightAtXZ,
+    distAt,
+    llToXZ,
+    houses,
+    midasJson,
+    ctxJson,
+    lineMats,
+    addClean: (fn) => cleanups.push(fn),
+  });
+
   // ---------- capas de color ----------
   const colorTmp = new THREE.Color();
   const gris = new THREE.Color().setRGB(0.30, 0.32, 0.34);
@@ -1854,10 +1868,29 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     plan_vias: () => ({ pos: new THREE.Vector3(mCx + 500, 1900, mCz + 1700), look: new THREE.Vector3(mCx + 150, 0, mCz - 120) }),
     plan_parque: () => ({ pos: new THREE.Vector3(pkX + 240, 700, pkZ + 820), look: new THREE.Vector3(pkX - 20, 0, pkZ - 40) }),
     casco_alto: () => ({ pos: new THREE.Vector3(vx + 250, 1500, vz + 1500), look: new THREE.Vector3(vx, 0, vz) }),
+    carto_intro: () => (window.innerWidth >= 1024
+      ? { pos: new THREE.Vector3(-1400, 7200, 7600), look: new THREE.Vector3(-1800, 0, 300) }
+      : { pos: new THREE.Vector3(500, 7800, 8400), look: new THREE.Vector3(0, 0, 300) }),
+    carto_marina: () => ({
+      pos: new THREE.Vector3(vx - 2200, 3400, vz + 3600),
+      look: new THREE.Vector3(vx - 600, 0, vz + 1200),
+    }),
+    carto_topohidrica: () => ({
+      pos: new THREE.Vector3(mCx + 1800, 3800, mCz + 3900),
+      look: new THREE.Vector3(mCx - 200, 20, mCz - 100),
+    }),
+    carto_biotica: () => ({
+      pos: new THREE.Vector3(mCx - 1400, 3200, mCz + 3200),
+      look: new THREE.Vector3(mCx + 300, 15, mCz + 400),
+    }),
+    carto_antropica: () => ({
+      pos: new THREE.Vector3(vx + 1600, 2900, vz + 3400),
+      look: new THREE.Vector3(vx, 0, vz),
+    }),
   };
 
   // ---------- estado objetivo y bucle ----------
-  const T = { cam: 'hero', year: 0, modo: 'perdida', red: null, capa: 'tipo', radio: 'n', calles: 0, casas: 1, dim: 0, rutas: 0, contexto: 0, modelo: 'midas', nivelManual: 2, plan: null, midas: false };
+  const T = { cam: 'hero', year: 0, modo: 'perdida', red: null, capa: 'tipo', radio: 'n', calles: 0, casas: 1, dim: 0, rutas: 0, contexto: 0, modelo: 'midas', nivelManual: 2, plan: null, midas: false, cartoCapa: -1 };
   // vista libre del usuario (zoom, giro, desplazamiento) sobre la pose de cada paso
   const vt = { zoom: 1, az: 0, el: 0, px: 0, pz: 0 };
   const vi = { zoom: 1, az: 0, el: 0, px: 0, pz: 0 };
@@ -2057,6 +2090,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     if (calidad > 0 && (cuadro++ % 2 === 0)) renderReflejo(camera);
     for (const k of PLAN_KEYS) planT[k] = (T.plan && T.plan[k]) || 0;
     actualizarPlan(dt, t, cur.escala);
+    carto3D.actualizar(dt, t, T.cartoCapa);
     renderer.render(scene, camera);
     if (!shown) {
       shown = true;
