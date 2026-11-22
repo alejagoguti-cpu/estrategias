@@ -36,11 +36,14 @@ export default function CorteVivo({ cfg }) {
   const caja = useRef(null); const lienzo = useRef(null);
   const interRef = useRef(null); const alAbrir = useRef(null); const alCerrar = useRef(null);
   const [ficha, setFicha] = useState(null);
+  // el muestreo en puntos es costoso: se hace solo cuando la sección se acerca a la pantalla
+  const [cerca, setCerca] = useState(false);
+  useEffect(() => { const el = caja.current; if (!el) return undefined; const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setCerca(true); io.disconnect(); } }, { rootMargin: "800px 0px" }); io.observe(el); return () => io.disconnect(); }, []);
   alAbrir.current = (d) => setFicha(d); alCerrar.current = () => setFicha(null);
   const { suelo } = cfg;
 
   useEffect(() => {
-    const el = caja.current; const cv = lienzo.current; if (!el || !cv) return undefined;
+    const el = caja.current; const cv = lienzo.current; if (!el || !cv || !cerca) return undefined;
     const cx = cv.getContext('2d'); let vivo = true; let raf = 0; let visible = false;
     const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const DPR = Math.min(devicePixelRatio || 1, 2);
@@ -185,7 +188,7 @@ export default function CorteVivo({ cfg }) {
     const sobre = (ev) => { cv.style.cursor = tocado(ev) ? 'pointer' : 'default'; };
     cv.addEventListener('dblclick', abrir); cv.addEventListener('pointerup', toque); cv.addEventListener('pointermove', sobre);
     return () => { vivo = false; cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); cv.removeEventListener('dblclick', abrir); cv.removeEventListener('pointerup', toque); cv.removeEventListener('pointermove', sobre); };
-  }, [cfg]);
+  }, [cfg, cerca]);
 
   const { Overlay } = cfg;
   return (

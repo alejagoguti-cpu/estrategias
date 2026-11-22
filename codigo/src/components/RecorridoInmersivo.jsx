@@ -1,7 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
-import { PAS, azar, clamp } from '../lib/inmersivo/comun.js';
+import { PAS, azar, clamp, fijarCalidad } from '../lib/inmersivo/comun.js';
+
+// calidad según el equipo: en móviles o equipos modestos se reduce vegetación, sombras, cielo y resolución
+const BAJA = typeof window !== 'undefined' && (innerWidth < 900 || (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 4);
+const PR_MAX = BAJA ? 1 : Math.min(devicePixelRatio || 1, 1.35);
 
 // Recorrido en primera persona con materiales reales: cielo HDRI fotográfico (Poly Haven), luz solar con
 // sombras y una escena (`construir`) que aporta el trazado, el terreno y lo que hay en él.
@@ -31,7 +35,7 @@ export default function RecorridoInmersivo({ construir, leyenda, aria = 'Recorri
     function iniciar() {
       const cv = document.createElement('canvas'); cv.className = 'absolute inset-0 h-full w-full cursor-grab touch-none active:cursor-grabbing'; cv.setAttribute('aria-label', aria); hueco.appendChild(cv);
       const ren = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
-      ren.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
+      let resol = PR_MAX; ren.setPixelRatio(resol); fijarCalidad(BAJA ? 0.45 : 1);
       ren.toneMapping = THREE.ACESFilmicToneMapping; ren.toneMappingExposure = 0.95;
       ren.shadowMap.enabled = true; ren.shadowMap.type = THREE.PCFSoftShadowMap;
       const escena = new THREE.Scene();
@@ -44,7 +48,7 @@ export default function RecorridoInmersivo({ construir, leyenda, aria = 'Recorri
 
       // cielo fotográfico y sol tomado de su píxel más brillante
       const sol = new THREE.Vector3(-0.45, 0.6, -0.65).normalize();
-      const luzSol = new THREE.DirectionalLight(0xfff1dc, 3.2); luzSol.castShadow = true; luzSol.shadow.mapSize.set(2048, 2048);
+      const luzSol = new THREE.DirectionalLight(0xfff1dc, 3.2); luzSol.castShadow = true; luzSol.shadow.mapSize.set(BAJA ? 1024 : 2048, BAJA ? 1024 : 2048);
       Object.assign(luzSol.shadow.camera, { left: -24, right: 24, top: 24, bottom: -24, near: 1, far: 180 }); luzSol.shadow.bias = -0.0004; luzSol.shadow.normalBias = 0.03;
       escena.add(luzSol, luzSol.target);
       let activo = true; const ctx = { escena, ren, tl, sol, nieblaU, uT, vivo: () => vivo && activo, rnd: azar(7), agua: null };
@@ -60,9 +64,10 @@ export default function RecorridoInmersivo({ construir, leyenda, aria = 'Recorri
         escena.environment = pm.fromEquirectangular(hdr).texture; escena.environmentIntensity = 0.85; hdr.dispose();
         if (ctx.agua) ctx.agua.material.uniforms.sunDirection.value.copy(sol);
       });
-      tl.load(`${PAS}cielo_8k.jpg`, (t) => { if (!vivo || !activo) { t.dispose(); return; } t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace; t.generateMipmaps = false; t.minFilter = THREE.LinearFilter; escena.background = t; });
+      tl.load(`${PAS}${BAJA ? "cielo_4k" : "cielo_8k"}.jpg`, (t) => { if (!vivo || !activo) { t.dispose(); return; } t.mapping = THREE.EquirectangularReflectionMapping; t.colorSpace = THREE.SRGBColorSpace; t.generateMipmaps = false; t.minFilter = THREE.LinearFilter; escena.background = t; });
 
-      const E = construir(ctx); const L = E.L; largoRef.current = L;
+      let E = null; let L = 1;
+      construir().then((mod) => { if (!vivo || !activo) return; E = mod.default(ctx); L = E.L; largoRef.current = L; });
 
       // controles
       const k = ctl.current; const v = { s: k.s, yaw: 0, pitch: 0 };
@@ -81,11 +86,11 @@ export default function RecorridoInmersivo({ construir, leyenda, aria = 'Recorri
       const tam = () => { const w = cv.clientWidth; const h = cv.clientHeight; if (!w || !h) return; ren.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); };
       const ro = new ResizeObserver(tam); ro.observe(cv); tam();
 
-      let ult = performance.now(); let pasoBob = 0; let ultProg = -1; let primero = true;
+      let mediaDt = 0.016; let cuadros = 0; let ult = performance.now(); let pasoBob = 0; let ultProg = -1; let primero = true;
       const vtmp = new THREE.Vector3(); const mira = new THREE.Vector3();
       const ciclo = (ahora) => {
         if (!vivo || !activo) return; raf = requestAnimationFrame(ciclo);
-        if (!visible && !primero) { ult = ahora; return; }
+        if ((!visible && !primero) || !E) { ult = ahora; return; }
         const dt = Math.min(0.05, (ahora - ult) / 1000); ult = ahora; const t = ahora / 1000;
         const dirTec = (teclas.KeyW || teclas.ArrowUp ? 1 : 0) - (teclas.KeyS || teclas.ArrowDown ? 1 : 0);
         const dir = clamp(k.dir + dirTec + (k.auto ? 0.55 : 0), -1, 1);
@@ -102,6 +107,8 @@ export default function RecorridoInmersivo({ construir, leyenda, aria = 'Recorri
         luzSol.position.copy(cam.position).addScaledVector(sol, 90); luzSol.target.position.copy(cam.position).addScaledVector(vtmp, 10); luzSol.target.updateMatrixWorld();
         uT.value = t; E.actualizar(t);
         ren.render(escena, cam);
+        // resolución dinámica: si el equipo no sostiene ~40 fps baja la resolución, y la recupera si sobra
+        mediaDt = mediaDt * 0.95 + dt * 0.05; if (++cuadros % 45 === 0) { const nuevo = mediaDt > 0.026 ? Math.max(0.6, resol - 0.15) : mediaDt < 0.015 ? Math.min(PR_MAX, resol + 0.1) : resol; if (nuevo !== resol) { resol = nuevo; ren.setPixelRatio(resol); tam(); } }
         if (primero) { primero = false; setListo(true); }
         const pr = v.s / L; if (Math.abs(pr - ultProg) > 0.002) { ultProg = pr; setProg(pr); }
       };

@@ -58,3 +58,6 @@ COLEGIO  (capitulo 11)
 
 HUERTA COMUNITARIA  (capitulo 12)
   Poly Haven (CC0): texturas Farm Soil y Red Laterite Soil Stones. Plantulas, matas y lechugas modeladas en Blender para este proyecto.
+
+PARQUE  (capitulo 13)
+  Poly Haven (CC0): texturas Wood Chips, Concrete Floor 02, Bark Brown 02 y Gravel Ground 01. Juegos modelados para el recorrido.

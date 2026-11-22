@@ -3,14 +3,16 @@ import CorteVivo from './CorteVivo.jsx';
 import RecorridoInmersivo from './RecorridoInmersivo.jsx';
 import { corteMarisma } from '../lib/cortes/marisma.jsx';
 import { corteHumedal } from '../lib/cortes/humedal.jsx';
-import escenaMarisma from '../lib/inmersivo/marisma.js';
-import escenaHumedal from '../lib/inmersivo/humedal.js';
+const escenaMarisma = () => import('../lib/inmersivo/marisma.js');
+const escenaHumedal = () => import('../lib/inmersivo/humedal.js');
 import { corteCasa } from '../lib/cortes/casa.jsx';
-import escenaCasa from '../lib/inmersivo/casa.js';
+const escenaCasa = () => import('../lib/inmersivo/casa.js');
 import { corteColegio } from '../lib/cortes/colegio.jsx';
-import escenaColegio from '../lib/inmersivo/colegio.js';
+const escenaColegio = () => import('../lib/inmersivo/colegio.js');
+import { corteParque } from '../lib/cortes/parque.jsx';
+const escenaParque = () => import('../lib/inmersivo/parque.js');
 import { corteHuerta } from '../lib/cortes/huerta.jsx';
-import escenaHuerta from '../lib/inmersivo/huerta.js';
+const escenaHuerta = () => import('../lib/inmersivo/huerta.js');
 
 // =============================================================================
 // Secciones de paisaje: a la izquierda un corte vivo dibujado con puntos (estética del manglar de «Tramas»,
@@ -117,6 +119,18 @@ export function Huerta() {
       aria="Huerta y vivero comunitario de Tierra Bomba"
       leyenda="El invernadero protege las plántulas del sol y la lluvia fuerte; afuera, bancales elevados de madera sobre mantillo, caminos de grava y un maizal. Riego por goteo desde el tanque de lluvia y un seto para los polinizadores."
       nota="Corte esquemático. Hortalizas y plántulas modeladas en Blender; texturas escaneadas de Poly Haven (CC0). Interacciones de la base de especies de la isla (Bello et al. 2017; Fricke y Svenning 2020; Bat Eco-Interactions; Ollerton et al. 2019)."
+    />
+  );
+}
+
+export function Parque() {
+  return (
+    <SeccionPaisaje
+      id="parque" etiqueta="13 · Parque" titulo="Un claro en el bosque para jugar"
+      cfg={corteParque} construir={escenaParque}
+      aria="Parque de juego natural en el bosque seco de Tierra Bomba"
+      leyenda="Un parque de juego natural en un claro del bosque seco: red de trepar, torre, troncos de equilibrio, pilotes y túnel sobre un piso de viruta que amortigua las caídas, con bancas a la sombra."
+      nota="Corte esquemático. Juegos de madera, cuerda y acero modelados para el recorrido; texturas escaneadas de Poly Haven (CC0). Interacciones de la base de especies de la isla."
     />
   );
 }

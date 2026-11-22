@@ -8,6 +8,9 @@ export const BASE = import.meta.env.BASE_URL;
 export const PAS = `${BASE}datos/pasarela/`;
 const MOD = `${BASE}datos/tramas/3d/`;
 export const arriba = new THREE.Vector3(0, 1, 0);
+// factor de densidad de vegetación (1 = completo); lo fija el recorrido según el equipo
+let CALIDAD = 1; export const fijarCalidad = (f) => { CALIDAD = f; };
+const ralear = (lista) => (CALIDAD >= 1 ? lista : lista.filter((_, i) => (i * 0.6180339) % 1 < CALIDAD));
 
 export const azar = (semilla = 7) => { let s = semilla; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; };
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -51,7 +54,8 @@ const PALETAS = {
   seca: ['vec3(0.30,0.24,0.12)', 'vec3(0.38,0.32,0.16)', 'vec3(0.62,0.52,0.30)', 'vec3(0.70,0.60,0.36)', 'vec3(0.86,0.78,0.54)', 'vec3(0.92,0.86,0.64)'],
   junco: ['vec3(0.12,0.20,0.06)', 'vec3(0.18,0.28,0.07)', 'vec3(0.28,0.42,0.12)', 'vec3(0.36,0.50,0.14)', 'vec3(0.50,0.58,0.24)', 'vec3(0.62,0.62,0.32)'],
 };
-export function crearBriznas(escena, puntos, { uT, sol, nieblaU, paleta = 'marisma', ancho = 0.012 }) {
+export function crearBriznas(escena, todos, { uT, sol, nieblaU, paleta = 'marisma', ancho = 0.012 }) {
+  const puntos = ralear(todos);
   const hoja = new THREE.BufferGeometry(); const vs = []; const segs = 5;
   for (let j = 0; j <= segs; j++) { const t = j / segs; const w = (1 - t * 0.92) * 0.5; if (j < segs) vs.push(-w, t, 0, w, t, 0); else vs.push(0, 1, 0); }
   const idx = []; for (let j = 0; j < segs - 1; j++) { const a = j * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); } idx.push((segs - 1) * 2, (segs - 1) * 2 + 1, segs * 2);
@@ -86,7 +90,8 @@ export function crearBriznas(escena, puntos, { uT, sol, nieblaU, paleta = 'maris
 }
 
 // pasto 3D escaneado (Poly Haven, Grass Medium 01) repartido en `lugares` [{x,y,z,k}]
-export function cargarPasto(escena, lugares, { uT, vivo, rnd }) {
+export function cargarPasto(escena, todos, { uT, vivo, rnd }) {
+  const lugares = ralear(todos);
   new GLTFLoader().load(`${PAS}pasto.glb`, (gltf) => {
     if (!vivo()) return; const tipos = []; gltf.scene.updateMatrixWorld(true);
     gltf.scene.traverse((o) => {
@@ -103,7 +108,8 @@ export function cargarPasto(escena, lugares, { uT, vivo, rnd }) {
 }
 
 // árboles reales: vistas renderizadas en Blender (Island Tree 02, Tree Small 02) como impostores
-export function crearArboles(escena, tl, lugares, rnd, tinte = [0.86, 0.86, 0.84]) {
+export function crearArboles(escena, tl, todos, rnd, tinte = [0.86, 0.86, 0.84]) {
+  const lugares = CALIDAD >= 1 ? todos : todos.filter((l, i) => l.h > 8.5 || (i * 0.618) % 1 < 0.6);
   const vistas = []; ['isla', 'seco'].forEach((k) => [0, 1, 2, 3].forEach((i) => vistas.push(tl.load(`${PAS}arbol_${k}_${i}.webp`, (t) => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; }))));
   const mats = vistas.map((t) => new THREE.SpriteMaterial({ map: t, alphaTest: 0.42, color: new THREE.Color(...tinte), fog: true }));
   lugares.forEach((l) => {
