@@ -41,3 +41,8 @@ PAISAJE ADAPTATIVO · PASARELA INMERSIVA  (capitulo 08)
   Poly Haven (CC0): cielo HDRI "Kloofendal 48d Partly Cloudy (Pure Sky)" (Greg Zaal); texturas Brown Planks 09, Brown Mud 02 y Rock Boulder Dry;
   modelos Grass Medium 01, Island Tree 02 y Tree Small 02 (arboles renderizados en Blender como impostores). https://polyhaven.com
   Recortes y fotos de especies: iNaturalist (CC BY-NC). Referente grafico: "10 Adaptive Landscape - Sea level rise and sediment uncertainty".
+
+HUMEDAL DE FITOFILTRACION Y MIRADOR  (capitulos 08-09)
+  Poly Haven (CC0): texturas Leafy Grass (pradera) y Rubberized Track (sendero rojo).
+  Papiro (Cyperus), juncia y lirio acuatico (Pontederia crassipes): modelados y exportados en Blender para este proyecto.
+  Banco solar ondulante y perfil de Bocagrande: modelados para el recorrido (referencia de la autora).
