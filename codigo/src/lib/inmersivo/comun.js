@@ -114,7 +114,7 @@ export function crearArboles(escena, tl, todos, rnd, tinte = [0.86, 0.86, 0.84])
   const mats = vistas.map((t) => new THREE.SpriteMaterial({ map: t, alphaTest: 0.42, color: new THREE.Color(...tinte), fog: true }));
   lugares.forEach((l) => {
     const vi = l.tipo != null ? l.tipo * 4 + Math.floor(rnd() * 4) : Math.floor(rnd() * 8); const esIsla = vi < 4; const esPalma = vi >= 8; const h = (l.h ?? (esIsla ? 5.5 : 8)) * (esPalma ? 0.85 + rnd() * 0.3 : 0.7 + rnd() * 0.7);
-    const sp = new THREE.Sprite(mats[vi]); sp.center.set(0.5, 0.02); sp.position.set(l.x, l.y, l.z); const k = h * (esPalma ? 1.06 : esIsla ? 1.28 : 1.04); sp.scale.set(esPalma ? k * 0.8 : k, k, 1); escena.add(sp);
+    const sp = new THREE.Sprite(mats[vi]); sp.center.set(0.5, 0.02); sp.position.set(l.x, l.y, l.z); const k = h * (esPalma ? 1.45 : esIsla ? 1.28 : 1.04); sp.scale.set(esPalma ? k * 0.845 : k, k, 1); escena.add(sp);
   });
 }
 
