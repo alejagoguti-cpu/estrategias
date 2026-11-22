@@ -29,19 +29,16 @@ export function crearCartografia3D({
   const marinaGroup = new THREE.Group();
   const topoGroup = new THREE.Group();
   const bioticaGroup = new THREE.Group();
-  const antropicaGroup = new THREE.Group();
 
   marinaGroup.name = 'capa_01_marina';
   topoGroup.name = 'capa_02_topo';
   bioticaGroup.name = 'capa_03_biotica';
-  antropicaGroup.name = 'capa_04_antropica';
 
   marinaGroup.visible = false;
   topoGroup.visible = false;
   bioticaGroup.visible = false;
-  antropicaGroup.visible = false;
 
-  rootGroup.add(marinaGroup, topoGroup, bioticaGroup, antropicaGroup);
+  rootGroup.add(marinaGroup, topoGroup, bioticaGroup);
 
   // --- Helper: Etiqueta 3D mínima y elegante (en escala del mundo, no cubre la pantalla) ---
   function crearEtiqueta3D(texto, x, z, yOffset, colorHex, parent) {
@@ -573,70 +570,6 @@ export function crearCartografia3D({
   crearEtiqueta3D('Borde de Amortiguamiento Bio-Mecánico', CANO_ORO[0] - 240, CANO_ORO[1] - 340, 50, '#10b981', bioticaGroup);
 
   // ===========================================================================
-  // 04 · CAPA ANTRÓPICA
-  // ===========================================================================
-  // A. Morfologías dendríticas ("manchas de tinta" en los 4 poblados)
-  const manchasDef = [
-    { c: TB_PUEBLO, rx: 380, rz: 300, color: 0xf59e0b },
-    { c: PUNTA_ARENA, rx: 260, rz: 420, color: 0xf59e0b },
-    { c: CANO_ORO, rx: 290, rz: 260, color: 0xf59e0b },
-    { c: BOCACHICA, rx: 420, rz: 380, color: 0xf59e0b },
-  ];
-  manchasDef.forEach(({ c, rx, rz, color }) => {
-    const pts = [];
-    const n = 32;
-    for (let k = 0; k <= n; k++) {
-      const a = (k / n) * Math.PI * 2;
-      const rad = 1 + 0.2 * Math.sin(a * 4) + 0.12 * Math.cos(a * 3);
-      pts.push([c[0] + Math.cos(a) * rx * rad, c[1] + Math.sin(a) * rz * rad]);
-    }
-    crearTrazoLineas(conectarPolilineaTerreno(pts, 2.5, 20), color, 3.5, true, antropicaGroup);
-  });
-
-  // B. Frentes de Colonización hacia el borde informal
-  const frenteColonizacionPares = [];
-  [
-    { c: TB_PUEBLO, dx: 340, dz: -160 },
-    { c: PUNTA_ARENA, dx: -200, dz: 320 },
-    { c: BOCACHICA, dx: -260, dz: -290 },
-  ].forEach(({ c, dx, dz }) => {
-    frenteColonizacionPares.push(...conectarPolilineaTerreno([[c[0] - dx, c[1] - dz], [c[0] + dx, c[1] + dz]], 3.0, 16));
-  });
-  crearTrazoLineas(frenteColonizacionPares, 0xef4444, 4.2, true, antropicaGroup);
-
-  // C. Trazas de Movilidad Real: Senderos y Líneas de Deseo Peatonales
-  const deseoSenderos = [
-    [TB_PUEBLO, PUNTA_ARENA],
-    [PUNTA_ARENA, CANO_ORO],
-    [CANO_ORO, BOCACHICA],
-    [TB_PUEBLO, MESETA_CENTRO],
-    [BOCACHICA, MESETA_CENTRO],
-    [BOCACHICA, SAN_FERNANDO],
-  ];
-  const deseoPares = [];
-  deseoSenderos.forEach(([pA, pB]) => {
-    const pts = [];
-    const n = 22;
-    for (let i = 0; i <= n; i++) {
-      const t = i / n;
-      pts.push([
-        (1 - t) * pA[0] + t * pB[0] + Math.sin(t * Math.PI * 2) * 70,
-        (1 - t) * pA[1] + t * pB[1] + Math.cos(t * Math.PI * 3) * 50,
-      ]);
-    }
-    deseoPares.push(...conectarPolilineaTerreno(pts, 2.8, 20));
-  });
-  const deseoLine = crearTrazoLineas(deseoPares, 0xfbbf24, 4.0, true, antropicaGroup);
-
-  // Etiquetas 3D mínimas para Capa Antrópica
-  crearEtiqueta3D('Autourbanismo "Manchas de Tinta"', TB_PUEBLO[0], TB_PUEBLO[1] - 80, 50, '#f59e0b', antropicaGroup);
-  crearEtiqueta3D('Líneas de Deseo Peatonales', MESETA_CENTRO[0] - 220, MESETA_CENTRO[1] + 280, 45, '#fbbf24', antropicaGroup);
-  crearEtiqueta3D('Frentes de Colonización de Borde', PUNTA_ARENA[0] - 120, PUNTA_ARENA[1] + 180, 45, '#ef4444', antropicaGroup);
-  crearEtiqueta3D('Muelle y Caleta de Pescadores', CANO_ORO[0] + 120, CANO_ORO[1] - 120, 45, '#10b981', antropicaGroup);
-  crearEtiqueta3D('Fricción Social y Patrimonio', SAN_FERNANDO[0] - 80, SAN_FERNANDO[1] + 120, 45, '#ef4444', antropicaGroup);
-  crearEtiqueta3D('Vacíos Expectantes (Terrains Vagues)', MESETA_CENTRO[0] - 180, MESETA_CENTRO[1] + 800, 55, '#38bdf8', antropicaGroup);
-
-  // ===========================================================================
   // BUCLE DE ACTUALIZACIÓN CON CONTROL ESTRICTO DE VISIBILIDAD POR SCROLL
   // ===========================================================================
   function actualizar(dt, t, cartoCapa) {
@@ -646,7 +579,6 @@ export function crearCartografia3D({
         marinaGroup.visible = false;
         topoGroup.visible = false;
         bioticaGroup.visible = false;
-        antropicaGroup.visible = false;
       }
       return;
     }
@@ -658,17 +590,14 @@ export function crearCartografia3D({
     //  0: Despiece Integral (todas visibles con equilibrio)
     //  1: Marina y Flujos (SÓLO marina visible)
     //  2: Topo-Hídrica (SÓLO topo visible)
-    //  3: Biótica (SÓLO biótica visible)
-    //  4: Antrópica (SÓLO antrópica visible)
+    //  3: Biótica (SÓLO biótica visible con su Red interactiva)
     const verMarina = cartoCapa === 0 || cartoCapa === 1;
     const verTopo = cartoCapa === 0 || cartoCapa === 2;
     const verBiotica = cartoCapa === 0 || cartoCapa === 3;
-    const verAntropica = cartoCapa === 0 || cartoCapa === 4;
 
     marinaGroup.visible = verMarina;
     topoGroup.visible = verTopo;
     bioticaGroup.visible = verBiotica;
-    antropicaGroup.visible = verAntropica;
 
     // Animación continua de la capa activa
     if (verMarina) {
@@ -711,10 +640,6 @@ export function crearCartografia3D({
         if (m) m.dashOffset = -t * 28;
       });
     }
-
-    if (verAntropica) {
-      if (deseoLine?.mat) deseoLine.mat.dashOffset = -t * 45;
-    }
   }
 
   return {
@@ -722,7 +647,6 @@ export function crearCartografia3D({
     marinaGroup,
     topoGroup,
     bioticaGroup,
-    antropicaGroup,
     actualizar,
   };
 }

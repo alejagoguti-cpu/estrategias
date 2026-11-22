@@ -1884,10 +1884,6 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       pos: new THREE.Vector3(mCx - 1400, 3200, mCz + 3200),
       look: new THREE.Vector3(mCx + 300, 15, mCz + 400),
     }),
-    carto_antropica: () => ({
-      pos: new THREE.Vector3(vx + 1600, 2900, vz + 3400),
-      look: new THREE.Vector3(vx, 0, vz),
-    }),
   };
 
   // ---------- estado objetivo y bucle ----------
