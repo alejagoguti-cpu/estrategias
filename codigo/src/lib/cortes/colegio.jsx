@@ -2,7 +2,7 @@ import React from 'react';
 import { clamp, vaiven } from '../../components/CorteVivo.jsx';
 
 // Corte del colegio (sección 11): aulas de bloque de tierra comprimida (BTC) sobre un zócalo, galería de
-// madera, cubierta flotante de lámina sobre cerchas de madera separada de los muros (el aire caliente sale
+// madera, cubierta flotante de lámina sobre tornapuntas de madera en V, separada de los muros (el aire caliente sale
 // por debajo), tanque de lluvia y patio de adoquín con árbol de sombra y bancas de tronco.
 export const suelo = (x) => 470 + Math.sin(x / 70) * 1.5;
 const ZOC = 455; const MURO = 372; // zócalo/galería y remate de muros
@@ -31,17 +31,20 @@ function pintarFondo(x) {
   bloques(AULA[0], AULA[0] + 14, MURO, ZOC); bloques(AULA[1] - 14, AULA[1], MURO, ZOC);
   // muro del fondo (visto) con ventanas
   x.globalAlpha = 0.5; bloques(AULA[0] + 14, AULA[1] - 14, MURO, ZOC); x.globalAlpha = 1;
-  [[580, 640], [700, 760]].forEach(([a, b]) => { x.fillStyle = '#1d1712'; x.fillRect(a, 392, b - a, 44); x.strokeStyle = '#5a3a24'; x.lineWidth = 3; x.strokeRect(a, 392, b - a, 44); });
+  [[590, 618], [660, 688], [730, 758]].forEach(([a, b]) => { x.fillStyle = '#c7a27a'; x.fillRect(a, 382, b - a, 48); x.strokeStyle = '#7a4a2e'; x.lineWidth = 2.5; x.strokeRect(a, 380, b - a, ZOC - 380); x.beginPath(); x.moveTo(a, 432); x.lineTo(b, 432); x.moveTo(a, 389); x.lineTo(b, 389); x.stroke(); for (let yy = 436; yy < ZOC - 4; yy += 7) for (let xx = a + 3 + ((yy / 7) % 2) * 4; xx < b - 3; xx += 8) { x.fillStyle = '#b37c4e'; x.fillRect(xx, yy, 5, 4); } });
   x.fillStyle = '#9ed4e4'; x.fillRect(AULA[1] - 9, 392, 4, 44);
   // pupitres en corte
   [[560, 0], [640, 0], [720, 0]].forEach(([dx]) => { x.fillStyle = '#8b6440'; x.fillRect(dx, ZOC - 20, 40, 4); x.fillRect(dx + 4, ZOC - 20, 3, 20); x.fillRect(dx + 33, ZOC - 20, 3, 20); x.fillStyle = '#6a4a30'; x.fillRect(dx + 44, ZOC - 14, 14, 3); x.fillRect(dx + 54, ZOC - 28, 3, 28); });
-  // cerchas de madera y cubierta flotante de lámina ondulada
+  // pilares embebidos, viga de remate y tornapuntas en V que sostienen la cubierta flotante (sin postes afuera)
+  x.fillStyle = '#4a2e1c'; [AULA[0] + 6, AULA[1] - 6].forEach((px) => { x.fillRect(px - 5, MURO - 6, 10, 8); });
   x.strokeStyle = '#4a2e1c'; x.lineWidth = 4;
-  [AULA[0] - 20, AULA[1] - 6, GAL[1] + 2].forEach((px) => { x.beginPath(); x.moveTo(px, ZOC); x.lineTo(px, techoY(px)); x.stroke(); });
-  x.lineWidth = 3; x.beginPath(); x.moveTo(470, 352); x.lineTo(960, 352); x.stroke();
-  for (let px = 490; px < 950; px += 46) { x.beginPath(); x.moveTo(px, 352); x.lineTo(px + 23, techoY(px + 23)); x.lineTo(px + 46, 352); x.stroke(); }
+  [[AULA[0] + 6, -1], [AULA[0] + 6, 1], [AULA[1] - 6, -1], [AULA[1] - 6, 1]].forEach(([px, d]) => { const ex = px + d * 62; x.beginPath(); x.moveTo(px, MURO - 4); x.lineTo(ex, techoY(ex) + 4); x.stroke(); });
+  [AULA[0] + 6, AULA[1] - 6].forEach((px) => { x.beginPath(); x.moveTo(px, MURO - 4); x.lineTo(px, techoY(px) + 4); x.stroke(); });
+  x.lineWidth = 5; x.beginPath(); x.moveTo(470, techoY(470) + 4); x.lineTo(960, techoY(960) + 4); x.stroke();
   x.fillStyle = '#5a4030'; x.beginPath(); x.moveTo(460, techoY(460) - 2); x.lineTo(970, techoY(970) - 2); x.lineTo(970, techoY(970) - 9); x.lineTo(460, techoY(460) - 9); x.fill();
   for (let px = 462; px < 968; px += 6) { x.fillStyle = (px / 6) % 2 < 1 ? '#7a6a5a' : '#4a3e34'; x.fillRect(px, techoY(px) - 10, 3, 2); }
+  // cielo raso claro con luminarias
+  x.fillStyle = '#dcc8ac'; x.fillRect(AULA[0] + 14, MURO + 2, AULA[1] - AULA[0] - 28, 4); x.fillStyle = '#fff6e0'; [600, 680, 760].forEach((lx) => x.fillRect(lx, MURO + 6, 24, 3));
   // tanque de lluvia
   x.fillStyle = '#8a9aa2'; x.fillRect(TANQUE.x0, TANQUE.y0, TANQUE.x1 - TANQUE.x0, TANQUE.y1 - TANQUE.y0); for (let y = TANQUE.y0 + 4; y < TANQUE.y1; y += 6) { x.fillStyle = '#6f7f88'; x.fillRect(TANQUE.x0, y, TANQUE.x1 - TANQUE.x0, 2); }
   x.strokeStyle = '#4a5156'; x.lineWidth = 3; x.beginPath(); x.moveTo(966, techoY(966) - 4); x.lineTo(990, TANQUE.y0); x.stroke();
@@ -50,9 +53,9 @@ function pintarFondo(x) {
 function pintarPasto(x) {
   const junco = (jx, jy, n, h, w, cols, ancho = 2) => { for (let i = 0; i < n; i++) { const dx = (i / (n - 1) - 0.5) * w; const ho = h * (0.6 + 0.4 * Math.sin(i * 2.3 + jx) ** 2); const cur = (i / (n - 1) - 0.5) * 12; x.strokeStyle = cols[i % cols.length]; x.lineWidth = ancho; x.lineCap = 'round'; x.beginPath(); x.moveTo(jx + dx, jy); x.quadraticCurveTo(jx + dx + cur * 0.3, jy - ho * 0.6, jx + dx + cur, jy - ho); x.stroke(); } };
   // pastizal seco alto a ambos lados
-  for (let jx = 66; jx < 118; jx += 7) junco(jx, suelo(jx) - 2, 6, 34 + (jx % 5) * 3, 10, ['#cdb57a', '#b79e62', '#e0cc92', '#a88d55']);
-  for (let jx = 1020; jx < 1146; jx += 7) junco(jx, suelo(jx) - 2, 6, 34 + (jx % 5) * 3, 10, ['#cdb57a', '#b79e62', '#e0cc92', '#a88d55']);
-  for (let jx = 905; jx < 965; jx += 9) junco(jx, suelo(jx) - 2, 5, 22, 8, ['#b5a06a', '#d2bc82']);
+  for (let jx = 66; jx < 118; jx += 7) junco(jx, suelo(jx) - 2, 6, 34 + (jx % 5) * 3, 10, ['#7fae36', '#5e9a2c', '#9cc44a', '#4f8a28']);
+  for (let jx = 1020; jx < 1146; jx += 7) junco(jx, suelo(jx) - 2, 6, 34 + (jx % 5) * 3, 10, ['#7fae36', '#5e9a2c', '#9cc44a', '#4f8a28']);
+  for (let jx = 905; jx < 965; jx += 9) junco(jx, suelo(jx) - 2, 5, 22, 8, ['#6ca63c', '#8fbf48']);
 }
 
 const ruta = (pts) => { const seg = []; let L = 0; for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); seg.push([pts[i - 1], pts[i], L, d]); L += d; } return { en: (u) => { const s = ((u % 1) + 1) % 1 * L; for (const [a, b, l0, d] of seg) if (s <= l0 + d) { const k = (s - l0) / d; return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k]; } return pts[pts.length - 1]; } }; };
@@ -102,9 +105,9 @@ function Overlay() {
   return (
     <>
       {t(AULA[0] + 70, 452, 'AULA')}{t(GAL[0] + 4, 448, 'GALERÍA', { fill: '#e9c08a' })}{t(150, 492, 'PATIO DE ADOQUÍN · BANCAS DE TRONCO', { fontSize: '10.5' })}
-      {t(560, 290, 'CUBIERTA FLOTANTE DE LÁMINA SOBRE CERCHAS DE MADERA', { fill: '#e9c08a', fontSize: '11' })}{t(540, 344, 'el aire caliente sale bajo la cubierta →', { fill: '#ffd9a0', fontSize: '10.5' })}
+      {t(520, 290, 'CUBIERTA FLOTANTE SOBRE TORNAPUNTAS DE MADERA EN V', { fill: '#e9c08a', fontSize: '11' })}{t(540, 344, 'el aire caliente sale bajo la cubierta →', { fill: '#ffd9a0', fontSize: '10.5' })}
       {t(AULA[0] + 6, 366, 'MURO DE BLOQUE DE TIERRA COMPRIMIDA (BTC)', { fill: '#e8a27a', fontSize: '10.5' })}{t(990, 398, 'TANQUE DE LLUVIA', { textAnchor: 'middle', fill: '#7fd8ee', fontSize: '10.5' })}
-      {t(80, 400, 'VENTILACIÓN CRUZADA →', { fill: '#ffd9a0' })}{t(70, 524, 'PASTIZAL SECO', { fontSize: '10.5', fillOpacity: '0.8' })}{t(250, 300, 'ÁRBOL DE SOMBRA', { textAnchor: 'middle', fontSize: '10.5' })}
+      {t(80, 400, 'VENTILACIÓN CRUZADA →', { fill: '#ffd9a0' })}{t(590, 478, 'celosía baja + ventana alta', { fill: '#e8a27a', fontSize: '10' })}{t(70, 524, 'PRADERA', { fontSize: '10.5', fillOpacity: '0.8' })}{t(250, 300, 'ÁRBOL DE SOMBRA', { textAnchor: 'middle', fontSize: '10.5' })}
     </>
   );
 }
