@@ -8,7 +8,6 @@ import Porques from './Porques.jsx';
 import RedEspecies from './RedEspecies.jsx';
 import Lectura from './Lectura.jsx';
 import Tramas from './Tramas.jsx';
-import CartografiaMulticapa from './CartografiaMulticapa.jsx';
 import { PLAN_PASOS, planEstado } from './Plan.jsx';
 import { PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from '../lib/plan.js';
 
@@ -56,6 +55,114 @@ const PASOS = [
   { id: 'mu-ele', corto: 'Lanchas · Elección a muelles', grupo: 'Lanchas', titulo: 'Elección hacia los muelles', red: 'peatonal', capa: 'muelle_ch', rutas: 1, cam: 'lancha', contexto: 1 },
   { id: 'rutas', corto: 'Lanchas · Rutas', grupo: 'Lanchas', titulo: 'Rutas de lancha', red: 'peatonal', capa: 'tipo', calles: 0.22, rutas: 1, cam: 'lancha', contexto: 1 },
   { id: 'riesgo', corto: 'La erosión sobre las redes', grupo: 'Erosión + redes', titulo: 'La erosión sobre las redes', capa: 'riesgo' },
+];
+
+export const PASOS_CARTOGRAFIA = [
+  {
+    id: 'intro',
+    pasoNum: '00',
+    corto: 'Despiece Axonométrico',
+    titulo: 'Cartografía Operativa Multicapa',
+    subtitulo: 'El diagrama o despiece axonométrico del territorio de Tierra Bomba',
+    cita: '[part_92, part_126]',
+    frase: '«Cartografiar el lugar no es para describirlo, sino para iniciar su transformación»',
+    texto: 'Antes de las estrategias, debes mostrar tu mapa descompuesto en sus vectores y capas activas [part_10, part_33, part_92]. La vulnerabilidad no es un dato abstracto: es la interacción física y espacial entre el mar, el relieve, la cobertura vegetal y las trayectorias de su gente.',
+    cam: 'problema',
+    casas: 1,
+    calles: 1,
+    dim: 0.1,
+    year: 0,
+    modo: 'perdida',
+  },
+  {
+    id: 'marina',
+    pasoNum: '01',
+    corto: 'Marina y Flujos',
+    titulo: 'Capa Marina y Flujos',
+    subtitulo: 'Mareas altas/bajas, corrientes litorales y frentes de erosión',
+    cita: '[part_92, part_156]',
+    frase: 'El mar como vector hidrodinámico activo sobre el borde costero',
+    texto: 'El choque hidrodinámico entre el oleaje del Caribe y la ensenada interior genera una deriva litoral dominante SSE que arrastra el suelo desprendido. En marea alta y mar de leva (+1,3 m de trepada), el mar socava los estratos blandos a tasas de hasta 3,0 m/año en Punta Arena.',
+    vectores: [
+      { t: 'Mareas altas / bajas', d: 'Marea astronómica de 0,20 m + sobreelevación de tormenta (0,20 m) y marea de leva (+1,3 m).' },
+      { t: 'Corrientes litorales', d: 'Deriva litoral neta hacia el SSE (0,4 a 0,8 m/s) que transporta sedimentos al canal exterior.' },
+      { t: 'Frentes críticos de erosión', d: '0,63 m/año media y hasta 3,0 m/año máxima medida por INVEMAR; 891 casas en riesgo a 30 años.' },
+    ],
+    cam: 'casco',
+    casas: 1,
+    calles: 0,
+    dim: 0.12,
+    year: 15,
+    midas: true,
+    modo: 'perdida',
+  },
+  {
+    id: 'topohidrica',
+    pasoNum: '02',
+    corto: 'Topo-Hídrica',
+    titulo: 'Capa Topo-Hídrica',
+    subtitulo: 'Cuencas naturales de escorrentía, acuíferos subterráneos y cotas de riesgo',
+    cita: '[part_160]',
+    frase: 'Geomorfología del relieve: meseta segura vs. llanura aluvial inundable',
+    texto: 'La isla articula un relieve dual: una meseta alta segura (+22 a +30 msnm) de roca calcárea fósil y una franja baja inundable (< +2 msnm). Las lluvias torrenciales generan escorrentías radiales que bajan a gran velocidad hacia las ensenadas, mientras los aljibes tradicionales sufren riesgo de intrusión salina.',
+    vectores: [
+      { t: 'Cuencas naturales de escorrentía', d: '6 microcuencas radiales principales que drenan desde la meseta central hacia las quebradas y el mar.' },
+      { t: 'Acuíferos subterráneos y aljibes', d: 'Lentes freáticas en roca calcárea fósil; aljibes comunitarios tradicionales de captación pluvial.' },
+      { t: 'Cotas de riesgo', d: 'Cota crítica < +2,0 m (inundación por eventos extremos) frente a la cota segura a +22 m (meseta del plan).' },
+    ],
+    cam: 'plan_meseta',
+    casas: 1,
+    calles: 0,
+    dim: 0.15,
+    year: 0,
+    modo: 'perdida',
+  },
+  {
+    id: 'biotica',
+    pasoNum: '03',
+    corto: 'Biótica',
+    titulo: 'Capa Biótica',
+    subtitulo: 'Vegetación nativa resistente a salinidad y bordes de amortiguamiento',
+    cita: '[part_160]',
+    frase: 'Armadura ecosistémica viva de disipación y amortiguamiento costero',
+    texto: 'La cobertura biótica es la primera defensa bio-mecánica contra la erosión marina y eólica. Los manglares (Rhizophora mangle, Avicennia germinans) estabilizan orillas y disipan hasta el 66% de la fuerza del oleaje en ensenadas, mientras que el bosque seco tropical en la meseta previene el lavado del suelo fértil.',
+    vectores: [
+      { t: 'Vegetación halófita y bosque seco', d: 'Mangle rojo, mangle negro, uvita de playa y trupillo con sistemas radiculares anclantes.' },
+      { t: 'Bordes de amortiguamiento bio-mecánico', d: 'Franjas de 50 a 150 m en ensenadas que disipan hasta el 66% de la energía de oleaje.' },
+      { t: 'Zonas de desmonte y degradación', d: '185 ha con pérdida severa de cobertura vegetal expuestas a desmoronamiento laminar.' },
+    ],
+    cam: 'plan_parque',
+    casas: 1,
+    calles: 0,
+    dim: 0.12,
+    year: 0,
+    modo: 'perdida',
+  },
+  {
+    id: 'antropica',
+    pasoNum: '04',
+    corto: 'Antrópica',
+    titulo: 'Capa Antrópica',
+    subtitulo: 'Trayectorias comunitarias, senderos informales y núcleos de pescadores',
+    cita: '[part_18, part_92]',
+    frase: 'Apropiación comunitaria: habitar de borde, pesca y conectividad marítima',
+    texto: 'Tierra Bomba vive de cara al mar pero bajo su amenaza directa. Sus cuatro asentamientos históricos (Tierra Bomba, Punta Arena, Caño del Oro y Bocachica) agrupan a más de 2.600 construcciones en bordes bajos nacidos de la actividad pesquera y del acceso a muelles hacia Cartagena (614 viajes diarios en lancha).',
+    vectores: [
+      { t: 'Trayectorias comunitarias', d: '614 viajes diarios en lancha hacia Bocagrande, La Bodeguita y Bazurto (estudio 2014) como líneas de vida.' },
+      { t: 'Senderos informales', d: '138 km de red peatonal y de motos mapeados sobre el terreno natural que cosen los barrios.' },
+      { t: 'Núcleos de pescadores', d: '4 poblados consolidados en borde de agua con 2.600 construcciones en total (891 en riesgo a 30 años).' },
+    ],
+    cam: 'lancha',
+    casas: 1,
+    calles: 1,
+    red: 'peatonal',
+    capa: 'tipo',
+    rutas: 1,
+    contexto: 1,
+    dim: 0.2,
+    year: 0,
+    modo: 'perdida',
+  },
 ];
 const ALTO_PASO = 95; // svh por paso
 
@@ -272,6 +379,69 @@ function PanelErosion({ stats, anio, modo, ctrl, setCtrl }) {
   );
 }
 
+function PanelCartografia({ paso, idx, total, onIrPaso }) {
+  if (!paso) return null;
+  return (
+    <aside className={`${contenedorPanel} entra`} aria-live="polite">
+      <div className="flex items-center justify-between border-b border-white/14 pb-2.5">
+        <p className="etiqueta text-arcilla">01 · Cartografía Operativa Multicapa</p>
+        <span className="font-mono text-[11px] text-white/50">{paso.cita}</span>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Capas operativas">
+        {PASOS_CARTOGRAFIA.map((p, i) => (
+          <button
+            key={p.id}
+            type="button"
+            className="ficha !h-7 !px-2.5 text-[11px]"
+            aria-pressed={idx === i}
+            onClick={() => onIrPaso(i)}
+          >
+            {p.pasoNum} · {p.corto}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4">
+        <h3 className="font-['Barlow_Condensed'] text-2xl font-light uppercase tracking-tight text-white leading-tight">
+          {paso.titulo}
+        </h3>
+        <p className="font-mono text-xs text-white/60 mt-0.5">{paso.subtitulo}</p>
+      </div>
+
+      {paso.frase && (
+        <blockquote className="mt-3.5 border-l-2 border-arcilla bg-white/[0.04] p-3 text-xs italic text-white/90 leading-snug">
+          {paso.frase}
+          <span className="not-italic block mt-1 font-mono text-[10px] text-white/45">{paso.cita}</span>
+        </blockquote>
+      )}
+
+      <p className="mt-3.5 text-[13px] leading-relaxed text-white/80">
+        {paso.texto}
+      </p>
+
+      {paso.vectores && (
+        <div className="mt-4 border-t border-white/12 pt-3">
+          <p className="etiqueta text-white/50 mb-2">Vectores activos de la capa</p>
+          <ul className="space-y-2">
+            {paso.vectores.map((v) => (
+              <li key={v.t} className="rounded border border-white/10 bg-black/40 p-2.5 text-xs">
+                <span className="font-medium text-white block">{v.t}</span>
+                <span className="text-white/65 mt-0.5 block leading-snug">{v.d}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div className="mt-4 border-t border-white/12 pt-3 flex items-center justify-between text-[11px] text-white/55">
+        <span>Desplaza el scroll para animar el territorio 3D ↓</span>
+        <span className="font-mono">{idx + 1} / {total}</span>
+      </div>
+    </aside>
+  );
+}
+
 function PanelVias({ stats, datos }) {
   const p = datos.peatonal;
   const km = stats.km.peatonal;
@@ -479,6 +649,22 @@ function Indice({ activo, onIr }) {
     <nav aria-label="Pasos de la sintaxis espacial" className="fixed right-5 top-1/2 z-20 hidden -translate-y-1/2 lg:block">
       <ol className="flex flex-col items-end gap-1">
         {PASOS.map((p, i) => (
+          <li key={p.id}>
+            <button type="button" onClick={() => onIr(i)} title={p.corto} aria-label={p.corto} aria-current={i === activo ? 'step' : undefined} className="group flex h-6 items-center">
+              <span className={`block h-[2px] rounded-full transition-all duration-300 ${i === activo ? 'w-9 bg-arcilla' : 'w-4 bg-white/40 group-hover:w-6 group-hover:bg-white'}`} />
+            </button>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
+function IndiceCartografia({ activo, onIr }) {
+  return (
+    <nav aria-label="Estratos de la cartografía operativa" className="fixed right-5 top-1/2 z-20 hidden -translate-y-1/2 lg:block">
+      <ol className="flex flex-col items-end gap-1">
+        {PASOS_CARTOGRAFIA.map((p, i) => (
           <li key={p.id}>
             <button type="button" onClick={() => onIr(i)} title={p.corto} aria-label={p.corto} aria-current={i === activo ? 'step' : undefined} className="group flex h-6 items-center">
               <span className={`block h-[2px] rounded-full transition-all duration-300 ${i === activo ? 'w-9 bg-arcilla' : 'w-4 bg-white/40 group-hover:w-6 group-hover:bg-white'}`} />
@@ -740,6 +926,7 @@ export default function Relato({ api, sinEscena }) {
   const [cap, setCap] = useState('portada');
   const [pasoIdx, setPasoIdx] = useState(0);
   const [planIdx, setPlanIdx] = useState(0);
+  const [cartoIdx, setCartoIdx] = useState(0);
   const [anio, setAnio] = useState(0);
   const [modo, setModo] = useState('perdida');
   const [ctrl, setCtrl] = useState({ radio: 'n', redRiesgo: 'peatonal', anioRiesgo: 30, modelo: 'midas', nivel: 2, verMidas: true });
@@ -760,8 +947,23 @@ export default function Relato({ api, sinEscena }) {
     const base = { modelo: k.modelo, nivelManual: k.nivel, cam: 'hero', year: 0, modo: 'perdida', red: null, capa: 'tipo', radio: 'n', calles: 0, casas: 1, dim: 0, rutas: 0, contexto: 0, plan: null, midas: false };
     let est = base;
     if (c === 'portada') est = base;
-    else if (c === 'problema') est = { ...base, cam: 'problema', dim: 0.1 };
-    else if (c === 'erosion') {
+    else if (c === 'problema') {
+      const ps = PASOS_CARTOGRAFIA[cartoIdx || 0] || PASOS_CARTOGRAFIA[0];
+      est = {
+        ...base,
+        cam: ps.cam || 'problema',
+        year: ps.year || 0,
+        modo: ps.modo || 'perdida',
+        red: ps.red || null,
+        capa: ps.capa || 'tipo',
+        calles: ps.calles ?? 0,
+        casas: ps.casas ?? 1,
+        rutas: ps.rutas || 0,
+        contexto: ps.contexto || 0,
+        dim: ps.dim || 0.1,
+        midas: !!ps.midas,
+      };
+    } else if (c === 'erosion') {
       const y = 30 * ease(clamp01((p - 0.08) / 0.76));
       est = { ...base, cam: p < 0.58 ? 'casco' : 'isla', year: y, modo: p > 0.9 ? 'despues' : 'perdida', midas: !!k.verMidas };
     } else if (c === 'vias') est = { ...base, cam: 'vias', red: 'peatonal', capa: 'tipo', calles: 1, casas: 0, dim: 0.55 };
@@ -798,6 +1000,10 @@ export default function Relato({ api, sinEscena }) {
       const total = Math.max(1, r.height - vh);
       const p = clamp01(-r.top / total);
       let pi = S.current.pasoIdx;
+      if (actual === 'problema') {
+        const ic = Math.min(PASOS_CARTOGRAFIA.length - 1, Math.floor(p * PASOS_CARTOGRAFIA.length));
+        setCartoIdx((x) => (x === ic ? x : ic));
+      }
       if (actual === 'sintaxis') pi = Math.min(PASOS.length - 1, Math.floor(p * PASOS.length));
       if (actual === 'plan') {
         const ip = Math.min(PLAN_PASOS.length - 1, Math.floor(p * PLAN_PASOS.length));
@@ -822,9 +1028,16 @@ export default function Relato({ api, sinEscena }) {
     return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('resize', onScroll); cancelAnimationFrame(raf); };
   }, [aplicar, api]);
 
-  useEffect(() => { aplicar(); }, [ctrl, api, aplicar]);
-  useEffect(() => { if (!['erosion', 'vias', 'sintaxis', 'plan'].includes(cap)) setExplorar(false); }, [cap]);
+  useEffect(() => { aplicar(); }, [ctrl, api, aplicar, cartoIdx]);
+  useEffect(() => { if (!['problema', 'erosion', 'vias', 'sintaxis', 'plan'].includes(cap)) setExplorar(false); }, [cap]);
   useEffect(() => { api?.alCambiarModelo(() => setVersion((v) => v + 1)); }, [api]);
+
+  const irACartoPaso = (i) => {
+    const el = document.getElementById('problema');
+    const vh = window.innerHeight;
+    const top = window.scrollY + el.getBoundingClientRect().top + ((i + 0.5) / PASOS_CARTOGRAFIA.length) * (el.offsetHeight - vh);
+    window.scrollTo({ top, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  };
 
   const irAPaso = (i) => {
     const el = document.getElementById('sintaxis');
@@ -869,11 +1082,13 @@ export default function Relato({ api, sinEscena }) {
       </section>
 
       {/* 01 · Cartografía Operativa Multicapa · Despiece Axonométrico */}
-      <section id="problema" className="relative">
-        <CartografiaMulticapa />
-        {/* árbol causal de problemas */}
-        <Porques />
-      </section>
+      <section
+        id="problema"
+        style={{ height: `${PASOS_CARTOGRAFIA.length * ALTO_PASO}svh` }}
+        aria-label="Cartografía Operativa Multicapa: Despiece axonométrico del territorio"
+      />
+      {/* árbol causal de problemas */}
+      <Porques />
 
       {/* 02 · lo social */}
       {/* la isla y sus cuatro sectores, en puntos */}
@@ -891,8 +1106,8 @@ export default function Relato({ api, sinEscena }) {
       <section id="plan" style={{ height: `${PLAN_PASOS.length * ALTO_PASO}svh` }} aria-label="Plan maestro en 3D" />
 
       {/* zoom y exploración del mapa 3D */}
-      {api && ['erosion', 'vias', 'sintaxis', 'plan'].includes(cap) && <ControlesVista api={api} explorar={explorar} setExplorar={setExplorar} panelOculto={panelOculto} setPanelOculto={setPanelOculto} />}
-      {api && explorar && ['erosion', 'vias', 'sintaxis', 'plan'].includes(cap) && <CapaExplorar api={api} />}
+      {api && ['problema', 'erosion', 'vias', 'sintaxis', 'plan'].includes(cap) && <ControlesVista api={api} explorar={explorar} setExplorar={setExplorar} panelOculto={panelOculto} setPanelOculto={setPanelOculto} />}
+      {api && explorar && ['problema', 'erosion', 'vias', 'sintaxis', 'plan'].includes(cap) && <CapaExplorar api={api} />}
       {api && cap === 'plan' && (
         <>
           {!panelOculto && <PanelPlan paso={PLAN_PASOS[planIdx]} idx={planIdx} stats={stats} version={version} />}
@@ -901,6 +1116,19 @@ export default function Relato({ api, sinEscena }) {
       )}
 
       {/* paneles flotantes */}
+      {api && cap === 'problema' && (
+        <>
+          {!panelOculto && (
+            <PanelCartografia
+              paso={PASOS_CARTOGRAFIA[cartoIdx]}
+              idx={cartoIdx}
+              total={PASOS_CARTOGRAFIA.length}
+              onIrPaso={irACartoPaso}
+            />
+          )}
+          <IndiceCartografia activo={cartoIdx} onIr={irACartoPaso} />
+        </>
+      )}
       {api && !panelOculto && cap === 'erosion' && <PanelErosion key={version} stats={stats} anio={anio} modo={modo} ctrl={ctrl} setCtrl={setCtrl} />}
       {api && !panelOculto && cap === 'vias' && <PanelVias stats={stats} datos={datos} />}
       {api && cap === 'sintaxis' && (
