@@ -44,7 +44,7 @@ export default function CorteVivo({ cfg }) {
     const cx = cv.getContext('2d'); let vivo = true; let raf = 0; let visible = false;
     const quieto = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const DPR = Math.min(devicePixelRatio || 1, 2);
-    const COT = cfg.cotas; const yTope = COT[0].y;
+    const COT = cfg.cotas; const yTope = COT[0]?.y ?? 9999;
     // puntos
     const fondo = muestrear(1200, 560, 3.0, cfg.pintarFondo, { saltar: (px, py) => (py > suelo(px) + 4 ? clamp((py - suelo(px)) / 90, 0, 0.82) : 0) });
     const pasto = muestrear(1200, 560, 2.4, cfg.pintarPasto).map((p) => ({ ...p, base: suelo(p.x) }));
@@ -69,7 +69,7 @@ export default function CorteVivo({ cfg }) {
         const pts = muestrear(w, h, paso, (x) => { if (img) x.drawImage(img, 0, 0, w, h); else { x.scale(w / e.cw, w / e.cw); e.pintar(x); } });
         e.pts = pts.map((p) => ({ ...p, x: p.x - w / 2, y: e.anc === 'pie' ? p.y - h : p.y - h / 2 }));
       };
-      if (e.src) cargar(`${REC}${e.src}.webp`).then((img) => { if (vivo) listo(img); }).catch(() => {}); else listo(null);
+      if (e.src || e.url) cargar(e.url ? `${BASE}${e.url}` : `${REC}${e.src}.webp`).then((img) => { if (vivo) listo(img); }).catch(() => {}); else listo(null);
     });
 
     // capa estática prerenderizada
@@ -101,6 +101,8 @@ export default function CorteVivo({ cfg }) {
         const alto = Math.max(0, p.base - p.y); const sub = cfg.sumergido?.(p.x, p.y); const sw = sub ? Math.sin(t * 0.9 + p.x * 0.04) * 0.12 : (Math.sin(t * 1.6 + p.x * 0.05) * 0.09 + Math.sin(t * 3.7 + p.x * 0.2) * 0.03);
         cx.globalAlpha = 0.95; cx.fillStyle = p.c; punto(cx, p.x + alto * sw * (alto / 18), p.y, 1.05 * p.r);
       }
+      cfg.animar?.(cx, t, punto);
+      cx.globalAlpha = 1;
       // especies: movimiento normal y, si hay interacción activa, el encuentro
       const M = {}; for (const e of especies) M[e.id] = e.mov(t);
       const it = interRef.current; let kI = 0; let posA = null; let posB = null; let uI = 0;

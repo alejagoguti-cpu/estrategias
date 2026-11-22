@@ -187,7 +187,7 @@ export function baranda(marco, sA, sB, { ancho, altura, metal, paso = 2 }) {
 }
 
 // ---------- banco solar ondulante (costillas blancas con cubierta fotovoltaica) ----------
-function texSolar() {
+export function texSolar() {
   const c = document.createElement('canvas'); c.width = 1024; c.height = 512; const x = c.getContext('2d');
   x.fillStyle = '#c9ced6'; x.fillRect(0, 0, 1024, 512);
   const cols = 12; const filas = 6; const g = 6; const cw = (1024 - g * (cols + 1)) / cols; const ch = (512 - g * (filas + 1)) / filas;
