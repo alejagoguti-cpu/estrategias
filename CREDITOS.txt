@@ -55,3 +55,6 @@ VIVIENDA MODULAR  (capitulo 10)
 COLEGIO  (capitulo 11)
   Poly Haven (CC0): School Chair 01, Wooden Table 01, Tree Stump 01; texturas Clay Block Wall y Red Brick Pavers.
   Aulas, cerchas, cubierta de lamina y tanque modelados para el recorrido (referencia de la autora).
+
+HUERTA COMUNITARIA  (capitulo 12)
+  Poly Haven (CC0): texturas Farm Soil y Red Laterite Soil Stones. Plantulas, matas y lechugas modeladas en Blender para este proyecto.

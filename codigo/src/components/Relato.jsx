@@ -8,7 +8,7 @@ import Porques from './Porques.jsx';
 import RedEspecies from './RedEspecies.jsx';
 import Lectura from './Lectura.jsx';
 import Tramas from './Tramas.jsx';
-import PaisajeAdaptativo, { HumedalFitofiltracion, ViviendaModular, Colegio } from './PaisajeAdaptativo.jsx';
+import PaisajeAdaptativo, { HumedalFitofiltracion, ViviendaModular, Colegio, Huerta } from './PaisajeAdaptativo.jsx';
 import { PLAN_PASOS, planEstado } from './Plan.jsx';
 import { PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from '../lib/plan.js';
 
@@ -41,7 +41,8 @@ const CAPITULOS = [
   { id: 'humedal', n: '09', nombre: 'Humedal de fitofiltración', corto: 'Humedal' },
   { id: 'vivienda', n: '10', nombre: 'Vivienda modular', corto: 'Vivienda' },
   { id: 'colegio', n: '11', nombre: 'Colegio', corto: 'Colegio' },
-  { id: 'cierre', n: '12', nombre: 'Lo que sigue', corto: 'Cierre' },
+  { id: 'huerta', n: '12', nombre: 'Huerta comunitaria', corto: 'Huerta' },
+  { id: 'cierre', n: '13', nombre: 'Lo que sigue', corto: 'Cierre' },
 ];
 
 const RADIOS = [
@@ -1204,6 +1205,7 @@ export default function Relato({ api, sinEscena }) {
       <HumedalFitofiltracion />
       <ViviendaModular />
       <Colegio />
+      <Huerta />
       <Cierre api={api} version={version} />
     </div>
   );

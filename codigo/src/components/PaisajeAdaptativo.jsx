@@ -9,6 +9,8 @@ import { corteCasa } from '../lib/cortes/casa.jsx';
 import escenaCasa from '../lib/inmersivo/casa.js';
 import { corteColegio } from '../lib/cortes/colegio.jsx';
 import escenaColegio from '../lib/inmersivo/colegio.js';
+import { corteHuerta } from '../lib/cortes/huerta.jsx';
+import escenaHuerta from '../lib/inmersivo/huerta.js';
 
 // =============================================================================
 // Secciones de paisaje: a la izquierda un corte vivo dibujado con puntos (estética del manglar de «Tramas»,
@@ -103,6 +105,18 @@ export function Colegio() {
       aria="Colegio de bloque de tierra con cubierta flotante en Tierra Bomba"
       leyenda="Aulas de bloque de tierra comprimida bajo una gran cubierta flotante que da sombra y deja salir el aire caliente. La galería de madera, el patio de adoquín y el árbol de sombra son el lugar de encuentro."
       nota="Corte esquemático. Muros de bloque de tierra comprimida (BTC), cubierta de lámina sobre cerchas de madera, captación de lluvia a tanque. Mobiliario y texturas: Poly Haven (CC0). Especies e interacciones de la base de especies de la isla."
+    />
+  );
+}
+
+export function Huerta() {
+  return (
+    <SeccionPaisaje
+      id="huerta" etiqueta="12 · Huerta comunitaria" titulo="Un vivero para sembrar la comida y el bosque"
+      cfg={corteHuerta} construir={escenaHuerta}
+      aria="Huerta y vivero comunitario de Tierra Bomba"
+      leyenda="Un invernadero abierto de acero y policarbonato protege las plántulas del sol y la lluvia fuerte. Mesas elevadas, riego por goteo desde el tanque de lluvia y una cerca de plantas para los polinizadores."
+      nota="Corte esquemático. Hortalizas y plántulas modeladas en Blender; texturas escaneadas de Poly Haven (CC0). Interacciones de la base de especies de la isla (Bello et al. 2017; Fricke y Svenning 2020; Bat Eco-Interactions; Ollerton et al. 2019)."
     />
   );
 }
