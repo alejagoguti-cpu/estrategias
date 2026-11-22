@@ -7,7 +7,6 @@ import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 // Cartografía Operativa Multicapa 3D para Tierra Bomba
 // Despiece axonométrico del territorio descompuesto en sus 4 capas activas:
 //  01 · Marina y Flujos (Mareas, Storm Surge, Deriva SSE, Vientos Alisios, Rutas)
-//  02 · Topo-Hídrica (Curvas de nivel, Escorrentías, Creeks, Ponds, Acuíferos, Techos)
 //  03 · Biótica (Geolocalización de especies nativas, Amortiguamiento, Corredores)
 //  04 · Antrópica (Autourbanismo, Movilidad real, Nodos relacionales, Terrains Vagues)
 // =============================================================================
@@ -27,18 +26,15 @@ export function crearCartografia3D({
   scene.add(rootGroup);
 
   const marinaGroup = new THREE.Group();
-  const topoGroup = new THREE.Group();
   const bioticaGroup = new THREE.Group();
 
   marinaGroup.name = 'capa_01_marina';
-  topoGroup.name = 'capa_02_topo';
   bioticaGroup.name = 'capa_03_biotica';
 
   marinaGroup.visible = false;
-  topoGroup.visible = false;
   bioticaGroup.visible = false;
 
-  rootGroup.add(marinaGroup, topoGroup, bioticaGroup);
+  rootGroup.add(marinaGroup, bioticaGroup);
 
   // --- Helper: Etiqueta 3D mínima y elegante (en escala del mundo, no cubre la pantalla) ---
   function crearEtiqueta3D(texto, x, z, yOffset, colorHex, parent) {
@@ -311,108 +307,6 @@ export function crearCartografia3D({
   crearEtiqueta3D('Vientos Alisios NE', TB_PUEBLO[0] + 450, TB_PUEBLO[1] - 700, 95, '#bae6fd', marinaGroup);
 
   // ===========================================================================
-  // 02 · CAPA TOPO-HÍDRICA
-  // ===========================================================================
-  // A. Curvas de Nivel Topográficas
-  const curvasPares = [];
-  {
-    const cotas = [5, 10, 15, 20, 25, 30, 35, 40];
-    cotas.forEach((cota) => {
-      const nPuntos = 120;
-      const pts = [];
-      for (let i = 0; i < nPuntos; i++) {
-        const ang = (i / nPuntos) * Math.PI * 2;
-        for (let r = 80; r < 4400; r += 50) {
-          const px = MESETA_CENTRO[0] + Math.cos(ang) * r * 0.75;
-          const pz = MESETA_CENTRO[1] + Math.sin(ang) * r * 1.25;
-          const h = heightAtXZ(px, pz);
-          if (Math.abs(h - cota) < 2.5) {
-            pts.push([px, h + 1.2, pz]);
-            break;
-          }
-        }
-      }
-      for (let j = 0; j < pts.length - 1; j++) {
-        if (Math.hypot(pts[j + 1][0] - pts[j][0], pts[j + 1][2] - pts[j][2]) < 260) {
-          curvasPares.push([pts[j], pts[j + 1]]);
-        }
-      }
-    });
-  }
-  crearTrazoLineas(curvasPares, 0xeab308, 2.5, false, topoGroup);
-
-  // B. 6 Arroyos Naturales (Creeks) y Escorrentía Pluvial
-  const arroyosDef = [
-    { n: 'Arroyo Norte', de: LOMA_ALTA, a: TB_PUEBLO },
-    { n: 'Arroyo Noroccidente', de: LOMA_ALTA, a: [TB_PUEBLO[0] - 850, TB_PUEBLO[1] + 180] },
-    { n: 'Arroyo Punta Arena', de: MESETA_CENTRO, a: PUNTA_ARENA },
-    { n: 'Arroyo Caño del Oro', de: MESETA_CENTRO, a: CANO_ORO },
-    { n: 'Arroyo Bocachica Norte', de: [MESETA_CENTRO[0], MESETA_CENTRO[1] + 750], a: [BOCACHICA[0], BOCACHICA[1] - 380] },
-    { n: 'Arroyo San Fernando', de: [BOCACHICA[0] + 350, BOCACHICA[1] - 280], a: SAN_FERNANDO },
-  ];
-
-  const arroyosPares = [];
-  const runoffAnimables = [];
-  arroyosDef.forEach(({ de, a }) => {
-    const pts = [];
-    const n = 22;
-    for (let i = 0; i <= n; i++) {
-      const t = i / n;
-      const mx = (1 - t) * de[0] + t * a[0] + Math.sin(t * Math.PI * 3) * 50;
-      const mz = (1 - t) * de[1] + t * a[1] + Math.cos(t * Math.PI * 2) * 45;
-      pts.push([mx, mz]);
-    }
-    arroyosPares.push(...conectarPolilineaTerreno(pts, 2.0, 16));
-
-    const gotaGeo = new THREE.SphereGeometry(8, 6, 6);
-    const gotaMat = new THREE.MeshBasicMaterial({ color: 0x67e8f9, transparent: true, opacity: 0.9 });
-    for (let k = 0; k < 3; k++) {
-      const gm = new THREE.Mesh(gotaGeo, gotaMat);
-      topoGroup.add(gm);
-      runoffAnimables.push({ mesh: gm, pts, fase: k / 3, vel: 0.18 });
-    }
-  });
-  crearTrazoLineas(arroyosPares, 0x0284c7, 4.8, false, topoGroup);
-
-  // C. Puntos de Depresión (Ponds / Futuros Lagos y Humedales)
-  const pondsDef = [
-    { n: 'Depresión Tierrabomba', pos: [TB_PUEBLO[0] + 50, TB_PUEBLO[1] - 160], r: 85 },
-    { n: 'Cuenca Punta Arena', pos: [PUNTA_ARENA[0] - 110, PUNTA_ARENA[1] + 150], r: 100 },
-    { n: 'Humedal Caño del Oro', pos: [CANO_ORO[0] - 70, CANO_ORO[1] + 110], r: 120 },
-    { n: 'Laguna Bocachica', pos: [BOCACHICA[0] + 120, BOCACHICA[1] - 160], r: 110 },
-  ];
-  const pondRings = [];
-  pondsDef.forEach(({ pos, r }) => {
-    const ringGeo = new THREE.RingGeometry(r * 0.7, r, 24);
-    ringGeo.rotateX(-Math.PI / 2);
-    ringGeo.translate(pos[0], heightAtXZ(pos[0], pos[1]) + 1.2, pos[1]);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.75, side: THREE.DoubleSide });
-    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-    topoGroup.add(ringMesh);
-    pondRings.push(ringMesh);
-  });
-
-  // D. Techos impermeabilizados (asbesto)
-  const techosGroup = new THREE.Group();
-  topoGroup.add(techosGroup);
-  {
-    const bGeo = new THREE.BoxGeometry(16, 5, 16);
-    const techoMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0.85 });
-    houses.slice(0, 160).forEach((h) => {
-      const tm = new THREE.Mesh(bGeo, techoMat);
-      tm.position.set(h.x, h.y + h.h + 2, h.z);
-      techosGroup.add(tm);
-    });
-  }
-
-  // Etiquetas 3D mínimas para Capa Topo-Hídrica
-  crearEtiqueta3D('Loma Central (+44 m)', LOMA_ALTA[0] + 80, LOMA_ALTA[1] - 120, 60, '#eab308', topoGroup);
-  crearEtiqueta3D('Meseta Segura (+22 a +30 m)', MESETA_CENTRO[0] - 120, MESETA_CENTRO[1] - 60, 50, '#eab308', topoGroup);
-  crearEtiqueta3D('6 Arroyos Naturales (Creeks)', MESETA_CENTRO[0] + 280, MESETA_CENTRO[1] + 350, 45, '#38bdf8', topoGroup);
-  crearEtiqueta3D('Ponds de Empozamiento Natural', PUNTA_ARENA[0] - 140, PUNTA_ARENA[1] + 90, 45, '#06b6d4', topoGroup);
-  crearEtiqueta3D('Cubiertas de Asbesto Selladas', TB_PUEBLO[0] - 120, TB_PUEBLO[1] + 240, 45, '#f43f5e', topoGroup);
-
-  // ===========================================================================
   // 03 · CAPA BIÓTICA (RED DE INTERACCIONES BIÓTICAS Y GEOLOCALIZACIÓN REAL)
   // Base científica: 9.688 registros, 438 especies, 923 interacciones ecológicas (GloBI / iNaturalist)
   // ===========================================================================
@@ -577,7 +471,6 @@ export function crearCartografia3D({
       if (rootGroup.visible) {
         rootGroup.visible = false;
         marinaGroup.visible = false;
-        topoGroup.visible = false;
         bioticaGroup.visible = false;
       }
       return;
@@ -589,14 +482,11 @@ export function crearCartografia3D({
     // Al scrollear, la capa actual aparece y la anterior DESAPARECE POR COMPLETO.
     //  0: Despiece Integral (todas visibles con equilibrio)
     //  1: Marina y Flujos (SÓLO marina visible)
-    //  2: Topo-Hídrica (SÓLO topo visible)
     //  3: Biótica (SÓLO biótica visible con su Red interactiva)
     const verMarina = cartoCapa === 0 || cartoCapa === 1;
-    const verTopo = cartoCapa === 0 || cartoCapa === 2;
     const verBiotica = cartoCapa === 0 || cartoCapa === 3;
 
     marinaGroup.visible = verMarina;
-    topoGroup.visible = verTopo;
     bioticaGroup.visible = verBiotica;
 
     // Animación continua de la capa activa
@@ -616,23 +506,6 @@ export function crearCartografia3D({
       if (intermLine?.mat) intermLine.mat.opacity = 0.5 + 0.3 * Math.sin(t * 3.5);
     }
 
-    if (verTopo) {
-      runoffAnimables.forEach((r) => {
-        const u = (t * r.vel + r.fase) % 1;
-        const idx = Math.min(r.pts.length - 2, Math.floor(u * (r.pts.length - 1)));
-        const frac = u * (r.pts.length - 1) - idx;
-        const p0 = r.pts[idx];
-        const p1 = r.pts[idx + 1];
-        r.mesh.position.set(
-          p0[0] + (p1[0] - p0[0]) * frac,
-          heightAtXZ(p0[0], p0[1]) + 3.0,
-          p0[1] + (p1[1] - p0[1]) * frac
-        );
-      });
-      const pulPond = 1 + 0.06 * Math.sin(t * 2.8);
-      pondRings.forEach((p) => p.scale.set(pulPond, pulPond, 1));
-    }
-
     if (verBiotica) {
       const pulBio = 1 + 0.05 * Math.sin(t * 2.0);
       bioticaRings.forEach((b) => b.scale.set(pulBio, pulBio, 1));
@@ -645,7 +518,6 @@ export function crearCartografia3D({
   return {
     rootGroup,
     marinaGroup,
-    topoGroup,
     bioticaGroup,
     actualizar,
   };

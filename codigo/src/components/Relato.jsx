@@ -68,7 +68,7 @@ export const PASOS_CARTOGRAFIA = [
     subtitulo: 'Despiece axonométrico del territorio de Tierra Bomba',
     cita: '[part_92, part_126]',
     frase: '«Cartografiar el lugar no es para describirlo, sino para iniciar su transformación»',
-    texto: 'Antes de las estrategias, debes mostrar tu mapa descompuesto en sus vectores y capas activas [part_10, part_33, part_92]. La vulnerabilidad no es un dato abstracto: es la interacción física y espacial entre el mar, el relieve, la cobertura vegetal y las trayectorias de su gente, descompuesta en cuatro estratos operativos que se activan al desplazarte.',
+    texto: 'Antes de las estrategias, debes mostrar tu mapa descompuesto en sus vectores y capas activas [part_10, part_33, part_92]. La vulnerabilidad no es un dato abstracto: es la interacción física y espacial entre el mar y la cobertura vegetal, descompuesta en dos estratos operativos que se activan al desplazarte.',
     cam: 'carto_intro',
     casas: 1,
     calles: 1,
@@ -78,9 +78,7 @@ export const PASOS_CARTOGRAFIA = [
     cartoCapa: 0,
     vectores: [
       { t: '01 · Capa Marina y Flujos', d: 'Mareas altas/bajas, corrientes litorales, frentes de erosión y vientos alisios [part_92, part_156].' },
-      { t: '02 · Capa Topo-Hídrica', d: 'Cuencas naturales de escorrentía, creeks, ponds, acuíferos subterráneos y cotas de riesgo [part_160].' },
-      { t: '03 · Capa Biótica', d: 'Red biótica, geolocalización de especies nativas y bordes de amortiguamiento [part_160].' },
-      { t: '04 · Capa Antrópica', d: 'Trayectorias comunitarias, senderos informales, núcleos de pescadores y terrains vagues [part_18, part_92].' },
+      { t: '02 · Capa Biótica', d: 'Red biótica, geolocalización de especies nativas y bordes de amortiguamiento [part_160].' },
     ],
   },
   {
@@ -110,33 +108,8 @@ export const PASOS_CARTOGRAFIA = [
     cartoCapa: 1,
   },
   {
-    id: 'topohidrica',
-    pasoNum: '02',
-    corto: 'Topo-Hídrica',
-    titulo: 'Capa Topo-Hídrica',
-    subtitulo: 'Cuencas naturales de escorrentía, acuíferos subterráneos y cotas de riesgo',
-    cita: '[part_53, part_54, part_60, part_68]',
-    frase: 'Altimetría insular y comportamiento del agua dulce (lluvias, drenaje y subsuelo)',
-    texto: 'Sintetiza la forma física del suelo insular y la hidrología [part_53, part_54, part_60, part_68]: articula el relieve con sus puntos altos (loma central +44 m y meseta segura a +22..+30 m) frente a la cota crítica inundable (< +2,0 m), encauzando las lluvias torrenciales a través de 6 arroyos naturales y revelando acuíferos subterráneos para la emancipación hídrica.',
-    vectores: [
-      { t: 'Curvas de nivel y relieve de la isla (Topografía)', d: 'Relieve con puntos altos y pendientes: loma central (+44 m), meseta segura (+22 a +30 m) y cota crítica (< +2,0 m) [part_10, part_19, part_31, part_53].' },
-      { t: 'Vectores de escorrentía pluvial', d: 'Flechas continuas que siguen la caída natural de la lluvia desde las partes altas hacia el mar [part_68].' },
-      { t: 'Microcuencas y arroyos naturales (Creeks)', d: 'Trazado de 6 escorrentías y caños naturales que bajan por la isla (arroyos que deben salvarse para compartimentar drenaje y evitar inundaciones) [part_60, part_68].' },
-      { t: 'Puntos de depresión y cuencas naturales (Ponds)', d: 'Zonas bajas donde el agua se empoza naturalmente (futuros lagos de captación, reservorios o humedales de fitofiltración) [part_36, part_53, part_54].' },
-      { t: 'Acuíferos subterráneos y pozos comunitarios', d: 'Zonas del subsuelo en roca calcárea con presencia de agua dulce para la emancipación hídrica de la isla [part_8, part_53, part_54].' },
-      { t: 'Zonas de impermeabilización crítica', d: 'Áreas construidas donde el agua no infiltra y sectores de cubiertas (asbesto) que impiden o contaminan la captación limpia [part_54, part_59].' },
-    ],
-    cam: 'carto_topohidrica',
-    casas: 1,
-    calles: 0,
-    dim: 0.15,
-    year: 0,
-    modo: 'perdida',
-    cartoCapa: 2,
-  },
-  {
     id: 'biotica',
-    pasoNum: '03',
+    pasoNum: '02',
     corto: 'Biótica',
     titulo: 'Capa Biótica · Red de Interacciones Bióticas',
     subtitulo: '9.688 registros geolocalizados · 438 especies · 923 relaciones ecológicas',
@@ -160,6 +133,7 @@ export const PASOS_CARTOGRAFIA = [
     cartoCapa: 3,
   },
 ];
+const IDX_BIOTICA = PASOS_CARTOGRAFIA.findIndex((p) => p.id === 'biotica');
 const ALTO_PASO = 95; // svh por paso
 
 /* ---------- utilidades de presentación ---------- */
@@ -986,7 +960,7 @@ export default function Relato({ api, sinEscena }) {
         contexto: ps.contexto || 0,
         dim: ps.dim || 0.1,
         midas: !!ps.midas,
-        cartoCapa: ci,
+        cartoCapa: ps.cartoCapa ?? ci,
       };
     } else if (c === 'erosion') {
       const y = 30 * ease(clamp01((p - 0.08) / 0.76));
@@ -1147,7 +1121,7 @@ export default function Relato({ api, sinEscena }) {
       {/* 03 · Visor interactivo real de la Red de Interacciones Bióticas: LITERALLY APPEARS on Capa 03 */}
       <div
         className={`fixed inset-0 z-30 transition-opacity duration-500 ${
-          cap === 'problema' && cartoIdx === 3
+          cap === 'problema' && cartoIdx === IDX_BIOTICA
             ? 'opacity-100 pointer-events-auto visible'
             : 'opacity-0 pointer-events-none invisible'
         }`}
@@ -1165,7 +1139,7 @@ export default function Relato({ api, sinEscena }) {
               key={p.id}
               type="button"
               className={`h-7 px-3 rounded-full text-xs font-medium transition-all ${
-                i === 3
+                i === IDX_BIOTICA
                   ? 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/60 shadow-lg'
                   : 'text-white/70 hover:text-white hover:bg-white/10'
               }`}
@@ -1201,7 +1175,7 @@ export default function Relato({ api, sinEscena }) {
       {/* paneles flotantes */}
       {api && cap === 'problema' && (
         <>
-          {(cartoIdx !== 3 || verFichaBiotica) && !panelOculto && (
+          {(cartoIdx !== IDX_BIOTICA || verFichaBiotica) && !panelOculto && (
             <PanelCartografia
               paso={PASOS_CARTOGRAFIA[cartoIdx]}
               idx={cartoIdx}

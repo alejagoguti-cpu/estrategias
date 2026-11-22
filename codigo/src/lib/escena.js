@@ -1876,10 +1876,6 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
       pos: new THREE.Vector3(vx - 2200, 3400, vz + 3600),
       look: new THREE.Vector3(vx - 600, 0, vz + 1200),
     }),
-    carto_topohidrica: () => ({
-      pos: new THREE.Vector3(mCx + 1800, 3800, mCz + 3900),
-      look: new THREE.Vector3(mCx - 200, 20, mCz - 100),
-    }),
     carto_biotica: () => ({
       pos: new THREE.Vector3(mCx - 1400, 3200, mCz + 3200),
       look: new THREE.Vector3(mCx + 300, 15, mCz + 400),
