@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 // Corte del paisaje adaptativo dibujado con puntos (la estética del manglar de «Tramas»):
 // terreno, agua por cotas, vegetación y especies se muestrean en puntos de color sobre fondo oscuro.
@@ -62,6 +62,8 @@ function pintarFondo(x) {
   const arbol = (ax, s, cols) => { const ay = suelo(ax) - 5; x.save(); x.translate(ax, ay); x.scale(s, s); x.fillStyle = '#6a4a30'; x.fill(new Path2D('M-1.5,0 L-1,-16 L-5,-22 L-0.5,-19 L0,-26 L1.5,-19 L6,-23 L1.5,-15 L1.8,0Z')); [[0, -34, 11], [-10, -27, 8], [10, -28, 8.5], [-4, -43, 8], [6, -41, 8]].forEach(([a, b, r], i) => { x.fillStyle = cols[i % cols.length]; x.beginPath(); x.arc(a, b, r, 0, 6.283); x.fill(); }); x.restore(); };
   arbol(845, 1.05, ['#3c6e2e', '#4f8236', '#2f5a28']); arbol(1010, 1.55, ['#2f5d2a', '#557f34', '#3f6f2c']);
   [0, 1, 2].forEach((i) => { x.fillStyle = ['#4d7a2f', '#5f8c36', '#3f6a29'][i]; x.beginPath(); x.arc(728 + i * 9, suelo(728 + i * 9) - 8 - (i % 2) * 3, 7 + (i % 2) * 2, 0, 6.283); x.fill(); });
+  // algodoncillo gigante (Calotropis procera) con flores lila
+  { const ax = 935; const ay = suelo(ax); x.strokeStyle = "#7d8f5a"; x.lineWidth = 2; [-8, -3, 3, 8].forEach((d) => { x.beginPath(); x.moveTo(ax, ay); x.quadraticCurveTo(ax + d * 0.6, ay - 14, ax + d, ay - 24); x.stroke(); }); [[-9, -24, 7], [-2, -30, 8], [7, -26, 7], [0, -20, 7], [10, -18, 5], [-10, -16, 5]].forEach(([dx, dy, r2], i) => { x.fillStyle = ["#8fae7a", "#a3be8c", "#7f9f6c"][i % 3]; x.beginPath(); x.ellipse(ax + dx, ay + dy, r2, r2 * 0.6, 0.3, 0, 6.283); x.fill(); }); [[-4, -36], [4, -34], [-11, -30], [10, -31]].forEach(([dx, dy]) => { x.fillStyle = "#d8c4f0"; x.beginPath(); x.arc(ax + dx, ay + dy, 2.6, 0, 6.283); x.fill(); x.fillStyle = "#8a5fb8"; x.beginPath(); x.arc(ax + dx, ay + dy, 1, 0, 6.283); x.fill(); }); }
   // enrocado permeable
   for (let i = 0; i < 16; i++) { const rx = 700 + i * 5.2; const ry = suelo(rx) - 3 - (i % 3) * 3; const s = 4 + (i % 4); x.fillStyle = ['#c9c4b8', '#b3ada0', '#ddd8cc'][i % 3]; x.beginPath(); x.moveTo(rx, ry); x.lineTo(rx + s, ry - 2); x.lineTo(rx + s + 2, ry + s - 2); x.lineTo(rx + 1, ry + s); x.lineTo(rx - 2, ry + 3); x.fill(); }
   // pasarela de madera sobre pilotes
@@ -105,11 +107,31 @@ const ESPECIES = [
 // rótulos fijos (vegetación)
 export const ROTULOS_FIJOS = [
   [238, suelo(250) - 30, 'Thalassia testudinum', 'middle'], [530, suelo(530) - 56, 'Rhizophora mangle', 'middle'], [655, suelo(665) + 16, 'Sesuvium portulacastrum', 'middle'],
-  [760, suelo(742) + 20, 'Coccoloba uvifera', 'start'], [845, suelo(845) - 66, 'Conocarpus erectus', 'middle'], [1010, suelo(1010) - 86, 'Ceiba pentandra', 'middle'],
+  [760, suelo(742) + 20, 'Coccoloba uvifera', 'start'], [845, suelo(845) - 66, 'Conocarpus erectus', 'middle'], [1010, suelo(1010) - 86, 'Ceiba pentandra', 'middle'], [935, suelo(935) - 46, 'Calotropis procera', 'middle'],
 ];
+
+const suave = (x) => { const t = clamp(x, 0, 1); return t * t * (3 - 2 * t); };
+const PIE = { garza: (x) => Math.min(suelo(x), 506), alba: (x) => suelo(x) + 2, iguana: (x) => suelo(x) - 2, cangrejo: (x) => suelo(x) - 1 };
+const INAT_OBS = 'iNaturalist (observaciones ciudadanas con interacción)';
+// interacciones registradas en la base de especies de la isla (especies/data/interacciones.json)
+const INTERACCIONES = {
+  garza: { a: 'garza', b: 'sardina', modo: 'caza', tipo: 'Depredación', A: ['Garza dedos dorados', 'Egretta thula'], B: ['Sardina vivita de hebra', 'Opisthonema oglinum'], texto: 'La garza camina despacio por el agua baja, se queda quieta y lanza el pico sobre las sardinas que se acercan a la orilla.', fuente: INAT_OBS },
+  alba: { a: 'alba', b: 'garza', modo: 'compite', tipo: 'Competencia', A: ['Garza blanca', 'Ardea alba'], B: ['Garza dedos dorados', 'Egretta thula'], texto: 'Las dos pescan en los mismos sitios de agua baja. Cuando llega la garza blanca, más grande, la garza dedos dorados se aparta.', fuente: INAT_OBS },
+  pelicano: { a: 'pelicano', b: 'garza', modo: 'compite', tipo: 'Competencia', A: ['Pelícano café', 'Pelecanus occidentalis'], B: ['Garza dedos dorados', 'Egretta thula'], texto: 'El pelícano se posa en el agua donde pesca la garza: los dos buscan los mismos cardúmenes de peces pequeños en la orilla.', fuente: INAT_OBS },
+  albaVuelo: { a: 'albaVuelo', b: 'iguana', modo: 'caza', tipo: 'Depredación', A: ['Garza blanca', 'Ardea alba'], B: ['Iguana verde', 'Iguana iguana'], texto: 'La garza blanca también caza en tierra: baja en picada sobre las iguanas jóvenes del talud, que huyen hacia el bosque.', fuente: `${INAT_OBS}; Vlad et al. 2022, iguana en Islas Caimán` },
+  martin: { a: 'martin', b: 'iguana', modo: 'acompana', tipo: 'Mutualismo y simbiosis', A: ['Martín pescador de collar', 'Megaceryle torquata'], B: ['Iguana verde', 'Iguana iguana'], texto: 'Asociación registrada entre el martín pescador de collar y la iguana verde en los bordes de agua.', fuente: 'Vlad et al. 2022, iguana en Islas Caimán' },
+  tortuga: { a: 'tortuga', b: { x: 250, y: suelo(250) - 12, es: 'Hierba de tortuga', sci: 'Thalassia testudinum' }, modo: 'planta', tipo: 'Herbivoría', A: ['Tortuga verde', 'Chelonia mydas'], B: ['Hierba de tortuga', 'Thalassia testudinum'], texto: 'La tortuga verde pasta las praderas de hierba de tortuga del lecho marino; al recortarlas las mantiene densas y productivas.', fuente: 'SeaLifeBase; GoMexSI, dietas del Golfo de México; Roopnarine y Hertog 2013; Mangal' },
+  iguana: { a: 'iguana', b: { x: 532, y: suelo(532) - 30, es: 'Mangle colorado', sci: 'Rhizophora mangle' }, modo: 'planta', tipo: 'Herbivoría', A: ['Iguana verde', 'Iguana iguana'], B: ['Mangle colorado', 'Rhizophora mangle'], texto: 'La iguana baja del talud al manglar y come hojas, brotes y flores del mangle colorado.', fuente: 'Vlad et al. 2022, iguana en Islas Caimán; Poelen 2014, asociaciones extraídas de literatura' },
+  monarca: { a: 'monarca', b: { x: 935, y: suelo(935) - 30, es: 'Algodoncillo gigante', sci: 'Calotropis procera' }, modo: 'visita', tipo: 'Planta hospedera', A: ['Mariposa monarca', 'Danaus plexippus'], B: ['Algodoncillo gigante', 'Calotropis procera'], texto: 'La monarca pone sus huevos en el algodoncillo gigante: sus orugas comen sus hojas y los adultos visitan sus flores.', fuente: `${INAT_OBS}; Ferrer-Paris et al. 2013; NHM Interactions Bank; HOSTS (NHM Londres)` },
+  fragata: { es: 'Fragata tijereta', sci: 'Fregata magnificens' },
+  cangrejo: { es: 'Cangrejo azul', sci: 'Cardisoma guanhumi' },
+};
 
 export default function CorteVivo() {
   const caja = useRef(null); const lienzo = useRef(null);
+  const interRef = useRef(null); const alAbrir = useRef(null); const alCerrar = useRef(null);
+  const [ficha, setFicha] = useState(null);
+  alAbrir.current = (d) => setFicha(d); alCerrar.current = () => setFicha(null);
   useEffect(() => {
     const el = caja.current; const cv = lienzo.current; if (!el || !cv) return undefined;
     const cx = cv.getContext('2d'); let vivo = true; let raf = 0; let visible = false;
@@ -174,10 +196,58 @@ export default function CorteVivo() {
         const alto = Math.max(0, p.base - p.y); const sub = p.y > 440 && p.x < 360; const sw = sub ? Math.sin(t * 0.9 + p.x * 0.04) * 0.12 : (Math.sin(t * 1.6 + p.x * 0.05) * 0.09 + Math.sin(t * 3.7 + p.x * 0.2) * 0.03);
         cx.globalAlpha = 0.95; cx.fillStyle = p.c; punto(cx, p.x + alto * sw * (alto / 18), p.y, 1.05 * p.r);
       }
-      // especies
+      // especies: movimiento normal y, si hay una interacción activa, el encuentro entre las dos
+      const M = {}; for (const e of especies) M[e.id] = e.mov(t);
+      const it = interRef.current; let kI = 0; let posA = null; let posB = null; let uI = 0;
+      if (it) {
+        uI = t - (it.t0 ?? (it.t0 = t)); const D = 11;
+        kI = suave(uI / 1.6) * (1 - suave((uI - (D - 1.6)) / 1.6));
+        if (uI > D) { interRef.current = null; alCerrar.current?.(); }
+        else {
+          const d = it.def; const A = M[d.a]; const pie = (id, x) => PIE[id](x);
+          const objetivo = {};
+          const bAnimal = typeof d.b === 'string';
+          if (it.P == null) it.P = d.modo === 'caza' && d.b === 'sardina' ? clamp(A.x, 150, 285) : bAnimal ? M[d.b === 'sardina' ? 'sardina0' : d.b].x : d.b.x;
+          const P = it.P;
+          if (d.b === 'sardina') {
+            const ataque = uI > 2.2 ? Math.pow(Math.max(0, Math.sin(uI * 2.2)), 10) * 10 : 0;
+            objetivo[d.a] = { x: P, y: pie(d.a, P) + ataque, dir: 1 };
+            for (let i = 0; i < 7; i++) { const sp = Math.sin(uI * 1.6 + i * 0.9); objetivo[`sardina${i}`] = { x: P + 34 + Math.cos(uI * 1.4 + i) * 16 - ataque * 0.8, y: 497 + (i % 4) * 5 + Math.sin(uI * 2 + i) * 3, dir: sp > 0 ? 1 : -1 }; }
+          } else if (d.modo === 'compite') {
+            const lado = A.x < P ? 1 : -1; const B0 = M[d.b];
+            objetivo[d.a] = d.a === 'pelicano' ? { x: P - lado * 46, y: 466, dir: lado, fase: uI * 0.8 } : { x: P - lado * 10, y: pie(d.a, P - lado * 10), dir: lado };
+            const xb = clamp(P + lado * 75 * suave((uI - 1.4) / 2), 112, 440); objetivo[d.b] = { x: xb, y: pie(d.b, xb), dir: lado, paso: B0.paso };
+          } else if (d.modo === 'caza') { // garza blanca en vuelo sobre la iguana, que huye talud arriba
+            const B0 = M[d.b]; const xb = clamp(B0.x + 55 * suave((uI - 1.5) / 2.5), 860, 1040); objetivo[d.b] = { x: xb, y: pie(d.b, xb), dir: 1, paso: B0.paso };
+            const picada = uI > 2.6 && uI < 4.4 ? Math.sin(((uI - 2.6) / 1.8) * Math.PI) : 0;
+            objetivo[d.a] = { x: xb - 30, y: suelo(xb) - 70 + picada * 48, dir: 1, fase: uI * (picada > 0 ? 1 : 4) };
+          } else if (d.modo === 'acompana') { const B0 = M[d.b]; objetivo[d.a] = { x: B0.x + Math.sin(uI * 1.3) * 14, y: B0.y - 40 + Math.sin(uI * 2) * 4, dir: -1, fase: uI * 9 }; }
+          else if (d.modo === 'planta') { objetivo[d.a] = { x: d.b.x + Math.sin(uI * 2.5) * 4, y: d.a === 'tortuga' ? d.b.y : pie(d.a, d.b.x), dir: -1, nado: uI * 2.5, paso: Math.sin(uI * 6) * 0.5 }; }
+          else if (d.modo === 'visita') { objetivo[d.a] = { x: d.b.x + Math.sin(uI * 1.8) * 14, y: d.b.y + Math.sin(uI * 2.7) * 9, dir: Math.cos(uI * 1.8) > 0 ? 1 : -1, fase: uI * 16 }; }
+          for (const [id, o] of Object.entries(objetivo)) { const m0 = M[id]; M[id] = { ...m0, ...o, x: m0.x + (o.x - m0.x) * kI, y: m0.y + (o.y - m0.y) * kI, dir: kI > 0.35 ? o.dir : m0.dir }; }
+          posA = M[d.a]; posB = bAnimal ? M[d.b === 'sardina' ? 'sardina0' : d.b] : d.b;
+          it.ids = new Set([d.a, ...Object.keys(objetivo)]);
+        }
+      }
+      // línea punteada, recuadro y ondas de la interacción
+      if (posA && posB && kI > 0.05) {
+        const ya = posA.y - 18; const yb = posB.y - 6; cx.globalAlpha = kI; cx.strokeStyle = 'rgba(255,107,74,.85)'; cx.lineWidth = 1.3; cx.setLineDash([6, 6]); cx.lineDashOffset = -t * 30;
+        cx.beginPath(); cx.moveTo(posA.x, ya); cx.lineTo(posB.x, yb); cx.stroke(); cx.setLineDash([]);
+        const mx = (posA.x + posB.x) / 2; const my = Math.min(ya, yb) - 46; const L = 74;
+        cx.fillStyle = 'rgba(4,6,7,.78)'; cx.fillRect(mx - L / 2, my - L / 4, L, L / 2); cx.fillStyle = 'rgba(255,107,74,.16)'; cx.fillRect(mx - L / 2, my - L / 4, L, L / 2);
+        cx.strokeStyle = '#ff6b4a'; cx.strokeRect(mx - L / 2, my - L / 4, L, L / 2);
+        cx.font = '600 10px "Geist Mono", monospace'; cx.fillStyle = '#ff8a6a'; cx.textAlign = 'center';
+        const pal = interRef.current.def.tipo.toUpperCase().split(' '); const lin = []; let l = ''; pal.forEach((w) => { if ((`${l} ${w}`).trim().length > 12) { lin.push(l.trim()); l = w; } else l += ` ${w}`; }); lin.push(l.trim());
+        lin.slice(0, 3).forEach((s, i) => cx.fillText(s, mx, my - (lin.length - 1) * 6 + i * 12 + 3));
+        cx.strokeStyle = '#d8f4fb';
+        for (const q of [posA, posB]) { if (q.y < 392 || q.x > corteX(q.y)) continue; for (let r = 0; r < 3; r++) { const rr = ((uI * 14 + r * 11) % 33); cx.globalAlpha = kI * (1 - rr / 33) * 0.8; cx.beginPath(); cx.ellipse(q.x, Math.min(q.y, 478) - 2, rr, rr * 0.28, 0, 0, 6.283); cx.stroke(); } }
+        cx.globalAlpha = 1;
+      }
       cx.font = 'italic 12.5px Geist, sans-serif'; cx.textAlign = 'center';
       for (const e of especies) {
-        if (!e.pts) continue; const m = e.mov(t); const sx = e.sinVoltear ? 1 : m.dir * e.mira;
+        if (!e.pts) continue; const m = M[e.id]; const sx = e.sinVoltear ? 1 : m.dir * e.mira;
+        const atenuado = it && it.ids && kI > 0 && !it.ids.has(e.id) ? 1 - 0.7 * kI : 1;
+        e.caja = e.anc === 'pie' ? [m.x - e.w / 2, m.y - e.alto, m.x + e.w / 2, m.y] : [m.x - e.w / 2, m.y - e.alto / 2, m.x + e.w / 2, m.y + e.alto / 2];
         let ang = 0; if (e.inclina) { ang = Math.atan2(suelo(m.x + 4) - suelo(m.x - 4), 8); }
         const ca = Math.cos(ang); const sa = Math.sin(ang); const media = e.w / 2;
         for (const p of e.pts) {
@@ -187,18 +257,48 @@ export default function CorteVivo() {
           if (m.nado != null) py += Math.sin(m.nado + p.x * 0.25) * 0.9;
           if (m.paso != null && py > -e.alto * 0.35) px += m.paso * (p.f > 3.14 ? 1 : -1) * 0.6;
           const rx = px * ca - py * sa; const ry = px * sa + py * ca;
-          cx.globalAlpha = 0.95; cx.fillStyle = p.c; punto(cx, m.x + rx, m.y + ry, 1.0 * p.r);
+          cx.globalAlpha = 0.95 * atenuado; cx.fillStyle = p.c; punto(cx, m.x + rx, m.y + ry, 1.0 * p.r);
         }
-        if (e.sci) { const abajo = e.rotuloAbajo; cx.globalAlpha = 0.72; cx.fillStyle = '#d6ebef'; cx.fillText(e.sci, m.x, abajo ? m.y + e.alto / 2 + 14 : m.y + (e.anc === 'pie' ? -e.alto - 7 : -e.alto / 2 - 7)); }
+        if (e.sci) { const abajo = e.rotuloAbajo; cx.globalAlpha = 0.72 * atenuado; cx.fillStyle = '#d6ebef'; cx.fillText(e.sci, m.x, abajo ? m.y + e.alto / 2 + 14 : m.y + (e.anc === 'pie' ? -e.alto - 7 : -e.alto / 2 - 7)); }
       }
       cx.globalAlpha = 1;
     };
     raf = requestAnimationFrame(dibujar);
-    return () => { vivo = false; cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); };
+
+    // doble clic (o doble toque) sobre un animal → su interacción
+    const aLogico = (ev) => { const r = cv.getBoundingClientRect(); return [((ev.clientX - r.left) / r.width) * VB.w, VB.y + ((ev.clientY - r.top) / r.height) * VB.h]; };
+    const tocado = (ev) => { const [x, y] = aLogico(ev); let mejor = null; let dm = 1e9; for (const e of especies) { if (!e.caja) continue; const [x0, y0, x1, y1] = e.caja; if (x < x0 - 10 || x > x1 + 10 || y < y0 - 10 || y > y1 + 10) continue; const d = Math.hypot(x - (x0 + x1) / 2, y - (y0 + y1) / 2); if (d < dm) { dm = d; mejor = e; } } return mejor; };
+    const abrir = (ev) => {
+      const e = tocado(ev); if (!e) return; ev.preventDefault?.();
+      const clave = e.id.startsWith('sardina') ? 'garza' : e.id.startsWith('fragata') ? 'fragata' : e.id;
+      const def = INTERACCIONES[clave];
+      if (!def || !def.tipo) { interRef.current = null; alAbrir.current?.({ sinRegistro: true, es: def?.es ?? e.sci, sci: def?.sci ?? e.sci }); return; }
+      interRef.current = { def, t0: null, P: null }; alAbrir.current?.(def);
+    };
+    let ultimoToque = 0; let ultimoXY = [0, 0];
+    const toque = (ev) => { if (ev.pointerType === 'mouse') return; const ahora = performance.now(); if (ahora - ultimoToque < 330 && Math.hypot(ev.clientX - ultimoXY[0], ev.clientY - ultimoXY[1]) < 30) { abrir(ev); ultimoToque = 0; } else { ultimoToque = ahora; ultimoXY = [ev.clientX, ev.clientY]; } };
+    const sobre = (ev) => { cv.style.cursor = tocado(ev) ? 'pointer' : 'default'; };
+    cv.addEventListener('dblclick', abrir); cv.addEventListener('pointerup', toque); cv.addEventListener('pointermove', sobre);
+    return () => { vivo = false; cancelAnimationFrame(raf); ro.disconnect(); io.disconnect(); cv.removeEventListener('dblclick', abrir); cv.removeEventListener('pointerup', toque); cv.removeEventListener('pointermove', sobre); };
   }, []);
 
   return (
     <div ref={caja} className="relative w-full" style={{ aspectRatio: `${VB.w} / ${VB.h}` }}>
+      <p className="pointer-events-none absolute right-1 top-1 z-10 font-mono text-[10px] uppercase tracking-wider text-white/55">Doble clic sobre un animal: su interacción</p>
+      {ficha && (
+        <div className="entra absolute left-[23%] top-[1%] z-20 w-[min(21rem,38%)] border border-[#ff6b4a]/50 bg-[#040607]/88 p-2.5 backdrop-blur" role="dialog" aria-live="polite">
+          <button type="button" onClick={() => { interRef.current = null; setFicha(null); }} className="absolute right-2 top-1.5 text-[13px] text-white/60 hover:text-white" aria-label="Cerrar">✕</button>
+          {ficha.sinRegistro ? (
+            <><p className="etiqueta text-arcilla">Sin interacciones registradas</p><p className="mt-2 text-[13px] text-white/85">{ficha.es} <i className="text-white/55">({ficha.sci})</i></p><p className="mt-1.5 text-[11px] leading-snug text-white/55">La base de especies de la isla no registra todavía relaciones de esta especie con las demás del corte.</p></>
+          ) : (
+            <><p className="etiqueta text-arcilla">{ficha.tipo}</p>
+              <p className="mt-1.5 text-[13.5px] leading-tight text-white">{ficha.A[0]}<span className="mx-1.5 text-arcilla">↔</span>{ficha.B[0]}</p>
+              <p className="mt-0.5 text-[11px] italic text-white/55">{ficha.A[1]} · {ficha.B[1]}</p>
+              <p className="mt-1.5 text-[11.5px] leading-snug text-white/80">{ficha.texto}</p>
+              <p className="mt-2 text-[10px] leading-snug text-white/40">Interacción: {ficha.fuente}</p></>
+          )}
+        </div>
+      )}
       <canvas ref={lienzo} className="absolute inset-0 h-full w-full" aria-hidden="true" />
       <svg viewBox={`${VB.x} ${VB.y} ${VB.w} ${VB.h}`} className="pointer-events-none absolute inset-0 h-full w-full" role="img" aria-label="Corte del paisaje adaptativo de Tierra Bomba dibujado con puntos: del lecho marino a la meseta, con cotas de marea e inundación, dos ecotonos, la pasarela elevada y especies en movimiento">
         <defs><marker id="flechaClara" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 L3,5Z" fill="#f4f1ea" /></marker></defs>
