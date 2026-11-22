@@ -19,6 +19,7 @@ export function crearCartografia3D({
   llToXZ,
   houses = [],
   lineMats = [],
+  baseUrl = './',
 }) {
   const rootGroup = new THREE.Group();
   rootGroup.name = 'cartografia_operativa_root';
@@ -415,29 +416,147 @@ export function crearCartografia3D({
   crearEtiqueta3D('Cubiertas de Asbesto Selladas', TB_PUEBLO[0] - 120, TB_PUEBLO[1] + 240, 45, '#f43f5e', topoGroup);
 
   // ===========================================================================
-  // 03 · CAPA BIÓTICA (RED BIÓTICA Y GEOLOCALIZACIÓN)
+  // 03 · CAPA BIÓTICA (RED DE INTERACCIONES BIÓTICAS Y GEOLOCALIZACIÓN REAL)
+  // Base científica: 9.688 registros, 438 especies, 923 interacciones ecológicas (GloBI / iNaturalist)
   // ===========================================================================
-  const especiesDef = [
-    { sp: 'Rhizophora mangle (Mangle rojo)', pos: [CANO_ORO[0] + 80, CANO_ORO[1] + 160], color: '#10b981', r: 150 },
-    { sp: 'Avicennia germinans (Mangle negro)', pos: [CANO_ORO[0] - 160, CANO_ORO[1] + 220], color: '#059669', r: 130 },
-    { sp: 'Coccoloba uvifera (Uvita de playa)', pos: [PUNTA_ARENA[0] + 110, PUNTA_ARENA[1] - 80], color: '#84cc16', r: 110 },
-    { sp: 'Prosopis juliflora (Trupillo)', pos: [TB_PUEBLO[0] + 260, TB_PUEBLO[1] + 360], color: '#65a30d', r: 140 },
-    { sp: 'Bosque Seco Tropical (Guayacán)', pos: [MESETA_CENTRO[0] + 100, MESETA_CENTRO[1] - 120], color: '#16a34a', r: 200 },
-    { sp: 'Pasto Vetiver (Bio-armadura talud)', pos: [PUNTA_ARENA[0] - 240, PUNTA_ARENA[1] + 440], color: '#22c55e', r: 120 },
+  const CAT_COLORS = [
+    0x38bdf8, // 0: Aves (78 spp)
+    0x22c55e, // 1: Flora (112 spp · 36 árboles)
+    0xfbbf24, // 2: Insectos (114 spp)
+    0x06b6d4, // 3: Peces (50 spp)
+    0xa855f7, // 4: Moluscos (33 spp)
+    0xec4899, // 5: Arácnidos (17 spp)
+    0xf97316, // 6: Mamíferos (15 spp)
+    0xeab308, // 7: Reptiles (10 spp)
+    0x10b981, // 8: Anfibios (5 spp)
+    0xd97706, // 9: Hongos (4 spp)
   ];
 
+  const bioticaLineMats = [];
   const bioticaRings = [];
-  especiesDef.forEach(({ sp, pos, color, r }) => {
-    const ringGeo = new THREE.RingGeometry(r * 0.75, r, 28);
-    ringGeo.rotateX(-Math.PI / 2);
-    ringGeo.translate(pos[0], heightAtXZ(pos[0], pos[1]) + 1.8, pos[1]);
-    const ringMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(color).getHex(), transparent: true, opacity: 0.75, side: THREE.DoubleSide });
-    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-    bioticaGroup.add(ringMesh);
-    bioticaRings.push(ringMesh);
+  const redBioticaSubGroup = new THREE.Group();
+  redBioticaSubGroup.name = 'red_biotica_interacciones_real';
+  bioticaGroup.add(redBioticaSubGroup);
 
-    crearEtiqueta3D(sp, pos[0], pos[1], 45, color, bioticaGroup);
-  });
+  // Carga asíncrona de la base de datos real de especies e interacciones
+  fetch(`${baseUrl}especies/data/especies.json`)
+    .then((r) => r.json())
+    .then((espData) => {
+      fetch(`${baseUrl}especies/data/interacciones.json`)
+        .then((r) => r.json())
+        .then((relData) => {
+          // 1. Puntos de observaciones reales en el terreno (732 avistamientos geolocalizados)
+          if (espData.obs && espData.obs.length) {
+            const dotGeo = new THREE.SphereGeometry(7, 6, 4);
+            const dotMat = new THREE.MeshBasicMaterial({ color: 0x4ade80, transparent: true, opacity: 0.85 });
+            const im = new THREE.InstancedMesh(dotGeo, dotMat, espData.obs.length);
+            const dummy = new THREE.Object3D();
+            const colorTmp = new THREE.Color();
+
+            espData.obs.forEach(([spIdx, ox, oz], i) => {
+              const sp = espData.species[spIdx];
+              const oy = Math.max(0, heightAtXZ(ox, oz)) + 2.0;
+              dummy.position.set(ox, oy, oz);
+              dummy.updateMatrix();
+              im.setMatrixAt(i, dummy.matrix);
+              const hex = CAT_COLORS[sp?.cat ?? 1] || 0x22c55e;
+              colorTmp.setHex(hex);
+              im.setColorAt(i, colorTmp);
+            });
+            im.instanceMatrix.needsUpdate = true;
+            if (im.instanceColor) im.instanceColor.needsUpdate = true;
+            redBioticaSubGroup.add(im);
+          }
+
+          // 2. Mapa de especies indexadas por taxon ID (tid)
+          const spMap = new Map();
+          espData.species.forEach((s) => spMap.set(s.tid, s));
+
+          // 3. Arcos tróficos y de polinización en 3D
+          const arcosPares = [];
+          const arcosParesPoli = [];
+          const arcosParesHerbi = [];
+
+          const validRels = [];
+          relData.rel.forEach(([t1, t2, tipos, n]) => {
+            const s1 = spMap.get(t1);
+            const s2 = spMap.get(t2);
+            if (s1 && s2 && s1.x != null && s2.x != null) {
+              const d = Math.hypot(s2.x - s1.x, s2.z - s1.z);
+              if (d > 20 && d < 4200) {
+                validRels.push({ s1, s2, tipo: tipos[0] || 0, d, n });
+              }
+            }
+          });
+          validRels.sort((a, b) => b.n - a.n);
+
+          // Trazar las 120 relaciones de mayor peso e impacto como parábolas 3D
+          validRels.slice(0, 120).forEach(({ s1, s2, tipo, d }) => {
+            const y1 = Math.max(0, heightAtXZ(s1.x, s1.z)) + 3;
+            const y2 = Math.max(0, heightAtXZ(s2.x, s2.z)) + 3;
+            const archH = Math.min(180, 25 + d * 0.08);
+
+            const nSegs = 8;
+            for (let k = 0; k < nSegs; k++) {
+              const tA = k / nSegs;
+              const tB = (k + 1) / nSegs;
+              const xA = s1.x + (s2.x - s1.x) * tA;
+              const zA = s1.z + (s2.z - s1.z) * tA;
+              const yA = y1 + (y2 - y1) * tA + Math.sin(tA * Math.PI) * archH;
+
+              const xB = s1.x + (s2.x - s1.x) * tB;
+              const zB = s1.z + (s2.z - s1.z) * tB;
+              const yB = y1 + (y2 - y1) * tB + Math.sin(tB * Math.PI) * archH;
+
+              const par = [[xA, yA, zA], [xB, yB, zB]];
+              if (tipo === 2) arcosParesPoli.push(par);
+              else if (tipo === 1) arcosParesHerbi.push(par);
+              else arcosPares.push(par);
+            }
+          });
+
+          // Conectar trazos 3D animados
+          if (arcosParesPoli.length) {
+            const l = crearTrazoLineas(arcosParesPoli, 0xf59e0b, 2.8, true, redBioticaSubGroup);
+            if (l) bioticaLineMats.push(l.mat);
+          }
+          if (arcosParesHerbi.length) {
+            const l = crearTrazoLineas(arcosParesHerbi, 0x84cc16, 2.5, true, redBioticaSubGroup);
+            if (l) bioticaLineMats.push(l.mat);
+          }
+          if (arcosPares.length) {
+            const l = crearTrazoLineas(arcosPares, 0xef4444, 2.2, true, redBioticaSubGroup);
+            if (l) bioticaLineMats.push(l.mat);
+          }
+
+          // 4. Balizas y nodos de las especies clave más conectadas en la isla
+          const especiesClave = [
+            { tid: 47219, n: 'Abeja melífera (62 rel.)', col: '#fbbf24' },
+            { tid: 51111, n: 'Abeja carpintera (42 rel.)', col: '#f59e0b' },
+            { tid: 62841, n: 'Cordia / Árbol nativo (37 rel.)', col: '#22c55e' },
+            { tid: 35342, n: 'Iguana verde (36 rel.)', col: '#84cc16' },
+            { tid: 62850, n: 'Mangle botoncillo (Costa)', col: '#10b981' },
+            { tid: 4328, n: 'Pelícano café (Litoral)', col: '#38bdf8' },
+            { tid: 41005, n: 'Murciélago frutero', col: '#f97316' },
+          ];
+
+          especiesClave.forEach(({ tid, n, col }) => {
+            const sp = spMap.get(tid);
+            if (!sp) return;
+            const r = 90;
+            const ringGeo = new THREE.RingGeometry(r * 0.7, r, 24);
+            ringGeo.rotateX(-Math.PI / 2);
+            ringGeo.translate(sp.x, Math.max(0, heightAtXZ(sp.x, sp.z)) + 2.0, sp.z);
+            const ringMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(col).getHex(), transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+            const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+            redBioticaSubGroup.add(ringMesh);
+            bioticaRings.push(ringMesh);
+            crearEtiqueta3D(n, sp.x, sp.z, 45, col, redBioticaSubGroup);
+          });
+        })
+        .catch((e) => console.warn('Aviso: interacciones.json diferido:', e));
+    })
+    .catch((e) => console.warn('Aviso: especies.json diferido:', e));
 
   // Borde de amortiguamiento bio-mecánico costero continuo (50-150m)
   const bufferPares = [];
@@ -588,6 +707,9 @@ export function crearCartografia3D({
     if (verBiotica) {
       const pulBio = 1 + 0.05 * Math.sin(t * 2.0);
       bioticaRings.forEach((b) => b.scale.set(pulBio, pulBio, 1));
+      bioticaLineMats.forEach((m) => {
+        if (m) m.dashOffset = -t * 28;
+      });
     }
 
     if (verAntropica) {

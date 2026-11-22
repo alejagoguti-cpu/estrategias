@@ -1750,6 +1750,7 @@ export async function crearEscena(mount, { onProgreso = () => {} } = {}) {
     midasJson,
     ctxJson,
     lineMats,
+    baseUrl: BASE,
     addClean: (fn) => cleanups.push(fn),
   });
 

@@ -136,20 +136,18 @@ export const PASOS_CARTOGRAFIA = [
     id: 'biotica',
     pasoNum: '03',
     corto: 'Biótica',
-    titulo: 'Capa Biótica',
-    subtitulo: 'Red biótica, geolocalización de especies y bordes de amortiguamiento',
+    titulo: 'Capa Biótica · Red de Interacciones Bióticas',
+    subtitulo: '9.688 registros geolocalizados · 438 especies · 923 relaciones ecológicas',
     cita: '[part_160]',
-    frase: 'Armadura ecosistémica viva de disipación y amortiguamiento costero',
-    texto: 'Geolocaliza las comunidades vegetales y su capacidad protectora [part_160]. Los manglares estabilizan orillas y disipan hasta el 66% de la fuerza del oleaje en ensenadas, la uvita de playa y el vetiver fijan taludes arenosos, y el Bosque Seco Tropical en la meseta previene el lavado del suelo fértil.',
+    frase: 'Red ecológica viva: 923 relaciones tróficas, polinización y armadura costera disipativa',
+    texto: 'Mapea la red de interacciones bióticas de Tierra Bomba a partir de 9.688 registros (47% iNaturalist, 25% artículos científicos, 22% bases globales GloBI, 6% colecciones de museos) [part_160]. Articula 438 especies en 10 grupos taxonómicos (78 aves, 112 flora con 36 especies arbóreas, 114 insectos, 50 peces, 33 moluscos, 17 arácnidos, 15 mamíferos, 10 reptiles, 5 anfibios y 4 hongos) y 923 relaciones ecológicas activas.',
     vectores: [
-      { t: 'Geolocalización: Rhizophora mangle (Mangle rojo)', d: 'Borde intermareal en Caño del Oro y Bocachica: raíces zancudas que disipan hasta el 66% del oleaje costero.' },
-      { t: 'Geolocalización: Avicennia germinans (Mangle negro)', d: 'Franja hipersalina interior y caños: neumatóforos oxigenadores y trampa de sedimentos.' },
-      { t: 'Geolocalización: Coccoloba uvifera (Uvita de playa)', d: 'Cordón dunar y bermas de Punta Arena: fijación de arenas litorales y resistencia a salinidad marina.' },
-      { t: 'Geolocalización: Prosopis juliflora (Trupillo)', d: 'Laderas semiáridas y escarpes: raíz pivotante profunda que fija nitrógeno y previene deslizamientos.' },
-      { t: 'Geolocalización: Bursera simaruba e Indio en Cueros / Guayacán', d: 'Núcleo de Bosque Seco Tropical en la meseta calcárea: cobertura de dosel y retención edáfica.' },
-      { t: 'Geolocalización: Chrysopogon zizanioides (Pasto Vetiver)', d: 'Bio-armadura radicular de 3 m para anclar mecánicamente taludes en retroceso crítico.' },
-      { t: 'Bordes de amortiguamiento bio-mecánico costero', d: 'Franjas de 50 a 150 m en ensenadas que disipan el embate directo del mar [part_160].' },
-      { t: 'Corredores ecológicos de conectividad', d: 'Vínculos biológicos entre la meseta alta y las zonas húmedas del litoral insular [part_160].' },
+      { t: 'Red Ecológica: 923 Relaciones Activas en 8 Tipos', d: '211 de depredación, 335 de herbivoría y frugivoría, 290 de visita floral y polinización, además de dispersión de semillas, simbiosis y refugio [part_160].' },
+      { t: 'Flora Protectora y 36 Especies Arbóreas', d: 'Mangle botoncillo (Conocarpus erectus), mangle rojo (Rhizophora), cedro (Cedrela odorata), jobo (Spondias mombin) y pasto vetiver que disipan hasta el 66% del oleaje costero.' },
+      { t: 'Fauna Clave y Polinizadores Nativos', d: 'Abejas melíferas y carpinteras (Apis mellifera, Xylocopa), mariposa monarca (Danaus plexippus), iguanas (Iguana iguana) y aves marinas.' },
+      { t: '732 Puntos Reales de Observación Geolocalizados', d: 'Avistamientos científicos georreferenciados sobre el terreno entre Punta Arena, Caño del Oro, Bocachica y la Meseta Central.' },
+      { t: 'Borde de Amortiguamiento Bio-Mecánico Costero', d: 'Franjas de 50 a 150 m en ensenadas que amortiguan activamente el embate del Caribe [part_160].' },
+      { t: 'Corredores Ecológicos de Conectividad', d: 'Vínculos biológicos entre la meseta alta y las zonas húmedas del litoral insular [part_160].' },
     ],
     cam: 'carto_biotica',
     casas: 1,
@@ -448,6 +446,40 @@ function PanelCartografia({ paso, idx, total, onIrPaso }) {
       <p className="mt-3.5 text-[13px] leading-relaxed text-white/80">
         {paso.texto}
       </p>
+
+      {paso.id === 'biotica' && (
+        <div className="mt-3 rounded border border-emerald-500/35 bg-emerald-950/25 p-3">
+          <div className="flex items-center justify-between text-xs text-emerald-400 font-medium">
+            <span>Red de Interacciones Bióticas</span>
+            <span className="font-mono text-[11px] text-emerald-300/80">GloBI / iNaturalist</span>
+          </div>
+          <div className="mt-2.5 grid grid-cols-3 gap-2 text-center font-mono">
+            <div className="bg-black/55 p-2 rounded border border-emerald-500/20">
+              <span className="text-white font-bold block text-base leading-none">9.688</span>
+              <span className="text-white/50 text-[10px] mt-1 block">registros</span>
+            </div>
+            <div className="bg-black/55 p-2 rounded border border-emerald-500/20">
+              <span className="text-white font-bold block text-base leading-none">438</span>
+              <span className="text-white/50 text-[10px] mt-1 block">especies</span>
+            </div>
+            <div className="bg-black/55 p-2 rounded border border-emerald-500/20">
+              <span className="text-emerald-400 font-bold block text-base leading-none">923</span>
+              <span className="text-white/50 text-[10px] mt-1 block">relaciones</span>
+            </div>
+          </div>
+          <a
+            href="#especies"
+            onClick={(e) => {
+              e.preventDefault();
+              const el = document.getElementById('especies');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="mt-2.5 flex items-center justify-center gap-1.5 w-full rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 py-1.5 text-xs font-medium transition-colors"
+          >
+            Abrir visor 3D completo de la Red ↗
+          </a>
+        </div>
+      )}
 
       {paso.vectores && (
         <div className="mt-4 border-t border-white/12 pt-3">
