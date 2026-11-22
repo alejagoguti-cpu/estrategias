@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies, texSolar } from './comun.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { PAS, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies, texSolar } from './comun.js';
 
 // Colegio en la ladera del bosque: dos barras largas escalonadas, de dos pisos sobre pilotes de acero, con
 // fachada de listones de madera, bandas de vidrio, balcones corridos con baranda, cubiertas flotantes de vidrio y
@@ -20,9 +21,12 @@ export default function escenaLadera(ctx) {
     losa: (() => { const m = pbr(tl, 'concreto', [1, 1], { color: 0xd8d4cc }); return m; })(),
     acero: new THREE.MeshStandardMaterial({ color: 0x3a3e42, metalness: 0.8, roughness: 0.38 }), aceroClaro: new THREE.MeshStandardMaterial({ color: 0xa9b0b4, metalness: 0.85, roughness: 0.3 }),
     vidrio: new THREE.MeshPhysicalMaterial({ color: 0xcfe0e4, metalness: 0.1, roughness: 0.04, transparent: true, opacity: 0.28, envMapIntensity: 1.5, side: THREE.DoubleSide, depthWrite: false }),
-    interior: new THREE.MeshStandardMaterial({ color: 0xe6dccb, roughness: 0.9 }), solar: new THREE.MeshPhysicalMaterial({ map: texSolar(), roughness: 0.12, metalness: 0.35, clearcoat: 1 }),
+    interior: new THREE.MeshStandardMaterial({ color: 0xf0dcc0, emissive: 0x2a1e10, roughness: 0.9 }), fascia: new THREE.MeshStandardMaterial({ color: 0xece8e0, roughness: 0.7 }), cieloRaso: pbr(tl, 'madera', [1, 1], { color: 0xe0b07a }),
+    luz: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff4dc, emissiveIntensity: 2 }), piso: pbr(tl, 'concreto', [1, 1], { color: 0xc8b8a0 }), solar: new THREE.MeshPhysicalMaterial({ map: texSolar(), roughness: 0.12, metalness: 0.35, clearcoat: 1 }),
     techoVidrio: new THREE.MeshPhysicalMaterial({ color: 0xe4eef0, roughness: 0.1, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),
   };
+  // bruma de ladera (como en la referencia)
+  escena.fog = new THREE.Fog(0xc6d1cd, 40, 520); nieblaU.value.set(0.776, 0.82, 0.804, 480);
   // ladera con bosque y cerros con bruma al fondo
   {
     const g = new THREE.PlaneGeometry(400, 400, 200, 200); g.rotateX(-Math.PI / 2); const pa = g.attributes.position; const uv = g.attributes.uv; const col = new Float32Array(pa.count * 3);
@@ -43,7 +47,8 @@ export default function escenaLadera(ctx) {
     const g = new THREE.Group(); const prof = 9; const zAtras = zFrente - prof; const yB = terreno(0, zAtras) + 0.6; const L = x1 - x0; const cx = (x0 + x1) / 2;
     for (let n = 0; n < 2; n++) {
       const y = yB + n * PISO;
-      g.add(en(caja(L + 3, 0.3, prof + 2.2, M.losa, 2), cx - 1.5, y - 0.15, zAtras + (prof + 2.2) / 2));
+      { const lo = en(caja(L + 3, 0.34, prof + 2.2, M.losa, 2), cx - 1.5, y - 0.17, zAtras + (prof + 2.2) / 2); lo.material = [M.fascia, M.fascia, M.piso, M.cieloRaso, M.fascia, M.fascia]; g.add(lo); }
+      for (let x = x0 + 1.4; x < x1; x += 2.4) { const lam = caja(0.18, 0.04, 1.6, M.luz); lam.castShadow = false; lam.position.set(x, y + PISO - 0.38, zAtras + prof / 2); g.add(lam); }
       g.add(en(caja(L, PISO - 0.3, 0.2, M.interior, 2), cx, y + (PISO - 0.3) / 2, zAtras + 0.1));
       // banda de vidrio retranqueada con marcos
       const v = new THREE.Mesh(new THREE.PlaneGeometry(L - 0.4, PISO - 0.4), M.vidrio); v.position.set(cx, y + (PISO - 0.3) / 2, zFrente - 0.15); g.add(v);
@@ -90,11 +95,11 @@ export default function escenaLadera(ctx) {
   posar('monarca', Array.from({ length: 8 }, () => ({ p: new THREE.Vector3(), esc: 0.09, tam: 0.6, tipo: 'mariposa', aleteo: 0.9, base: new THREE.Vector3(-20 + rnd() * 40, y1 + 1.2, -11 + rnd() * 2), f: rnd() * 6 })));
 
   // recorrido: sube por el sendero, toma la escalera al balcón bajo, lo recorre, sube al balcón alto y lo recorre
-  const P = [[0, 0.1, 16], [0, 0.1, 6], [1.6, terreno(2, -6) + 0.1, -6.5], [4.2, terreno(5, -10.4) + 0.1, -10.4], [10.2, (terreno(5, -10.4) + y1) / 2, -10.4], [15.5, y1, -10.4], [16.6, y1, -12.4], [12, y1, -12.6], [0, y1, -12.6], [-14, y1, -12.6], [-26.6, y1, -12.8], [-28.6, y1, -13.6], [-28.6, (y1 + y2) / 2, -20.5], [-28.6, y2, -27.4], [-26.6, y2, -28.6], [-12, y2, -28.6], [6, y2, -28.6], [22, y2, -28.6]];
+  const P = [[0, 0.1, 30], [0, 0.1, 18], [0, 0.1, 6], [1.6, terreno(2, -6) + 0.1, -6.5], [4.2, terreno(5, -10.4) + 0.1, -10.4], [10.2, (terreno(5, -10.4) + y1) / 2, -10.4], [15.5, y1, -10.4], [16.6, y1, -12.4], [12, y1, -12.6], [0, y1, -12.6], [-14, y1, -12.6], [-26.6, y1, -12.8], [-28.6, y1, -13.6], [-28.6, (y1 + y2) / 2, -20.5], [-28.6, y2, -27.4], [-26.6, y2, -28.6], [-12, y2, -28.6], [6, y2, -28.6], [22, y2, -28.6]];
   const curva = new THREE.CatmullRomCurve3(P.map(([x, y, z]) => new THREE.Vector3(x, y, z)), false, 'catmullrom', 0.1);
   const L = curva.getLength();
   const muestras = curva.getSpacedPoints(400);
-  const libre = (x, z) => !muestras.some((q) => Math.hypot(q.x - x, q.z - z) < 3.2) && !(x > -31 && x < 26 && z < -11 && z > -41);
+  const libre = (x, z) => !muestras.some((q) => Math.hypot(q.x - x, q.z - z) < 3.2) && !(x > -31 && x < 26 && z < -11 && z > -41) && !(Math.abs(x) < 9 && z > -11 && z < 34 && (x * 7 + z * 3) % 5 > 1.2);
   // bosque denso en la ladera, bajo y entre las barras
   const arb = [];
   for (let i = 0; i < 1400; i++) { const x = -90 + rnd() * 180; const z = 30 - rnd() * 160; if (!libre(x, z)) continue; arb.push({ x, y: terreno(x, z) - 0.3, z, h: 7 + rnd() * 6 }); }
@@ -102,5 +107,7 @@ export default function escenaLadera(ctx) {
 
   const marco = (s, lado = 0) => { const u = clamp(s / L, 0, 1); const p = curva.getPointAt(u); const t = curva.getTangentAt(u).setY(0).normalize(); const l = new THREE.Vector3().crossVectors(t, new THREE.Vector3(0, 1, 0)).normalize(); return { p: p.addScaledVector(l, lado), t, l }; };
   const altura = (s) => curva.getPointAt(clamp(s / L, 0, 1)).y;
+  { const cache = {}; const cg = new GLTFLoader(); const traer = (n) => cache[n] || (cache[n] = new Promise((ok) => cg.load(`${PAS}colegio/${n}.glb`, (r2) => ok(r2.scene), undefined, () => ok(null))));
+    [baja, alta].forEach((b, bi) => [0, 1].forEach((n) => { const y = b.yB + n * PISO; const zf = bi ? -30 : -14; for (let x = -18; x < 18; x += 4.2) for (let j = 0; j < 2; j++) { const z = zf - 2.6 - j * 2.6; traer("WoodenTable_01").then((e) => { if (!e || !vivo()) return; const m = e.clone(true); m.position.set(x, y, z); escena.add(m); }); [-0.45, 0.45].forEach((dx) => traer("SchoolChair_01").then((e) => { if (!e || !vivo()) return; const m = e.clone(true); m.position.set(x + dx, y, z - 0.55); escena.add(m); })); } })); }
   return { curva, L, marco, altura, actualizar: (t) => animarEspecies(animales, t) };
 }
