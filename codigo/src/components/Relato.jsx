@@ -8,6 +8,7 @@ import Porques from './Porques.jsx';
 import RedEspecies from './RedEspecies.jsx';
 import Lectura from './Lectura.jsx';
 import Tramas from './Tramas.jsx';
+import PaisajeAdaptativo from './PaisajeAdaptativo.jsx';
 import { PLAN_PASOS, planEstado } from './Plan.jsx';
 import { PROGRAMA, PARQUE_RADIOS, HUMEDAL_RADIOS } from '../lib/plan.js';
 
@@ -36,7 +37,8 @@ const CAPITULOS = [
   { id: 'plan', n: '06', nombre: 'Plan maestro', corto: 'Plan' },
   { id: 'tramas', n: '07', nombre: 'Especies de la isla', corto: 'Especies' },
   { id: 'especies', n: '07', nombre: 'Red de especies', corto: 'Red' },
-  { id: 'cierre', n: '08', nombre: 'Lo que sigue', corto: 'Cierre' },
+  { id: 'paisaje-adaptativo', n: '08', nombre: 'Paisaje adaptativo', corto: 'Adaptativo' },
+  { id: 'cierre', n: '09', nombre: 'Lo que sigue', corto: 'Cierre' },
 ];
 
 const RADIOS = [
@@ -1183,6 +1185,16 @@ export default function Relato({ api, sinEscena }) {
           >
             {verFichaBiotica ? '✕ Ocultar Ficha' : 'ℹ Ficha Técnica'}
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              const el = document.getElementById('paisaje-adaptativo');
+              if (el) el.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="h-7 px-3 rounded-full text-xs font-medium transition-all bg-emerald-600/30 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-600/50 hover:text-white flex items-center gap-1"
+          >
+            🌊 Corte Adaptativo ↓
+          </button>
         </div>
       </div>
 
@@ -1211,6 +1223,7 @@ export default function Relato({ api, sinEscena }) {
 
       <Tramas />
       <RedEspecies />
+      <PaisajeAdaptativo />
       <Cierre api={api} version={version} />
     </div>
   );
