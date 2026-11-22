@@ -1,544 +1,264 @@
-import React, { useState } from 'react';
+import React from 'react';
+import PasarelaInmersiva from './PasarelaInmersiva.jsx';
 
 // =============================================================================
-// PAISAJE ADAPTATIVO: ASCENSO DEL NIVEL DEL MAR, SEDIMENTACIÓN Y BORDES BLANDOS
-// Adaptado a la Isla de Tierra Bomba, Cartagena
-// Referente: 10 ADAPTIVE LANDSCAPE - SEA LEVEL RISE AND SEDIMENT UNCERTAINTY
-// Articula:
-//  - Ecotono 01: Zona Intermareal y Praderas Marinas (Bajamar -0.15 m / Pleamar +0.40 m)
-//  - Ecotono 02: Marisma Costera, Manglar Disipativo y Pasarela Elevada (Storm Surge 50a +1.80 m)
-//  - Ecotono 03: Humedal Dulce de Fitofiltración y Bosque Seco hacia Meseta (+22 m / 100a +2.40 m)
+// 08 · PAISAJE ADAPTATIVO — ascenso del mar e incertidumbre de sedimentos (Tierra Bomba)
+// Representación gráfica del referente «10 Adaptive Landscape – Sea level rise and sediment uncertainty»:
+// corte en blanco con bandas de agua por cota, ecotonos en barras negras, siluetas azul marino con su
+// nombre científico, vegetación de fondo lavada, tiras de especies abajo y, a la derecha, la pasarela
+// elevada en primera persona (PasarelaInmersiva).
 // =============================================================================
 
-export const ESPECIES_PALETA = [
-  {
-    tid: 4328,
-    comun: 'Pelícano café',
-    sci: 'Pelecanus occidentalis',
-    cat: 'Avifauna Marina',
-    zona: 'Zona Intermareal',
-    c: '#38bdf8',
-    rol: 'Piscívoro costero y bioindicador de calidad de agua en bajamar.',
-    img: 'https://inaturalist-open-data.s3.amazonaws.com/photos/55327445/medium.jpg',
-  },
-  {
-    tid: 118509,
-    comun: 'Hierba de tortuga',
-    sci: 'Thalassia testudinum',
-    cat: 'Pradera Marina',
-    zona: 'Zona Intermareal',
-    c: '#06b6d4',
-    rol: 'Fijación de lechos arenosos, reducción de turbidez y sumidero de carbono azul.',
-    img: 'https://inaturalist-open-data.s3.amazonaws.com/photos/31937008/medium.jpeg',
-  },
-  {
-    tid: 62850,
-    comun: 'Mangle Botoncillo',
-    sci: 'Conocarpus erectus',
-    cat: 'Manglar de Borde',
-    zona: 'Marisma Costera',
-    c: '#10b981',
-    rol: 'Borde supramareal, alta resistencia a viento y salinidad extrema en costas rocosas.',
-    img: 'https://inaturalist-open-data.s3.amazonaws.com/photos/213051740/medium.jpeg',
-  },
-  {
-    tid: 82768,
-    comun: 'Mangle Rojo',
-    sci: 'Rhizophora mangle',
-    cat: 'Manglar Disipativo',
-    zona: 'Marisma Costera',
-    c: '#059669',
-    rol: 'Raíces zancudas que disipan hasta 66% de la energía del oleaje y retienen sedimentos.',
-    img: 'https://inaturalist-open-data.s3.amazonaws.com/photos/10197355/medium.jpg',
-  },
-  {
-    tid: 199320,
-    comun: 'Uvita de playa',
-    sci: 'Coccoloba uvifera',
-    cat: 'Flora Litoral',
-    zona: 'Marisma Costera',
-    c: '#84cc16',
-    rol: 'Fijación de dunas y bermas arenosas contra la socavación por viento y marea.',
-    img: 'https://inaturalist-open-data.s3.amazonaws.com/photos/33707794/medium.jpeg',
-  },
-  {
-    tid: 62833,
-    comun: 'Pasto Vetiver',
-    sci: 'Chrysopogon zizanioides',
-    cat: 'Bio-Armadura',
-    zona: 'Humedal y Talud',
-    c: '#22c55e',
-    rol: 'Red radicular masiva de 3 m de profundidad que ancla taludes frente al desmoronamiento.',
-    img: 'https://inaturalist-open-data.s3.amazonaws.com/photos/8346930/medium.jpeg',
-  },
-  {
-    tid: 35342,
-    comun: 'Iguana verde',
-    sci: 'Iguana iguana',
-    cat: 'Reptiles',
-    zona: 'Bosque Seco',
-    c: '#eab308',
-    rol: 'Herbívoro y dispersor de semillas entre la marisma baja y el dosel de la meseta.',
-    img: 'https://inaturalist-open-data.s3.amazonaws.com/photos/264671214/medium.jpeg',
-  },
-  {
-    tid: 184273,
-    comun: 'Guayacán / Bosque Seco',
-    sci: 'Bursera simaruba / Cedrela',
-    cat: 'Dosel Forestal',
-    zona: 'Meseta Segura',
-    c: '#15803d',
-    rol: 'Retención hídrica edáfica en roca calcárea y sombra protectora sobre +22 m.',
-    img: 'https://static.inaturalist.org/photos/8263137/medium.jpg',
-  },
+const BASE = import.meta.env.BASE_URL;
+const REC = `${BASE}datos/tramas/m/`;
+const MARINO = '#1f2b5b';
+const INAT = 'https://inaturalist-open-data.s3.amazonaws.com/photos/';
+const INAT2 = 'https://static.inaturalist.org/photos/';
+
+// perfil del terreno: del lecho marino (izq.) a la meseta (der.)
+const W = 1200; const H = 600;
+const suelo = (x) => { const t = Math.max(0, Math.min(1, (x - 150) / 1000)); return 520 - 215 * Math.pow(t, 1.3); };
+const PERFIL = (() => { let d = ''; for (let x = 60; x <= 1150; x += 10) d += `${x === 60 ? 'M' : 'L'}${x},${suelo(x).toFixed(1)} `; return d; })();
+const SOBRE_SUELO = `${PERFIL} L1150,0 L60,0 Z`;
+
+// cotas (m) y su y en el dibujo
+const COTAS = [
+  { y: 392, m: '+2,40 m', nombre: 'Inundación 100 años', fill: '#e3f4f6' },
+  { y: 425, m: '+1,80 m', nombre: 'Inundación 50 años', fill: '#c7e9ee' },
+  { y: 462, m: '+0,40 m', nombre: 'Pleamar', fill: '#a6dbe3' },
+  { y: 478, m: '−0,15 m', nombre: 'Bajamar', fill: '#86ccd8' },
+];
+const E1 = 470; const E2 = 785;
+
+function Rotulo({ x, y, t, ancla = 'start', tam = 11.5 }) {
+  return <text x={x} y={y} textAnchor={ancla} fill={MARINO} fontSize={tam} fontStyle="italic" fontFamily="Geist, sans-serif">{t}</text>;
+}
+// recorte fotográfico vuelto silueta azul marino
+function Silueta({ src, x, y, w, h, voltear = false }) {
+  return <image href={`${REC}${src}.webp`} x={x} y={y} width={w} height={h} filter="url(#marino)" preserveAspectRatio="xMidYMid meet" transform={voltear ? `translate(${2 * x + w},0) scale(-1,1)` : undefined} />;
+}
+
+const Tortuga = ({ x, y, s = 1 }) => (
+  <g transform={`translate(${x},${y}) scale(${s})`} fill={MARINO}>
+    <path d="M0,0 C7,-10 27,-10 35,0 C27,8 7,8 0,0Z" />
+    <circle cx="39" cy="-1" r="4" />
+    <path d="M23,-5 L37,-15 L33,-12 L26,-3Z" /><path d="M24,4 L35,12 L22,6Z" /><path d="M5,-3 L-4,-9 L2,-2Z" /><path d="M5,4 L-3,9 L7,5Z" />
+  </g>
+);
+const Cangrejo = ({ x, y, s = 1 }) => (
+  <g transform={`translate(${x},${y}) scale(${s})`} fill={MARINO} stroke={MARINO} strokeWidth="1.3" strokeLinecap="round">
+    <ellipse cx="0" cy="0" rx="8" ry="5" stroke="none" />
+    {[-1, 1].map((l) => [0, 1, 2].map((i) => <path key={`${l}${i}`} d={`M${l * 6},${1 + i} L${l * (12 + i * 2)},${4 + i * 2} L${l * (14 + i * 2)},${9 + i}`} fill="none" />))}
+    <circle cx="-11" cy="-6" r="3.2" stroke="none" /><circle cx="11" cy="-6" r="3.2" stroke="none" />
+    <path d="M-6,-3 L-10,-5 M6,-3 L10,-5" fill="none" />
+  </g>
+);
+const Iguana = ({ x, y, s = 1, rot = 0 }) => (
+  <g transform={`translate(${x},${y}) rotate(${rot}) scale(${s})`} fill={MARINO} stroke={MARINO} strokeLinecap="round">
+    <path d="M0,0 C6,-6 18,-7 27,-4 L36,-5 C39,-4 39,-1 36,0 L27,1 C18,4 8,4 0,2 C-14,2 -32,4 -50,9 C-32,1 -14,-1 0,0Z" stroke="none" />
+    <path d="M6,-5 l2,-4 l2,4 M12,-6 l2,-4 l2,4 M18,-6 l2,-3 l2,3" strokeWidth="1" fill="none" />
+    <path d="M22,2 L25,8 L28,9 M6,3 L3,9 L0,10 M20,-3 L23,3 M2,1 L-2,7" strokeWidth="2" fill="none" />
+  </g>
+);
+const Juncos = ({ x, y, n = 7, h = 26, color = MARINO, w = 14 }) => (
+  <g stroke={color} strokeWidth="1.5" fill="none" strokeLinecap="round">
+    {Array.from({ length: n }, (_, i) => { const dx = (i / (n - 1) - 0.5) * w; const ho = h * (0.6 + 0.4 * Math.sin(i * 2.3 + x) ** 2); const cur = (i / (n - 1) - 0.5) * 12; return <path key={i} d={`M${x + dx},${y} Q${x + dx + cur * 0.3},${y - ho * 0.6} ${x + dx + cur},${y - ho}`} />; })}
+  </g>
+);
+const ArbolMarino = ({ x, y, s = 1 }) => (
+  <g transform={`translate(${x},${y}) scale(${s})`} fill={MARINO}>
+    <path d="M-1.5,0 L-1,-16 L-5,-22 L-0.5,-19 L0,-26 L1.5,-19 L6,-23 L1.5,-15 L1.8,0Z" />
+    <circle cx="0" cy="-34" r="11" /><circle cx="-10" cy="-27" r="8" /><circle cx="10" cy="-28" r="8.5" /><circle cx="-4" cy="-43" r="8" /><circle cx="6" cy="-41" r="8" />
+  </g>
+);
+const Mangle = ({ x, y, s = 1 }) => (
+  <g transform={`translate(${x},${y}) scale(${s})`}>
+    <g stroke={MARINO} strokeWidth="1.6" fill="none" strokeLinecap="round">
+      <path d="M0,-18 Q-10,-10 -16,0" /><path d="M0,-18 Q-4,-8 -6,0" /><path d="M0,-18 Q5,-8 6,0" /><path d="M0,-18 Q12,-10 17,0" /><path d="M0,-18 L0,-28" strokeWidth="2.6" />
+    </g>
+    <g fill={MARINO}><ellipse cx="0" cy="-36" rx="17" ry="11" /><ellipse cx="-9" cy="-43" rx="9" ry="7" /><ellipse cx="9" cy="-44" rx="10" ry="7" /></g>
+  </g>
+);
+const Palma = ({ x, y, h = 170, inc = 8, color = '#d3ebe2' }) => {
+  const tx = x + inc; const ty = y - h;
+  return (
+    <g stroke={color} fill="none" strokeLinecap="round">
+      <path d={`M${x},${y} Q${x + inc * 0.2},${y - h * 0.55} ${tx},${ty}`} strokeWidth="6" />
+      {[-160, -125, -95, -60, -25, 10, 40].map((a, i) => { const r = 48 + (i % 3) * 8; const ar = (a * Math.PI) / 180; const ex = tx + Math.cos(ar) * r; const ey = ty + Math.sin(ar) * r * 0.55 + 16; return <path key={a} d={`M${tx},${ty} Q${tx + Math.cos(ar) * r * 0.5},${ty + Math.sin(ar) * r * 0.5 - 14} ${ex},${ey}`} strokeWidth="7" />; })}
+    </g>
+  );
+};
+const ArbolFondo = ({ x, y, r = 50, color = '#dcefdf' }) => (
+  <g fill={color}>
+    <rect x={x - 3} y={y - r * 1.2} width="6" height={r * 1.2} />
+    {[[0, -1.55, 0.8], [-0.6, -1.25, 0.62], [0.62, -1.28, 0.66], [-0.25, -2.0, 0.6], [0.35, -1.95, 0.58], [0.0, -1.2, 0.6]].map(([dx, dy, k], i) => <circle key={i} cx={x + dx * r} cy={y + dy * r} r={k * r} />)}
+  </g>
+);
+
+// tiras de especies (como la fila inferior del referente)
+const TIRAS = [
+  { tipo: 'liso', fondo: '#8fd5df', banda: '#6fc3cf', sci: 'Opisthonema oglinum', es: 'Sardina vivita', recorte: 'sardina', rw: 96, rx: -26, ry: 92 },
+  { tipo: 'foto', img: `${INAT}31937008/medium.jpeg`, banda: '#2f8f8a', sci: 'Thalassia testudinum', es: 'Hierba de tortuga' },
+  { tipo: 'foto', img: `${INAT}222906733/medium.jpeg`, banda: '#3c7f43', sci: 'Rhizophora mangle', es: 'Mangle rojo', nota: 'También llamado «mangle colorado»' },
+  { tipo: 'liso', fondo: '#2f6b6a', banda: '#245857', sci: 'Egretta thula', es: 'Garza dedos dorados', recorte: 'garza', rw: 104, rx: -30, ry: 64 },
+  { tipo: 'foto', img: `${INAT2}48492231/medium.jpg`, banda: '#5c8fd1', sci: 'Coccoloba uvifera', es: 'Uvero de playa' },
+  { tipo: 'foto', img: `${INAT2}108453904/medium.jpeg`, banda: '#2f8f8a', sci: 'Cocos nucifera', es: 'Cocotero' },
+  { tipo: 'liso', fondo: '#bcd63e', banda: '#a6c12c', sci: 'Ardea alba', es: 'Garza blanca', recorte: 'alba', rw: 40, rx: 8, ry: 70 },
+  { tipo: 'foto', img: `${INAT}405494364/medium.jpeg`, banda: '#3c7f43', sci: 'Ceiba pentandra', es: 'Ceiba', nota: 'También llamada «bonga»' },
 ];
 
-export const NIVELES_AGUA = [
-  { id: 'baja', label: 'Bajamar (-0.15 m)', cotaM: -0.15, ySvg: 250, desc: 'Franja intermareal expuesta para alimentación de aves limícolas y faena artesanal.' },
-  { id: 'plea', label: 'Pleamar (+0.40 m)', cotaM: 0.40, ySvg: 228, desc: 'Cota de marea alta diaria: cubre praderas de Thalassia y base del manglar rojo.' },
-  { id: 'storm50', label: 'Storm Surge 50a (+1.80 m)', cotaM: 1.80, ySvg: 168, desc: 'Penetración de tormenta de 50 años: disipada por raíces de mangle y protegida por la pasarela.' },
-  { id: 'flood100', label: 'Inundación Crítica 100a (+2.40 m)', cotaM: 2.40, ySvg: 135, desc: 'Límite máximo de inundación centenaria: el enrocado permeable y talud de vetiver salvan la meseta.' },
-];
+function Tira({ t }) {
+  return (
+    <div className="relative flex h-[200px] shrink-0" title={`${t.es} · ${t.sci}`}>
+      {t.tipo === 'foto' ? (
+        <div className="h-full w-[54px] overflow-hidden bg-slate-200"><img src={t.img} alt={t.es} loading="lazy" className="h-full w-full object-cover" /></div>
+      ) : (
+        <div className="h-full w-[54px]" style={{ background: t.fondo }} />
+      )}
+      <div className="flex h-full w-[18px] items-end justify-center pb-2" style={{ background: t.banda }}>
+        <span className="text-[9px] italic leading-none text-white [writing-mode:vertical-rl] rotate-180 whitespace-nowrap">{t.sci}</span>
+      </div>
+      {t.recorte && <img src={`${REC}${t.recorte}.webp`} alt="" aria-hidden="true" className="pointer-events-none absolute drop-shadow-[0_2px_2px_rgba(0,0,0,.25)]" style={{ width: t.rw, left: t.rx, top: t.ry }} />}
+      {t.nota && (
+        <span className="absolute -top-9 left-[34px] z-10 w-[78px] rotate-[-58deg] bg-[#f3e600] px-1.5 py-1 text-[9px] font-medium leading-tight text-[#1f2b5b] shadow-sm">{t.nota}</span>
+      )}
+    </div>
+  );
+}
+
+function Corte() {
+  return (
+    <svg viewBox={`0 30 ${W} 530`} className="block h-auto w-full" role="img" aria-label="Corte del paisaje adaptativo de Tierra Bomba: del lecho marino a la meseta, con cotas de marea e inundación, dos ecotonos, la pasarela elevada y las especies de cada franja">
+      <defs>
+        <filter id="marino" colorInterpolationFilters="sRGB"><feFlood floodColor={MARINO} result="c" /><feComposite in="c" in2="SourceAlpha" operator="in" /></filter>
+        <clipPath id="sobreSuelo"><path d={SOBRE_SUELO} /></clipPath>
+        <marker id="flecha" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 L3,5Z" fill="#111" /></marker>
+      </defs>
+
+      {/* vegetación de fondo, lavada */}
+      <g opacity="0.95">
+        <ArbolFondo x={900} y={suelo(900)} r={78} color="#e2f1e5" />
+        <ArbolFondo x={1060} y={suelo(1060)} r={92} color="#dbeedf" />
+        <ArbolFondo x={1140} y={suelo(1140)} r={60} color="#e4f2e6" />
+        <ArbolFondo x={820} y={suelo(820)} r={46} color="#e6f3e8" />
+        <Palma x={575} y={suelo(575)} h={205} inc={-12} />
+        <Palma x={640} y={suelo(640)} h={240} inc={14} color="#cfe8de" />
+        <Palma x={700} y={suelo(700)} h={175} inc={6} color="#d9eee6" />
+        <ArbolFondo x={520} y={suelo(520)} r={40} color="#e4f2ec" />
+      </g>
+
+      {/* agua por cotas, recortada por el terreno */}
+      <g clipPath="url(#sobreSuelo)">
+        {COTAS.map((c, i) => <rect key={c.y} x="90" y={c.y} width="1060" height={(COTAS[i + 1]?.y ?? 600) - c.y} fill={c.fill} opacity="0.92" />)}
+        {COTAS.map((c) => <line key={`l${c.y}`} x1="90" y1={c.y} x2="1150" y2={c.y} stroke="#4fa3b4" strokeWidth="1" strokeDasharray="2 3" />)}
+      </g>
+      {COTAS.map((c) => (
+        <g key={`t${c.y}`}>
+          <text x="96" y={c.y - 3} fill="#2c7f90" fontSize="11.9" fontFamily="Geist Mono, monospace">{c.m} · {c.nombre.toLowerCase()}</text>
+          
+        </g>
+      ))}
+
+      {/* pradera y pasto sobre el talud y la meseta */}
+      <path d={(() => { let d = ''; for (let x = 690; x <= 1150; x += 10) d += `${x === 690 ? 'M' : 'L'}${x},${(suelo(x) - (x < E2 ? 4 : 9)).toFixed(1)} `; for (let x = 1150; x >= 690; x -= 10) d += `L${x},${suelo(x).toFixed(1)} `; return `${d}Z`; })()} fill="#b9d63c" />
+      {Array.from({ length: 30 }, (_, i) => { const x = 795 + i * 12; return <Juncos key={i} x={x} y={suelo(x) - 7} n={4} h={9 + (i % 3) * 3} w={7} color="#9cbc22" />; })}
+
+      {/* enrocado permeable al pie del talud */}
+      <g fill="#cfccc4" stroke="#8d8a82" strokeWidth="0.8">
+        {Array.from({ length: 16 }, (_, i) => { const x = 700 + i * 5.2; const y = suelo(x) - 3 - (i % 3) * 3; const s = 4 + (i % 4); return <polygon key={i} points={`${x},${y} ${x + s},${y - 2} ${x + s + 2},${y + s - 2} ${x + 1},${y + s} ${x - 2},${y + 3}`} />; })}
+      </g>
+
+      {/* perfil del terreno */}
+      <path d={PERFIL} fill="none" stroke="#111" strokeWidth="3.2" strokeLinecap="round" markerStart="url(#flecha)" markerEnd="url(#flecha)" />
+
+      {/* pasarela elevada (+2,10 m) */}
+      <g stroke={MARINO} fill="none" strokeLinecap="round">
+        {Array.from({ length: 10 }, (_, i) => { const x = 500 + i * 30; return <line key={i} x1={x} y1="410" x2={x} y2={suelo(x)} strokeWidth="1.6" />; })}
+        <line x1="494" y1="410" x2="778" y2="410" strokeWidth="3" />
+        <line x1="494" y1="396" x2="778" y2="396" strokeWidth="1" />
+        {Array.from({ length: 15 }, (_, i) => <line key={i} x1={496 + i * 20} y1="396" x2={496 + i * 20} y2="410" strokeWidth="0.8" />)}
+      </g>
+      <text x="600" y="384" textAnchor="middle" fill={MARINO} fontSize="11.9" fontWeight="600" fontFamily="Geist Mono, monospace">PASARELA ELEVADA +2,10 m</text>
+
+      {/* ecotonos */}
+      {[[E1, ['MARISMA INTERMAREAL', 'PRADERA SALOBRE']], [E2, ['HUMEDAL DULCE', 'PRADERA / BOSQUE SECO']]].map(([x, [a, b]]) => {
+        const y0 = suelo(x) - 150; const y1 = suelo(x) + 44;
+        return (
+          <g key={x}>
+            <line x1={x} y1="58" x2={x} y2={y0} stroke="#111" strokeWidth="1" />
+            <rect x={x - 7} y={y0} width="14" height={y1 - y0} fill="#111" />
+            <text transform={`translate(${x + 3.5},${y1 - 8}) rotate(-90)`} fill="#fff" fontSize="11.9" fontWeight="700" letterSpacing="1.5" fontFamily="Geist, sans-serif">ECOTONO</text>
+            <text transform={`translate(${x - 3},${y0 - 6}) rotate(-90)`} fill="#111" fontSize="11.9" fontFamily="Geist, sans-serif">{a}</text>
+            <text transform={`translate(${x + 9},${y0 - 6}) rotate(-90)`} fill="#111" fontSize="11.9" fontFamily="Geist, sans-serif">{b}</text>
+          </g>
+        );
+      })}
+
+      {/* rótulos de franjas */}
+      <text x="330" y="540" fill="#111" fontSize="14.0" fontWeight="600" letterSpacing="0.6" fontFamily="Geist, sans-serif">ZONA INTERMAREAL</text>
+      <text x="700" y="446" fill="#111" fontSize="12.6" fontWeight="600" fontFamily="Geist, sans-serif"><tspan x="700">INUNDACIÓN 50 AÑOS</tspan><tspan x="700" dy="14">+ MAREJADA</tspan></text>
+      <text x="985" y="352" fill="#111" fontSize="12.6" fontWeight="600" fontFamily="Geist, sans-serif"><tspan x="985">INUNDACIÓN 100 AÑOS</tspan><tspan x="985" dy="14">+ MAREJADA</tspan></text>
+
+      {/* especies en silueta, con su nombre científico */}
+      <Juncos x={250} y={suelo(250)} n={8} h={24} w={16} /><Rotulo x={238} y={suelo(250) - 28} t="Thalassia testudinum" ancla="middle" />
+      <Juncos x={420} y={suelo(420)} n={9} h={34} w={18} /><Juncos x={448} y={suelo(448)} n={6} h={26} w={12} />
+      <Silueta src="garza" x={108} y={406} w={86} h={74} voltear /><Rotulo x={112} y={402} t="Egretta thula" />
+      <Silueta src="alba" x={380} y={396} w={34} h={78} /><Rotulo x={372} y={392} t="Ardea alba" ancla="middle" />
+      <Silueta src="alba_vuelo" x={170} y={312} w={98} h={52} /><Rotulo x={205} y={372} t="Ardea alba (vuelo)" />
+      <Silueta src="pelicano" x={280} y={262} w={128} h={46} voltear /><Rotulo x={300} y={316} t="Pelecanus occidentalis" />
+      <Silueta src="fragata" x={860} y={130} w={124} h={66} /><Rotulo x={985} y={164} t="Fregata magnificens" />
+      <Silueta src="fragata" x={990} y={96} w={64} h={34} voltear />
+      <Silueta src="martin_vuelo" x={548} y={322} w={74} h={22} voltear /><Rotulo x={555} y={354} t="Megaceryle torquata" />
+      <Silueta src="sardina" x={150} y={495} w={40} h={12} /><Silueta src="sardina" x={196} y={503} w={32} h={10} /><Silueta src="sardina" x={232} y={493} w={28} h={9} /><Rotulo x={150} y={523} t="Opisthonema oglinum" />
+      <Tortuga x={300} y={500} s={0.9} /><Rotulo x={292} y={518} t="Chelonia mydas" />
+      <Cangrejo x={446} y={478} s={0.85} /><Rotulo x={420} y={497} t="Cardisoma guanhumi" ancla="middle" />
+      <Mangle x={530} y={suelo(530)} s={1} /><Rotulo x={530} y={suelo(530) - 52} t="Rhizophora mangle" ancla="middle" />
+      <Mangle x={610} y={suelo(610)} s={0.8} />
+      <Juncos x={570} y={suelo(570)} n={6} h={16} w={10} /><Juncos x={665} y={suelo(665)} n={6} h={14} w={10} /><Rotulo x={655} y={suelo(665) + 14} t="Sesuvium portulacastrum" ancla="middle" />
+      <g fill={MARINO}>{[0, 1, 2].map((i) => <circle key={i} cx={728 + i * 9} cy={suelo(728 + i * 9) - 8 - (i % 2) * 3} r={7 + (i % 2) * 2} />)}</g><Rotulo x={760} y={suelo(742) + 18} t="Coccoloba uvifera" />
+      <Iguana x={905} y={suelo(905) - 9} s={0.8} rot={-11} /><Rotulo x={880} y={suelo(880) + 16} t="Iguana iguana" />
+      <ArbolMarino x={845} y={suelo(845) - 5} s={1} /><Rotulo x={845} y={suelo(845) - 62} t="Conocarpus erectus" ancla="middle" />
+      <ArbolMarino x={1010} y={suelo(1010) - 7} s={1.5} /><Rotulo x={1010} y={suelo(1010) - 82} t="Ceiba pentandra" ancla="middle" />
+      <Silueta src="monarca" x={955} y={268} w={26} h={18} /><Rotulo x={985} y={281} t="Danaus plexippus" />
+    </svg>
+  );
+}
 
 export default function PaisajeAdaptativo() {
-  const [nivelActivo, setNivelActivo] = useState(NIVELES_AGUA[2]); // Storm Surge 50a por defecto
-  const [especieSel, setEspecieSel] = useState(ESPECIES_PALETA[3]); // Rhizophora mangle
-
   return (
-    <section id="paisaje-adaptativo" className="relative border-t border-white/10 bg-[#040608] py-20 px-4 sm:px-8 lg:px-14 text-white overflow-hidden" aria-label="Paisaje Adaptativo: Ascenso del nivel del mar y corte ecosistémico en Tierra Bomba">
-      {/* Marco de fondo */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-emerald-950/20 via-transparent to-transparent opacity-60" />
+    <section id="paisaje-adaptativo" className="relative bg-[#fbfbf8] text-[#111]" aria-label="Paisaje adaptativo: ascenso del mar e incertidumbre de sedimentos en Tierra Bomba">
+      <div className="grid min-h-[100svh] grid-cols-1 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)]">
+        <div className="relative px-4 pb-10 pt-24 sm:px-8 lg:pl-10 lg:pr-6">
+          <h2 className="font-['Geist'] text-[1.25rem] font-bold uppercase leading-tight tracking-tight sm:text-[1.55rem]">
+            08&nbsp; Paisaje adaptativo – ascenso del mar e incertidumbre de sedimentos
+          </h2>
 
-      <div className="relative mx-auto max-w-[1720px]">
-        {/* Cabecera del corte adaptativo */}
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 border-b border-white/15 pb-8">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-              <p className="font-mono text-xs uppercase tracking-widest text-emerald-400 font-semibold">
-                Estrategia Paisajística · Borde Blando y Amortiguamiento
-              </p>
-            </div>
-            <h2 className="mt-2.5 font-['Barlow_Condensed'] text-3xl sm:text-5xl lg:text-6xl font-light uppercase tracking-tight leading-none text-white">
-              Paisaje Adaptativo <span className="font-semibold text-arcilla">· Ascenso del Mar e Incertidumbre de Sedimentos</span>
-            </h2>
-            <p className="mt-3 max-w-4xl text-sm sm:text-base leading-relaxed text-white/75">
-              Corte ecosistémico transversal adaptado a Tierra Bomba: articula el gradiente desde la franja marina intermareal hasta el suelo seguro de la meseta calcárea (+22 m). El sistema integra <strong className="text-emerald-300">enrocado permeable (*riprap revetment*)</strong>, <strong className="text-emerald-300">marisma de manglar disipativa</strong> y una <strong className="text-arcilla">pasarela palafítica elevada (*elevated boardwalk*)</strong> que garantiza la movilidad comunitaria y el acceso seguro a lanchas sin obstaculizar la dinámica hidrológica.
-            </p>
+          <div className="relative mt-4">
+            {/* localización */}
+            <figure className="absolute left-0 top-0 z-10 w-[23%] min-w-[110px] overflow-hidden bg-white shadow-sm ring-1 ring-black/5">
+              <div className="relative aspect-square">
+                <img src={`${BASE}assets/texturas/cartagena_z14.jpg`} alt="Bahía de Cartagena y la isla de Tierra Bomba" className="h-full w-full object-cover [filter:grayscale(1)_brightness(2.6)_contrast(.38)]" />
+                <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" aria-hidden="true">
+                  <circle cx="40" cy="63" r="2.6" fill="#f07a1e" />
+                  <text x="44" y="62" fontSize="5.4" fill="#d4620f" fontWeight="700" fontFamily="Geist, sans-serif">SITIO</text>
+                  <text x="4" y="12" fontSize="4.2" fill="#3b6fd6" fontFamily="Geist, sans-serif">Mar Caribe</text>
+                  <text x="56" y="70" fontSize="4" fill="#555" fontFamily="Geist, sans-serif">Bahía de</text><text x="56" y="75" fontSize="4" fill="#555" fontFamily="Geist, sans-serif">Cartagena</text>
+                  <text x="22" y="72" fontSize="3.6" fill="#3aa36b" fontFamily="Geist, sans-serif">Tierra Bomba</text>
+                </svg>
+              </div>
+            </figure>
+            <Corte />
           </div>
 
-          {/* Selectores de nivel de agua / tormenta */}
-          <div className="flex flex-col gap-2 bg-black/60 p-3.5 rounded-xl border border-white/12 backdrop-blur">
-            <span className="font-mono text-[11px] text-white/50 uppercase tracking-wider">Simular Cota de Agua y Tormenta:</span>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Nivel de agua">
-              {NIVELES_AGUA.map((n) => (
-                <button
-                  key={n.id}
-                  type="button"
-                  onClick={() => setNivelActivo(n)}
-                  className={`h-8 px-3 rounded-lg text-xs font-medium transition-all ${
-                    nivelActivo.id === n.id
-                      ? 'bg-emerald-500 text-black font-semibold shadow-lg shadow-emerald-500/25 scale-[1.02]'
-                      : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white border border-white/10'
-                  }`}
-                >
-                  {n.label}
-                </button>
-              ))}
-            </div>
-            <p className="font-mono text-[11px] text-emerald-400/90 mt-1">{nivelActivo.desc}</p>
+          {/* tiras de especies */}
+          <div className="mt-6 flex gap-5 overflow-x-auto overflow-y-visible px-6 pb-2 pt-6 sm:justify-between sm:gap-3">
+            {TIRAS.map((t) => <Tira key={t.sci} t={t} />)}
           </div>
+          <p className="mt-3 text-[10px] leading-snug text-black/45">Fotos y recortes: iNaturalist (CC BY-NC). Cotas de marea y de inundación según la sección de Cartografía; perfil esquemático, sin escala vertical.</p>
         </div>
 
-        {/* =====================================================================
-            CORTE ECOSISTÉMICO TRANSVERSAL INTERACTIVO (SVG + OVERLAYS)
-        ===================================================================== */}
-        <div className="mt-8 rounded-2xl border border-white/15 bg-gradient-to-b from-[#060b10] to-[#030608] p-4 sm:p-6 shadow-2xl relative">
-          {/* Título y leyenda del corte */}
-          <div className="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-white/10 text-xs">
-            <div className="flex items-center gap-4">
-              <span className="font-mono text-white/60">CORTE TRANSVERSAL A-A': MAR CARIBE → ENSENADA → MANGLAR → MESETA</span>
-            </div>
-            <div className="flex items-center gap-3 font-mono text-[11px] text-white/50">
-              <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-cyan-400" /> Praderas marinas</span>
-              <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-emerald-500" /> Manglar disipativo</span>
-              <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-amber-500" /> Pasarela de madera</span>
-              <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-full bg-lime-500" /> Vetiver y Bosque Seco</span>
-            </div>
-          </div>
-
-          {/* Gráfico SVG del corte ecosistémico */}
-          <div className="relative w-full aspect-[21/9] min-h-[360px] overflow-hidden select-none">
-            <svg viewBox="0 0 1000 420" className="w-full h-full" preserveAspectRatio="none">
-              <defs>
-                {/* Degradados de agua */}
-                <linearGradient id="gradAgua" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#0284c7" stopOpacity="0.45" />
-                  <stop offset="60%" stopColor="#0369a1" stopOpacity="0.75" />
-                  <stop offset="100%" stopColor="#0c4a6e" stopOpacity="0.95" />
-                </linearGradient>
-                {/* Degradado de terreno geológico calcáreo */}
-                <linearGradient id="gradTerreno" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#292524" />
-                  <stop offset="30%" stopColor="#1c1917" />
-                  <stop offset="100%" stopColor="#0c0a09" />
-                </linearGradient>
-                {/* Sombra de la pasarela */}
-                <filter id="glowAgua" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-              </defs>
-
-              {/* CIELO / FONDO SUAVE */}
-              <rect x="0" y="0" width="1000" height="420" fill="transparent" />
-
-              {/* LÍNEAS DE CUADRÍCULA GUÍA */}
-              {[135, 168, 228, 250].map((y) => (
-                <line key={y} x1="30" y1={y} x2="970" y2={y} stroke="rgba(255,255,255,0.06)" strokeDasharray="3 3" />
-              ))}
-
-              {/* PERFIL GEOLÓGICO DEL TERRENO DE TIERRA BOMBA */}
-              {/* Comienza en el fondo marino (x:0, y:310), sube por el talud intermareal, plataforma de manglar, talud de vetiver y meseta (+22m) */}
-              <path
-                d="M 0,320 
-                   C 120,315 220,300 320,280 
-                   C 390,265 440,240 520,230 
-                   C 590,225 650,220 720,195 
-                   C 790,170 840,110 930,90 
-                   L 1000,85 L 1000,420 L 0,420 Z"
-                fill="url(#gradTerreno)"
-                stroke="#57534e"
-                strokeWidth="2"
-              />
-
-              {/* ESTRATOS GEOLÓGICOS INTERIORES */}
-              <path d="M 0,360 Q 400,340 720,260 T 1000,160" fill="none" stroke="rgba(255,255,255,0.08)" strokeDasharray="4 4" />
-              <path d="M 0,390 Q 500,380 800,300 T 1000,220" fill="none" stroke="rgba(255,255,255,0.05)" strokeDasharray="2 4" />
-
-              {/* ENROCADO PERMEABLE (RIPRAP REVETMENT) */}
-              {/* Bloques de roca caliza permeable dispuestos entre x:490 y x:560 */}
-              <g id="riprap" fill="#78716c" stroke="#292524" strokeWidth="1.2">
-                {[
-                  [490, 238, 14], [505, 235, 16], [520, 230, 18], [538, 226, 17], [555, 221, 15],
-                  [498, 248, 15], [515, 244, 18], [532, 239, 16], [548, 233, 15],
-                  [506, 258, 16], [524, 252, 17], [540, 246, 16],
-                ].map(([rx, ry, s], idx) => (
-                  <polygon
-                    key={idx}
-                    points={`${rx},${ry} ${rx + s},${ry - 3} ${rx + s + 3},${ry + s - 2} ${rx + 2},${ry + s} ${rx - 2},${ry + 4}`}
-                    opacity="0.9"
-                  />
-                ))}
-              </g>
-
-              {/* RAÍCES DE MANGLAR ROJO (RHIZOPHORA) - ZANCUDAS */}
-              <g stroke="#047857" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.85">
-                {/* Mangle 1 */}
-                <path d="M 370,225 Q 355,250 340,285" />
-                <path d="M 370,225 Q 375,255 365,283" />
-                <path d="M 370,225 Q 390,250 405,280" />
-                <circle cx="370" cy="210" r="18" fill="#059669" stroke="#10b981" strokeWidth="1.5" />
-                {/* Mangle 2 */}
-                <path d="M 430,215 Q 410,240 395,270" />
-                <path d="M 430,215 Q 435,245 430,268" />
-                <path d="M 430,215 Q 450,240 465,265" />
-                <circle cx="430" cy="198" r="22" fill="#047857" stroke="#10b981" strokeWidth="1.5" />
-                {/* Neumatóforos de Avicennia */}
-                {[440, 448, 455, 462, 470, 478].map((nx) => (
-                  <line key={nx} x1={nx} y1="262" x2={nx} y2="242" stroke="#10b981" strokeWidth="2" />
-                ))}
-              </g>
-
-              {/* PRADERAS SUBMARINAS DE THALASSIA TESTUDINUM */}
-              <g stroke="#06b6d4" strokeWidth="1.8" fill="none" opacity="0.75">
-                {[120, 140, 160, 185, 210, 240, 265, 290].map((px) => (
-                  <path key={px} d={`M ${px},310 Q ${px + 5},290 ${px - 3},272 T ${px + 2},260`} />
-                ))}
-              </g>
-
-              {/* BIO-ARMADURA DE VETIVER EN EL TALUD MEDIO */}
-              <g stroke="#84cc16" strokeWidth="1.5" opacity="0.85">
-                {[730, 745, 760, 775, 795, 815].map((vx) => (
-                  <g key={vx}>
-                    {/* Raíces profundas de 3 m */}
-                    <line x1={vx} y1="180" x2={vx - 5} y2="250" stroke="#65a30d" strokeDasharray="2 3" strokeWidth="2" />
-                    <line x1={vx} y1="180" x2={vx + 8} y2="245" stroke="#65a30d" strokeDasharray="2 3" strokeWidth="1.8" />
-                    {/* Mechón superficial */}
-                    <path d={`M ${vx - 4},180 Q ${vx},155 ${vx - 8},140 M ${vx},180 Q ${vx + 2},150 ${vx + 6},138`} fill="none" />
-                  </g>
-                ))}
-              </g>
-
-              {/* BOSQUE SECO TROPICAL EN LA MESETA ALTA (+22 M) */}
-              <g id="bosque-seco">
-                <circle cx="860" cy="70" r="28" fill="#15803d" opacity="0.9" />
-                <line x1="860" y1="95" x2="860" y2="125" stroke="#78350f" strokeWidth="4" />
-                <circle cx="910" cy="55" r="34" fill="#166534" opacity="0.9" />
-                <line x1="910" y1="88" x2="910" y2="115" stroke="#78350f" strokeWidth="5" />
-                <circle cx="965" cy="50" r="32" fill="#14532d" opacity="0.9" />
-                <line x1="965" y1="80" x2="965" y2="105" stroke="#78350f" strokeWidth="4.5" />
-              </g>
-
-              {/* ===============================================================
-                  PASARELA PALAFÍTICA ELEVADA DE MADERA (ELEVATED BOARDWALK)
-                  Pasa a cota +2.10 m (y: 155 en SVG), por encima del storm surge de 50 años
-              =============================================================== */}
-              <g id="boardwalk" filter="url(#glowAgua)">
-                {/* Pilotes hincados al terreno */}
-                {[330, 410, 485, 560, 630].map((bx) => (
-                  <g key={bx}>
-                    <line x1={bx} y1="155" x2={bx} y2="265" stroke="#d97706" strokeWidth="4.5" strokeLinecap="round" />
-                    <line x1={bx + 3} y1="155" x2={bx + 3} y2="265" stroke="#b45309" strokeWidth="1.5" />
-                  </g>
-                ))}
-                {/* Viga estructural horizontal */}
-                <line x1="310" y1="155" x2="650" y2="155" stroke="#b45309" strokeWidth="5" strokeLinecap="round" />
-                {/* Tablones de cubierta de madera */}
-                <line x1="305" y1="150" x2="655" y2="150" stroke="#f59e0b" strokeWidth="4" strokeLinecap="round" />
-                {/* Barandilla de seguridad ligera */}
-                <line x1="308" y1="135" x2="652" y2="135" stroke="#d97706" strokeWidth="1.8" />
-                {[330, 370, 410, 450, 485, 525, 560, 595, 630].map((rx) => (
-                  <line key={rx} x1={rx} y1="150" x2={rx} y2="135" stroke="#d97706" strokeWidth="1.5" />
-                ))}
-                {/* Siluetas de personas caminando sobre la pasarela */}
-                <g fill="#fef3c7" opacity="0.95">
-                  <circle cx="480" cy="116" r="3.2" />
-                  <path d="M 478,120 L 482,120 L 484,138 L 476,138 Z" />
-                  <circle cx="494" cy="118" r="3.0" />
-                  <path d="M 492,122 L 496,122 L 498,138 L 490,138 Z" />
-                </g>
-                <text x="485" y="105" textAnchor="middle" fill="#fbbf24" fontSize="10" fontFamily="monospace" fontWeight="bold">
-                  PASARELA ELEVADA (+2.10 m)
-                </text>
-              </g>
-
-              {/* ===============================================================
-                  MASA DE AGUA DINÁMICA CON EL NIVEL SIMULADO
-              =============================================================== */}
-              <g id="masa-agua" className="transition-all duration-700 ease-out">
-                {/* Superficie y cuerpo del agua */}
-                <rect
-                  x="0"
-                  y={nivelActivo.ySvg}
-                  width="1000"
-                  height={420 - nivelActivo.ySvg}
-                  fill="url(#gradAgua)"
-                />
-                {/* Línea de oleaje superior iluminada */}
-                <line
-                  x1="0"
-                  y1={nivelActivo.ySvg}
-                  x2="1000"
-                  y2={nivelActivo.ySvg}
-                  stroke="#38bdf8"
-                  strokeWidth="2.5"
-                  strokeDasharray="8 4"
-                />
-                {/* Flecha y cota indicadora */}
-                <text
-                  x="70"
-                  y={nivelActivo.ySvg - 8}
-                  fill="#38bdf8"
-                  fontSize="11"
-                  fontFamily="monospace"
-                  fontWeight="bold"
-                >
-                  ◀ {nivelActivo.label} [{nivelActivo.cotaM > 0 ? `+${nivelActivo.cotaM}` : nivelActivo.cotaM} m]
-                </text>
-              </g>
-
-              {/* BARRAS VERTICALES DE SEPARACIÓN DE ECOTONOS */}
-              {/* Ecotono 01 (x: 320) */}
-              <g id="ecotono-1">
-                <rect x="315" y="30" width="8" height="340" fill="#000000" stroke="#10b981" strokeWidth="1.5" rx="2" />
-                <text x="319" y="200" transform="rotate(-90 319,200)" textAnchor="middle" fill="#10b981" fontSize="10" fontFamily="monospace" fontWeight="bold" letterSpacing="2">
-                  ECOTONO 01
-                </text>
-                <text x="319" y="24" textAnchor="middle" fill="#38bdf8" fontSize="10" fontFamily="sans-serif" fontWeight="bold">
-                  TIDAL MARSH / GRASSLAND
-                </text>
-              </g>
-
-              {/* Ecotono 02 (x: 690) */}
-              <g id="ecotono-2">
-                <rect x="685" y="30" width="8" height="340" fill="#000000" stroke="#84cc16" strokeWidth="1.5" rx="2" />
-                <text x="689" y="200" transform="rotate(-90 689,200)" textAnchor="middle" fill="#84cc16" fontSize="10" fontFamily="monospace" fontWeight="bold" letterSpacing="2">
-                  ECOTONO 02
-                </text>
-                <text x="689" y="24" textAnchor="middle" fill="#84cc16" fontSize="10" fontFamily="sans-serif" fontWeight="bold">
-                  FRESHWATER WETLAND / FOREST
-                </text>
-              </g>
-
-              {/* RÓTULOS DE ZONAS SUPERIORES */}
-              <text x="160" y="24" textAnchor="middle" fill="#38bdf8" fontSize="10" fontFamily="sans-serif" fontWeight="bold">
-                TIDAL ZONE / LECHO MARINO
-              </text>
-              <text x="840" y="24" textAnchor="middle" fill="#22c55e" fontSize="10" fontFamily="sans-serif" fontWeight="bold">
-                MESETA SEGURA (&gt; +22 M)
-              </text>
-
-              {/* SILUETAS DE FAUNA */}
-              {/* Pelícano / Aves en vuelo */}
-              <g fill="#bae6fd" opacity="0.8">
-                <path d="M 180,90 Q 190,82 200,90 Q 210,82 220,90 Q 200,85 180,90 Z" />
-                <path d="M 230,110 Q 238,104 246,110 Q 254,104 262,110 Q 246,106 230,110 Z" />
-                <path d="M 620,70 Q 628,64 636,70 Q 644,64 652,70 Q 636,66 620,70 Z" />
-              </g>
-            </svg>
-          </div>
-
-          {/* Información del nivel seleccionado */}
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 border-t border-white/10 pt-3 text-xs">
-            <div className="bg-white/[0.03] p-2.5 rounded-lg border border-white/8">
-              <span className="text-white/50 block font-mono text-[10px]">ECOTONO 01 · INTERMAREAL</span>
-              <p className="mt-0.5 font-medium text-cyan-300">Praderas submarinas &amp; oleaje</p>
-              <p className="text-white/60 text-[11px] mt-1 leading-snug">Disipación de energía marina basal mediante *Thalassia* y fondos no consolidados.</p>
-            </div>
-            <div className="bg-white/[0.03] p-2.5 rounded-lg border border-white/8">
-              <span className="text-white/50 block font-mono text-[10px]">ECOTONO 02 · BORDE BLANDO</span>
-              <p className="mt-0.5 font-medium text-emerald-400">Manglar disipativo &amp; pasarela</p>
-              <p className="text-white/60 text-[11px] mt-1 leading-snug">Raíces zancudas amortiguan hasta 66% de fuerza de ola; pasarela peatonal sobre pilotes a +2.10 m.</p>
-            </div>
-            <div className="bg-white/[0.03] p-2.5 rounded-lg border border-white/8">
-              <span className="text-white/50 block font-mono text-[10px]">ECOTONO 03 · SUELO SEGURO</span>
-              <p className="mt-0.5 font-medium text-lime-400">Bio-armadura Vetiver &amp; Meseta</p>
-              <p className="text-white/60 text-[11px] mt-1 leading-snug">Raíces de 3 m frenan cárcavas de escorrentía; Bosque Seco retiene agua dulce sobre cota +22 m.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* =====================================================================
-            FILA INFERIOR: PALETA DE ESPECIES (IZQ) Y PERSPECTIVA DEL BORDE BLANDO (DER)
-        ===================================================================== */}
-        <div className="mt-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-          {/* PALETA DE ESPECIES NATIVAS Y FUNCIONES ADAPTATIVAS (7 COLUMNAS) */}
-          <div className="lg:col-span-7 flex flex-col justify-between bg-black/40 p-5 rounded-2xl border border-white/12">
-            <div>
-              <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                <h3 className="font-mono text-xs uppercase tracking-wider text-emerald-400 font-semibold">
-                  Paleta de Especies Adaptativas de Tierra Bomba
-                </h3>
-                <span className="text-white/45 text-[11px] font-mono">Toca una especie para inspeccionar su rol</span>
-              </div>
-
-              {/* Tiras verticales de especies (como en el referente gráfico) */}
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {ESPECIES_PALETA.map((sp) => {
-                  const activa = especieSel.tid === sp.tid;
-                  return (
-                    <button
-                      key={sp.tid}
-                      type="button"
-                      onClick={() => setEspecieSel(sp)}
-                      className={`group relative flex flex-col overflow-hidden rounded-xl border text-left transition-all ${
-                        activa
-                          ? 'border-emerald-400 ring-2 ring-emerald-400/30 scale-[1.02] bg-white/[0.08]'
-                          : 'border-white/10 bg-white/[0.02] hover:border-white/25 hover:bg-white/[0.05]'
-                      }`}
-                    >
-                      <div className="relative aspect-[4/5] w-full overflow-hidden bg-black/60">
-                        <img
-                          src={sp.img}
-                          alt={sp.comun}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                        <span
-                          className="absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold"
-                          style={{ background: sp.c, color: '#000' }}
-                        >
-                          {sp.cat}
-                        </span>
-                      </div>
-                      <div className="p-2.5 flex-1 flex flex-col justify-between">
-                        <div>
-                          <p className="font-semibold text-xs leading-snug text-white group-hover:text-emerald-300 transition-colors">
-                            {sp.comun}
-                          </p>
-                          <p className="font-mono text-[10px] text-white/50 italic mt-0.5">
-                            {sp.sci}
-                          </p>
-                        </div>
-                        <p className="font-mono text-[10px] text-emerald-400 mt-2 block">
-                          {sp.zona}
-                        </p>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Ficha de detalle de la especie seleccionada */}
-            {especieSel && (
-              <div className="mt-5 rounded-xl border border-emerald-500/30 bg-emerald-950/25 p-4 flex flex-col sm:flex-row items-center gap-4">
-                <img
-                  src={especieSel.img}
-                  alt={especieSel.comun}
-                  className="h-16 w-16 rounded-lg object-cover border border-emerald-400/40 flex-none"
-                />
-                <div className="flex-1 text-xs">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-bold text-sm text-white">{especieSel.comun}</span>
-                    <span className="font-mono text-emerald-400 italic">({especieSel.sci})</span>
-                    <span className="px-2 py-0.5 rounded bg-black/60 font-mono text-[10px] text-white/70 border border-white/10">
-                      {especieSel.zona}
-                    </span>
-                  </div>
-                  <p className="mt-1.5 text-white/80 leading-relaxed">
-                    <strong>Función ecosistémica adaptativa:</strong> {especieSel.rol}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* VISUALIZACIÓN EN PERSPECTIVA DE LA PASARELA Y BORDE BLANDO (5 COLUMNAS) */}
-          <div className="lg:col-span-5 flex flex-col justify-between bg-black/40 p-5 rounded-2xl border border-white/12">
-            <div>
-              <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
-                <h3 className="font-mono text-xs uppercase tracking-wider text-arcilla font-semibold">
-                  Visualización de Paisaje Adaptativo
-                </h3>
-                <span className="text-white/45 text-[11px] font-mono">Borde Blando &amp; Pasarela</span>
-              </div>
-
-              {/* Render arquitectónico representativo del referente */}
-              <div className="mt-4 relative aspect-[4/3] w-full overflow-hidden rounded-xl border border-white/15 bg-black/60 group">
-                <img
-                  src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80"
-                  alt="Borde costero adaptativo con pasarela de madera"
-                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105 brightness-90 saturate-95"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent" />
-
-                {/* Etiquetas superpuestas tipo proyecto */}
-                <div className="absolute top-3 left-3 bg-black/75 backdrop-blur px-2.5 py-1 rounded-md border border-white/20 font-mono text-[10px] text-emerald-300">
-                  Sector: Punta Arena / Caño del Oro
-                </div>
-
-                <div className="absolute bottom-3 left-3 right-3 text-xs leading-relaxed text-white/90">
-                  <p className="font-medium text-white text-sm">
-                    Pasarela Palafítica Elevada (*Elevated Boardwalk*)
-                  </p>
-                  <p className="text-white/75 text-[11px] mt-1 leading-snug">
-                    Permite a los pescadores y a la comunidad acceder a las embarcaciones y desplazarse por encima de las marejadas de tormenta sin interrumpir el flujo del manglar ni cimentar rellenos duros.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Texto de manifiesto adaptativo (traducción del referente arquitectónico) */}
-            <blockquote className="mt-5 border-l-2 border-arcilla bg-white/[0.04] p-3.5 rounded-r-lg text-xs leading-relaxed text-white/85 italic">
-              "El enrocado permeable (*riprap revetment*), la marisma de manglar y la pasarela elevada componen un borde blando de costa con alta capacidad de adaptación al ascenso del nivel del mar y a la incertidumbre sedimentaria futura, reduciendo el impacto en los hábitats litorales para fomentar un entorno ecológicamente próspero en Tierra Bomba."
-              <span className="block not-italic font-mono text-[10px] text-white/45 mt-1.5">
-                Adaptación de: 10 Adaptive Landscape — Sea Level Rise and Sediment Uncertainty
-              </span>
-            </blockquote>
-          </div>
+        <div className="relative h-[82svh] min-h-[520px] lg:sticky lg:top-0 lg:h-[100svh]">
+          <PasarelaInmersiva />
         </div>
       </div>
     </section>

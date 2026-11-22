@@ -36,3 +36,8 @@ DATOS SOCIALES  (capitulo Lo social)
   Encuesta a 238 habitantes (2016, publicada en 2017), Universidad de Manizales; talleres de memoria de la Universidad Tecnologica de Bolivar;
   Caracol Radio (2018); Reporteros Asociados (2017); SED Cartagena (PACSE 2025); Cartagena Como Vamos (Informe de Calidad de Vida 2022);
   ESE Cartagena de Indias (2022); Armada Nacional (2021); estudio de transporte acuatico de Cartagena (2014). Enlaces en la pagina.
+
+PAISAJE ADAPTATIVO · PASARELA INMERSIVA  (capitulo 08)
+  Poly Haven (CC0): cielo HDRI "Kloofendal 48d Partly Cloudy (Pure Sky)" (Greg Zaal); texturas Brown Planks 09, Brown Mud 02 y Rock Boulder Dry;
+  modelos Grass Medium 01, Island Tree 02 y Tree Small 02 (arboles renderizados en Blender como impostores). https://polyhaven.com
+  Recortes y fotos de especies: iNaturalist (CC BY-NC). Referente grafico: "10 Adaptive Landscape - Sea level rise and sediment uncertainty".
