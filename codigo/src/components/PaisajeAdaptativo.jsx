@@ -115,7 +115,7 @@ export function Huerta() {
       id="huerta" etiqueta="12 · Huerta comunitaria" titulo="Un vivero para sembrar la comida y el bosque"
       cfg={corteHuerta} construir={escenaHuerta}
       aria="Huerta y vivero comunitario de Tierra Bomba"
-      leyenda="Un invernadero abierto de acero y policarbonato protege las plántulas del sol y la lluvia fuerte. Mesas elevadas, riego por goteo desde el tanque de lluvia y una cerca de plantas para los polinizadores."
+      leyenda="El invernadero protege las plántulas del sol y la lluvia fuerte; afuera, bancales elevados de madera sobre mantillo, caminos de grava y un maizal. Riego por goteo desde el tanque de lluvia y un seto para los polinizadores."
       nota="Corte esquemático. Hortalizas y plántulas modeladas en Blender; texturas escaneadas de Poly Haven (CC0). Interacciones de la base de especies de la isla (Bello et al. 2017; Fricke y Svenning 2020; Bat Eco-Interactions; Ollerton et al. 2019)."
     />
   );

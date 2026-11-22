@@ -95,11 +95,38 @@ export default function escenaHuerta(ctx) {
   }));
 
   // construcciones de bloque alrededor (como en la referencia) y tanque de lluvia
-  [[-15, -6, 8, 6, 0.1], [15, -2, 9, 6, -0.1], [3, -30, 12, 6, 0]].forEach(([x, z, w, d, r]) => { const b = new THREE.Group(); b.add(en(caja(w, 2.8, d, M.bloque, 1.2), 0, 1.4, 0)); const t = caja(w + 1.2, 0.06, d + 1.4, M.lamina); t.position.y = 3.05; t.rotation.z = 0.1; b.add(t); b.position.set(x, 0, z); b.rotation.y = r; escena.add(b); });
+  [[-15, -6, 8, 6, 0.1], [40, 24, 9, 6, -0.1], [3, -30, 12, 6, 0]].forEach(([x, z, w, d, r]) => { const b = new THREE.Group(); b.add(en(caja(w, 2.8, d, M.bloque, 1.2), 0, 1.4, 0)); const t = caja(w + 1.2, 0.06, d + 1.4, M.lamina); t.position.y = 3.05; t.rotation.z = 0.1; b.add(t); b.position.set(x, 0, z); b.rotation.y = r; escena.add(b); });
   escena.add(en(new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 2.5, 48), new THREE.MeshStandardMaterial({ color: 0xa9b4ba, metalness: 0.8, roughness: 0.35 })), 7.4, 1.25, 10));
 
   // pradera, árboles y fauna
-  const pasto = []; for (let i = 0; i < 140000; i++) { const x = -45 + rnd() * 90; const z = -45 + rnd() * 90; if (Math.abs(x) < 10 && Math.abs(z) < 21) continue; pasto.push({ x, y: terreno(x, z), z, h: 0.25 + rnd() * 0.45 }); }
+  // huerta exterior (como la referencia): mantillo de viruta, caminos de grava, bancales elevados de madera y maizal
+  {
+    const mantillo = caja(24, 0.05, 35, pbr(tl, 'viruta', [1, 1], { color: 0xc89a78 }), 2); mantillo.position.set(19, 0.025, -0.5); escena.add(mantillo);
+    const grava = pbr(tl, 'grava', [1, 1], { color: 0xf2ece2 });
+    [[9.5, 0, 1.9, 35], [20, 0, 1.6, 35], [19, 14, 24, 1.6], [19, -17.2, 24, 1.4]].forEach(([x, z, w, d]) => escena.add(en(caja(w, 0.07, d, grava, 1.5), x, 0.035, z)));
+    const bordes = pbr(tl, 'madera', [0.5, 2], { color: 0x8a6646 });
+    const lugares = { lechuga: [], mata: [], plantula: [], maiz: [] };
+    const bancal = (cx, cz, w, l, tipo) => {
+      const h = 0.36; [-1, 1].forEach((s) => { escena.add(en(caja(0.06, h, l, bordes, 1.5), cx + s * (w / 2 - 0.03), h / 2, cz)); escena.add(en(caja(w, h, 0.06, bordes, 1.5), cx, h / 2, cz + s * (l / 2 - 0.03))); });
+      escena.add(en(caja(w - 0.1, h - 0.06, l - 0.1, M.tierra, 1), cx, (h - 0.06) / 2, cz));
+      const sep = tipo === 'lechuga' ? 0.32 : tipo === 'mata' ? 0.42 : 0.18;
+      for (let x = cx - w / 2 + 0.2; x < cx + w / 2 - 0.12; x += sep) for (let z = cz - l / 2 + 0.2; z < cz + l / 2 - 0.12; z += sep) if (rnd() < 0.9) lugares[tipo].push({ x: x + (rnd() - 0.5) * 0.05, y: h - 0.03, z: z + (rnd() - 0.5) * 0.05, k: tipo === 'plantula' ? 2.2 + rnd() : tipo === 'mata' ? 1.6 + rnd() * 0.8 : 1.3 + rnd() * 0.5 });
+    };
+    const tipos = ['lechuga', 'mata', 'plantula', 'lechuga', 'mata'];
+    [12.2, 14.8, 17.4].forEach((x, i) => { for (let z = -15.6; z < 12; z += 3.3) bancal(x, z, 1.3, 2.5, tipos[(((i + Math.round(z)) % tipos.length) + tipos.length) % tipos.length]); });
+    [23.0, 25.6, 28.2].forEach((x, i) => { for (let z = -4.6; z < 12; z += 3.3) bancal(x, z, 1.3, 2.5, tipos[(((i + 2 + Math.round(z)) % tipos.length) + tipos.length) % tipos.length]); });
+    for (let x = 21.8; x < 30; x += 0.75) for (let z = -16.2; z < -7; z += 0.6) if (rnd() < 0.85) lugares.maiz.push({ x: x + (rnd() - 0.5) * 0.2, y: 0.05, z: z + (rnd() - 0.5) * 0.2, k: 0.8 + rnd() * 0.35 });
+    const o2 = new THREE.Object3D();
+    Object.entries(lugares).forEach(([nombre, lista]) => cargador.load(`${PAS}huerta/${nombre}.glb`, (gl) => {
+      if (!vivo()) return; let malla = null; gl.scene.traverse((m) => { if (m.isMesh && !malla) malla = m; }); if (!malla) return;
+      const geo = malla.geometry; if (geo.attributes.color_1) geo.setAttribute('color', geo.attributes.color_1); const mat = malla.material.clone(); mat.side = THREE.DoubleSide; mat.vertexColors = true;
+      const im = new THREE.InstancedMesh(geo, mat, lista.length); lista.forEach((l, i) => { o2.position.set(l.x, l.y, l.z); o2.rotation.set(0, rnd() * 6.283, (rnd() - 0.5) * (nombre === 'maiz' ? 0.12 : 0)); o2.scale.setScalar(l.k); o2.updateMatrix(); im.setMatrixAt(i, o2.matrix); }); im.receiveShadow = true; im.castShadow = true; escena.add(im);
+    }));
+    // seto vivo en el borde este
+    const seto = []; for (let i = 0; i < 26000; i++) { const z = -18 + rnd() * 36; const x = 31.2 + rnd() * 1.6; seto.push({ x, y: 0, z, h: 0.9 + rnd() * 0.9 }); }
+    crearBriznas(escena, seto, { uT, sol, nieblaU, paleta: 'junco', ancho: 0.03 });
+  }
+  const pasto = []; for (let i = 0; i < 140000; i++) { const x = -45 + rnd() * 90; const z = -45 + rnd() * 90; if (Math.abs(x) < 10 && Math.abs(z) < 21) continue; if (x > 6.5 && x < 33 && z > -18.5 && z < 16.5) continue; pasto.push({ x, y: terreno(x, z), z, h: 0.25 + rnd() * 0.45 }); }
   crearBriznas(escena, pasto, { uT, sol, nieblaU, paleta: 'pradera', ancho: 0.01 });
   const arb = [{ x: -12, y: 0, z: 14, h: 7 }, { x: 13, y: 0, z: 16, h: 8 }, { x: -20, y: 0, z: -20, h: 9 }, { x: 22, y: 0, z: -24, h: 9 }];
   for (let i = 0; i < 520; i++) { const a = rnd() * 6.283; const r = 50 + rnd() * 200; const x = Math.cos(a) * r; const z = Math.sin(a) * r; arb.push({ x, y: terreno(x, z) + Math.max(0, Math.hypot(x, z) - 170) / 200 * 6, z }); }
@@ -109,7 +136,7 @@ export default function escenaHuerta(ctx) {
   posar('colibri', Array.from({ length: 3 }, () => ({ p: new THREE.Vector3(), esc: 0.11, tam: 0.7, tipo: 'mariposa', aleteo: 0.6, base: new THREE.Vector3(-8 + rnd() * 16, 2.0, 16 + rnd() * 4), f: rnd() * 6 })));
 
   // recorrido: entra por el hastial, recorre un pasillo, cruza entre tramos y sale por el otro pasillo
-  const curva = new THREE.CatmullRomCurve3([[1.75, 24], [1.75, 15], [1.75, 6], [1.75, -4], [0, -4.0], [-1.75, -4.0], [-1.75, -10], [-1.75, -16], [-6, -19], [-10, -14], [-9, -4], [-9.5, 6]].map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
+  const curva = new THREE.CatmullRomCurve3([[1.75, 24], [1.75, 15], [1.75, 6], [1.75, -4], [0, -4.0], [-1.75, -4.0], [-1.75, -10], [-1.75, -16], [1.5, -19.5], [7.5, -18.4], [9.5, -12], [9.5, 0], [9.5, 10], [13, 14], [18.5, 12.5], [20, 4], [20, -6], [21, -16.5], [27, -17.4]].map(([x, z]) => new THREE.Vector3(x, 0, z)), false, 'centripetal');
   const L = curva.getLength();
   const marco = (s, lado = 0) => { const u = clamp(s / L, 0, 1); const p = curva.getPointAt(u); const t = curva.getTangentAt(u).setY(0).normalize(); const l = new THREE.Vector3().crossVectors(t, new THREE.Vector3(0, 1, 0)).normalize(); return { p: p.addScaledVector(l, lado), t, l }; };
   const altura = (s) => { const p = marco(s).p; return terreno(p.x, p.z) + 0.04; };
