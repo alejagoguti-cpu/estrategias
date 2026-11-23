@@ -3,7 +3,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { PAS, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies, texSolar } from './comun.js';
 
 // Colegio en la ladera del bosque: dos barras largas escalonadas, de dos pisos sobre pilotes de acero, con
-// fachada de celosías de listones de madera (sin vidrio), balcones corridos con baranda de listones, cubiertas
+// fachada de persianas de madera de lamas horizontales en paneles (sin vidrio), balcones corridos con baranda de cables, cubiertas
 // flotantes de pérgola de listones y paneles solares, y escaleras exteriores entre niveles. El recorrido sube del sendero a los balcones.
 const PISO = 3.4;
 const terreno = (x, z) => clamp((-z - 6) * 0.32, 0, 24) + 0.25 * Math.sin(x * 0.09) * Math.cos(z * 0.07);
@@ -14,6 +14,35 @@ function caja(w, h, d, mat, tile = 1) {
 }
 const en = (m, x, y, z) => { m.position.set(x, y, z); return m; };
 
+
+// persianas de madera como la referencia: paneles con marco (largueros, travesaños y travesaño intermedio) y
+// lamas horizontales inclinadas. Todo en dos InstancedMesh. L = largo, h = alto, eje = dirección del paño.
+function persiana(L, h, eje, mat, anchoPanel = 0.75, semilla = 0) {
+  const n = Math.max(1, Math.round(L / anchoPanel)); const wp = L / n; const paso = 0.085; const nl = Math.ceil(h / paso) + 2;
+  const geo = new THREE.BoxGeometry(1, 1, 1); const marcos = new THREE.InstancedMesh(geo, mat, n * 5); const lamas = new THREE.InstancedMesh(geo, mat, n * nl);
+  const o = new THREE.Object3D(); let im = 0; let il = 0;
+  const poner = (mesh, i, t, y, st, sy, sd, giro = 0) => { if (eje === 'x') { o.position.set(t, y, 0); o.scale.set(st, sy, sd); o.rotation.set(giro, 0, 0); } else { o.position.set(0, y, t); o.scale.set(sd, sy, st); o.rotation.set(0, 0, giro); } o.updateMatrix(); mesh.setMatrixAt(i, o.matrix); };
+  const yMed = -h / 2 + h * 0.36;
+  for (let p = 0; p < n; p++) {
+    const c = -L / 2 + (p + 0.5) * wp;
+    poner(marcos, im++, c - wp / 2 + 0.035, 0, 0.065, h, 0.07); poner(marcos, im++, c + wp / 2 - 0.035, 0, 0.065, h, 0.07);
+    poner(marcos, im++, c, h / 2 - 0.045, wp, 0.09, 0.07); poner(marcos, im++, c, -h / 2 + 0.06, wp, 0.12, 0.07); poner(marcos, im++, c, yMed, wp, 0.08, 0.07);
+    const giro = 0.62 + 0.18 * Math.sin((p + semilla) * 2.7); // cada panel con sus lamas un poco distintas
+    for (let y = -h / 2 + 0.16; y < h / 2 - 0.09; y += paso) { if (Math.abs(y - yMed) < 0.07) continue; poner(lamas, il++, c, y, wp - 0.12, 0.012, 0.075, giro); }
+  }
+  marcos.count = im; lamas.count = il; [marcos, lamas].forEach((m) => { m.castShadow = true; m.receiveShadow = true; });
+  const g = new THREE.Group(); g.add(marcos, lamas); return g;
+}
+// baranda liviana como la referencia: pasamanos de madera, parales y cables de acero
+function barandaCable(L, eje, madera, acero) {
+  const g = new THREE.Group(); const geo = new THREE.BoxGeometry(1, 1, 1); const o = new THREE.Object3D();
+  const np = Math.max(2, Math.round(L / 1.5) + 1); const ac = new THREE.InstancedMesh(geo, acero, np + 5);
+  const poner = (mesh, i, t, y, st, sy, sd) => { if (eje === 'x') { o.position.set(t, y, 0); o.scale.set(st, sy, sd); } else { o.position.set(0, y, t); o.scale.set(sd, sy, st); } o.updateMatrix(); mesh.setMatrixAt(i, o.matrix); };
+  let i = 0; for (let k = 0; k < np; k++) poner(ac, i++, -L / 2 + (k * L) / (np - 1), 0.5, 0.05, 1.0, 0.05);
+  for (let k = 0; k < 5; k++) poner(ac, i++, 0, 0.15 + k * 0.17, L, 0.008, 0.008);
+  const pm = new THREE.InstancedMesh(geo, madera, 1); poner(pm, 0, 0, 1.04, L + 0.1, 0.06, 0.12);
+  ac.castShadow = pm.castShadow = true; g.add(ac, pm); return g;
+}
 // celosía de listones verticales (InstancedMesh): L = largo, h = alto, eje = dirección del paño ('x' | 'z')
 function celosia(L, h, eje, mat, paso = 0.15, ancho = 0.07, prof = 0.05) {
   const n = Math.max(2, Math.round(L / paso)); const geo = new THREE.BoxGeometry(eje === 'x' ? ancho : prof, h, eje === 'x' ? prof : ancho);
@@ -43,11 +72,11 @@ export default function escenaLadera(ctx) {
     [[-120, -420, 260, 120], [160, -460, 300, 150], [20, -560, 360, 190]].forEach(([x, z, r, h]) => { const c = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), cerro); c.position.set(x, 18, z); c.scale.set(r, h, r * 0.5); escena.add(c); });
   }
 
-  function baranda(x0, x1, y, z) { // baranda de acero con listones de madera a lo largo de x
+  function baranda(x0, x1, y, z) { // baranda de acero con cables y pasamanos de madera a lo largo de x
     const g = new THREE.Group(); const L = x1 - x0;
     g.add(en(caja(L, 0.05, 0.06, M.aceroClaro), (x0 + x1) / 2, y + 1.05, z)); g.add(en(caja(L, 0.03, 0.03, M.aceroClaro), (x0 + x1) / 2, y + 0.1, z));
     for (let x = x0; x <= x1 + 0.01; x += 1.5) g.add(en(caja(0.04, 1.05, 0.04, M.aceroClaro), x, y + 0.53, z));
-    g.add(en(celosia(L, 0.85, 'x', M.listones, 0.12, 0.05, 0.04), (x0 + x1) / 2, y + 0.56, z)); return g;
+    g.add(en(barandaCable(L, 'x', M.madera, M.aceroClaro), (x0 + x1) / 2, y, z)); return g;
   }
   function barra(zFrente, x0, x1) {
     const g = new THREE.Group(); const prof = 9; const zAtras = zFrente - prof; const yB = terreno(0, zAtras) + 0.6; const L = x1 - x0; const cx = (x0 + x1) / 2;
@@ -56,15 +85,15 @@ export default function escenaLadera(ctx) {
       { const lo = en(caja(L + 3, 0.34, prof + 2.2, M.losa, 2), cx - 1.5, y - 0.17, zAtras + (prof + 2.2) / 2); lo.material = [M.fascia, M.fascia, M.piso, M.cieloRaso, M.fascia, M.fascia]; g.add(lo); }
       for (let x = x0 + 1.4; x < x1; x += 2.4) { const lam = caja(0.18, 0.04, 1.6, M.luz); lam.castShadow = false; lam.position.set(x, y + PISO - 0.38, zAtras + prof / 2); g.add(lam); }
       g.add(en(caja(L, PISO - 0.3, 0.2, M.interior, 2), cx, y + (PISO - 0.3) / 2, zAtras + 0.1));
-      // banda continua de celosía de listones de madera con marcos (sin vidrio)
-      g.add(en(celosia(L - 0.2, PISO - 0.45, 'x', M.listones, 0.14, 0.07, 0.05), cx, y + (PISO - 0.3) / 2, zFrente - 0.15));
+      // banda continua de persianas de madera en paneles (sin vidrio)
+      g.add(en(persiana(L - 0.2, PISO - 0.4, 'x', M.listones, 0.8, n * 7), cx, y + (PISO - 0.3) / 2, zFrente - 0.15));
       for (let x = x0; x <= x1 + 0.01; x += 2.4) g.add(en(caja(0.06, PISO - 0.3, 0.08, M.acero), x, y + (PISO - 0.3) / 2, zFrente - 0.15));
-      // segunda capa: celosías corredizas de listones al frente en algunos paños
-      for (let x = x0 + 1.2; x < x1; x += 2.4) if (((x - x0) / 2.4 + n) % 3 < 1.2) { const p = new THREE.Group(); for (let k = 0; k < 14; k++) p.add(en(caja(0.07, PISO - 0.5, 0.04, M.listones, 0.8), -1.1 + k * 0.17, 0, 0)); p.position.set(x, y + (PISO - 0.3) / 2, zFrente + 0.05); g.add(p); }
+      // segunda capa: persianas corredizas abiertas al frente en algunos paños
+      for (let x = x0 + 1.2; x < x1; x += 2.4) if (((x - x0) / 2.4 + n) % 3 < 1.2) { const p = persiana(1.6, PISO - 0.45, 'x', M.madera, 0.8, x); p.position.set(x + 0.4, y + (PISO - 0.3) / 2, zFrente + 0.05); g.add(p); }
       g.add(baranda(x0 - 3, x1, y, zFrente + 2.0));
     }
-    // cajas cerradas de listones en los extremos
-    [x0 + 3, x1 - 3].forEach((xc) => { const b = new THREE.Group(); for (let k = 0; k < 34; k++) b.add(en(caja(0.08, PISO * 2 - 0.3, 0.06, M.listones, 0.8), -2.9 + k * 0.175, 0, 0)); b.position.set(xc, yB + PISO - 0.15, zFrente + 0.12); g.add(b); g.add(en(caja(6, PISO * 2 - 0.3, prof - 0.4, M.madera, 1.5), xc, yB + PISO - 0.15, zAtras + prof / 2 - 0.1)); });
+    // cajas cerradas de persianas en los extremos
+    [x0 + 3, x1 - 3].forEach((xc) => { const b = new THREE.Group(); b.add(persiana(6, PISO * 2 - 0.3, 'x', M.listones, 0.75, xc)); b.position.set(xc, yB + PISO - 0.15, zFrente + 0.12); g.add(b); g.add(en(caja(6, PISO * 2 - 0.3, prof - 0.4, M.madera, 1.5), xc, yB + PISO - 0.15, zAtras + prof / 2 - 0.1)); });
     // pilotes de acero hasta el terreno
     for (let x = x0; x <= x1 + 0.01; x += 6) [zFrente + 2, zFrente - 2, zAtras + 1].forEach((z) => { const h = yB - terreno(x, z); if (h > 0.2) g.add(en(caja(0.24, h, 0.24, M.acero), x, terreno(x, z) + h / 2, z)); });
     // cubierta flotante: vigas inclinadas, franjas alternas de paneles solares y pérgola de listones

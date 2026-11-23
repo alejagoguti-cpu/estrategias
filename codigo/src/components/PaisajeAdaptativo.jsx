@@ -145,7 +145,7 @@ export function ColegioLadera() {
       id="colegio-ladera" etiqueta="09 · Colegio en ladera" titulo="Aulas sobre pilotes entre el bosque"
       cfg={corteLadera} construir={escenaLadera}
       aria="Colegio en ladera sobre pilotes en el bosque de Tierra Bomba"
-      leyenda="Dos barras de aulas escalonadas sobre pilotes dejan pasar el bosque por debajo. Balcones corridos, fachadas de listones de madera, cubiertas flotantes con paneles solares y escaleras exteriores entre niveles."
+      leyenda="Dos barras de aulas escalonadas sobre pilotes dejan pasar el bosque por debajo. Balcones corridos, fachadas de persianas de madera sin vidrio, cubiertas flotantes con paneles solares y escaleras exteriores entre niveles."
       nota="Corte esquemático. Estructura de acero y madera modelada para el recorrido; texturas escaneadas de Poly Haven (CC0). Interacciones de la base de especies de la isla."
     />
   );
@@ -157,7 +157,7 @@ export function ConjuntoVivienda() {
       id="conjunto" etiqueta="10 · Conjunto de vivienda" titulo="Bloques alrededor de un eje de agua y jardín"
       cfg={corteConjunto} construir={escenaConjunto}
       aria="Conjunto de vivienda alrededor de un canal de agua en la meseta de Tierra Bomba"
-      leyenda="Dos hileras de bloques blancos de cuatro pisos, escalonados, se abren a un eje central con un canal que retiene la lluvia, jardín y árboles de sombra. Balcones, terrazas con pérgola y ventilación cruzada."
+      leyenda="Dos hileras de bloques blancos de cuatro pisos, escalonados, se abren a un eje central con un canal que retiene la lluvia, jardín y árboles de sombra. Persianas de madera sin vidrio, balcones, terrazas con pérgola y ventilación cruzada."
       nota="Corte esquemático. Bloques, canal y jardín modelados para el recorrido; texturas escaneadas de Poly Haven (CC0). Interacción de garzas registrada en la base de especies de la isla (iNaturalist)."
     />
   );

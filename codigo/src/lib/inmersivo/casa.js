@@ -59,6 +59,15 @@ export default function escenaCasa(ctx) {
     m.position.set((x0 + x1) / 2, (yAlto + yBajo) / 2 + 0.13, (z0 + z1) / 2); m.rotation.z = -ang; return m;
   }
 
+  // celosía de ladrillo en trabado abierto (soga con hueco): x0..x1 en el eje local x; eje 'z' la gira
+  function celosiaLadrillo(x0, x1, y0, y1, eje = 'x', fijo = 0) {
+    const L = x1 - x0; const filas = Math.floor((y1 - y0) / 0.11); const cols = Math.ceil(L / 0.3) + 1;
+    const geo = caja(0.22, 0.07, 0.105, M.ladrillo, 0.5).geometry; const im = new THREE.InstancedMesh(geo, M.ladrillo, filas * cols); const o = new THREE.Object3D(); let k = 0;
+    for (let j = 0; j < filas; j++) for (let i = 0; i < cols; i++) { const t = x0 + 0.11 + i * 0.3 + (j % 2) * 0.15; if (t > x1 - 0.11) continue; const y = y0 + 0.06 + j * 0.11;
+      if (eje === 'x') o.position.set(t, y, fijo); else o.position.set(fijo, y, t); o.rotation.set(0, (eje === 'x' ? 0 : Math.PI / 2) + (rnd() - 0.5) * 0.02, 0); o.updateMatrix(); im.setMatrixAt(k++, o.matrix); }
+    im.count = k; im.castShadow = true; im.receiveShadow = true; return im;
+  }
+
   function construirCasa(conMuebles) {
     const c = new THREE.Group();
     // piso interior, deck y sala hundida
@@ -83,6 +92,11 @@ export default function escenaCasa(ctx) {
       for (let j = 0; j < 26; j++) for (let i = 0; i < 22; i++) { const x = 2.3 + i * 0.3 + (j % 2) * 0.15; if (x > 8.55) continue; o.position.set(x, PISO + 0.06 + j * 0.11, 2.45); o.rotation.y = (rnd() - 0.5) * 0.02; o.updateMatrix(); im.setMatrixAt(k++, o.matrix); }
       im.count = k; im.castShadow = true; im.receiveShadow = true; c.add(im);
       c.add(en(caja(6.6, 0.12, 0.3, M.revoque), 5.45, PISO + 2.95, 2.45)); }
+    // más celosías de ladrillo: frente de la sala (medio paño), costado de la sala, costado y fondo de dormitorios
+    c.add(celosiaLadrillo(-9.0, -5.6, PISO, PISO + 2.9, 'x', 2.45)); c.add(en(caja(3.5, 0.12, 0.3, M.revoque), -7.3, PISO + 2.95, 2.45));
+    c.add(celosiaLadrillo(-5.3, -1.0, PISO, PISO + 2.9, 'z', -9.45));
+    c.add(celosiaLadrillo(-5.2, 1.6, PISO, PISO + 2.9, 'z', 9.45)); c.add(en(caja(0.3, 0.12, 6.8, M.revoque), 9.45, PISO + 2.95, -1.8));
+    c.add(celosiaLadrillo(2.0, 8.8, PISO, PISO + 2.9, 'x', -5.85));
     // pórtico frontal y columnas
     c.add(en(caja(12.2, 0.38, 0.34, M.revoque, 2), 3.9, TOPE - 0.05, 2.6)); [[-1.95, 2.6], [10, 2.6], [10, -5.4]].forEach(([x, z]) => c.add(en(caja(0.34, H + 0.1, 0.34, M.revoque, 2), x, PISO + H / 2, z)));
     // paneles solares y bajante

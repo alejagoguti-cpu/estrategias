@@ -3,9 +3,9 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 import { BASE, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies } from './comun.js';
 
 // Conjunto de vivienda en la meseta (referencia: conjunto de bloques blancos alrededor de un eje de agua):
-// dos hileras de bloques de tres y cuatro pisos, escalonados, de revoque blanco, con celosías de madera de piso a
-// techo (sin vidrio), perfilería fina, balcones con antepecho y baranda de listones, aletas verticales y terrazas con
-// pérgola. Eje central: canal de retención de lluvia con borde de piedra, prado, camastros y cocoteros.
+// dos hileras de bloques de tres y cuatro pisos, escalonados, de revoque blanco, con persianas de madera de piso a
+// techo en paneles de lamas (sin vidrio), perfilería fina, balcones con antepecho y baranda de cables, aletas verticales y terrazas con
+// pérgola. Eje central: canal de retención de lluvia con borde de piedra, prado y cocoteros.
 const H = 3.2;
 const terreno = (x, z) => 0.03 * Math.sin(x * 0.1) * Math.cos(z * 0.08) + Math.max(0, Math.hypot(x, z + 30) - 140) / 200 * 6;
 function caja(w, h, d, mat, tile = 1) {
@@ -15,12 +15,34 @@ function caja(w, h, d, mat, tile = 1) {
 }
 const en = (m, x, y, z) => { m.position.set(x, y, z); return m; };
 
-// celosía de listones verticales (InstancedMesh): L = largo, h = alto, eje = dirección del paño ('x' | 'z')
-function celosia(L, h, eje, mat, paso = 0.15, ancho = 0.07, prof = 0.05) {
-  const n = Math.max(2, Math.round(L / paso)); const geo = new THREE.BoxGeometry(eje === 'x' ? ancho : prof, h, eje === 'x' ? prof : ancho);
-  const im = new THREE.InstancedMesh(geo, mat, n); const o = new THREE.Object3D();
-  for (let i = 0; i < n; i++) { const t = -L / 2 + (i + 0.5) * (L / n); o.position.set(eje === 'x' ? t : 0, 0, eje === 'z' ? t : 0); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
-  im.castShadow = true; im.receiveShadow = true; return im;
+
+// persianas de madera como la referencia: paneles con marco (largueros, travesaños y travesaño intermedio) y
+// lamas horizontales inclinadas. Todo en dos InstancedMesh. L = largo, h = alto, eje = dirección del paño.
+function persiana(L, h, eje, mat, anchoPanel = 0.75, semilla = 0) {
+  const n = Math.max(1, Math.round(L / anchoPanel)); const wp = L / n; const paso = 0.085; const nl = Math.ceil(h / paso) + 2;
+  const geo = new THREE.BoxGeometry(1, 1, 1); const marcos = new THREE.InstancedMesh(geo, mat, n * 5); const lamas = new THREE.InstancedMesh(geo, mat, n * nl);
+  const o = new THREE.Object3D(); let im = 0; let il = 0;
+  const poner = (mesh, i, t, y, st, sy, sd, giro = 0) => { if (eje === 'x') { o.position.set(t, y, 0); o.scale.set(st, sy, sd); o.rotation.set(giro, 0, 0); } else { o.position.set(0, y, t); o.scale.set(sd, sy, st); o.rotation.set(0, 0, giro); } o.updateMatrix(); mesh.setMatrixAt(i, o.matrix); };
+  const yMed = -h / 2 + h * 0.36;
+  for (let p = 0; p < n; p++) {
+    const c = -L / 2 + (p + 0.5) * wp;
+    poner(marcos, im++, c - wp / 2 + 0.035, 0, 0.065, h, 0.07); poner(marcos, im++, c + wp / 2 - 0.035, 0, 0.065, h, 0.07);
+    poner(marcos, im++, c, h / 2 - 0.045, wp, 0.09, 0.07); poner(marcos, im++, c, -h / 2 + 0.06, wp, 0.12, 0.07); poner(marcos, im++, c, yMed, wp, 0.08, 0.07);
+    const giro = 0.62 + 0.18 * Math.sin((p + semilla) * 2.7); // cada panel con sus lamas un poco distintas
+    for (let y = -h / 2 + 0.16; y < h / 2 - 0.09; y += paso) { if (Math.abs(y - yMed) < 0.07) continue; poner(lamas, il++, c, y, wp - 0.12, 0.012, 0.075, giro); }
+  }
+  marcos.count = im; lamas.count = il; [marcos, lamas].forEach((m) => { m.castShadow = true; m.receiveShadow = true; });
+  const g = new THREE.Group(); g.add(marcos, lamas); return g;
+}
+// baranda liviana como la referencia: pasamanos de madera, parales y cables de acero
+function barandaCable(L, eje, madera, acero) {
+  const g = new THREE.Group(); const geo = new THREE.BoxGeometry(1, 1, 1); const o = new THREE.Object3D();
+  const np = Math.max(2, Math.round(L / 1.5) + 1); const ac = new THREE.InstancedMesh(geo, acero, np + 5);
+  const poner = (mesh, i, t, y, st, sy, sd) => { if (eje === 'x') { o.position.set(t, y, 0); o.scale.set(st, sy, sd); } else { o.position.set(0, y, t); o.scale.set(sd, sy, st); } o.updateMatrix(); mesh.setMatrixAt(i, o.matrix); };
+  let i = 0; for (let k = 0; k < np; k++) poner(ac, i++, -L / 2 + (k * L) / (np - 1), 0.5, 0.05, 1.0, 0.05);
+  for (let k = 0; k < 5; k++) poner(ac, i++, 0, 0.15 + k * 0.17, L, 0.008, 0.008);
+  const pm = new THREE.InstancedMesh(geo, madera, 1); poner(pm, 0, 0, 1.04, L + 0.1, 0.06, 0.12);
+  ac.castShadow = pm.castShadow = true; g.add(ac, pm); return g;
 }
 
 export default function escenaConjunto(ctx) {
@@ -46,9 +68,6 @@ export default function escenaConjunto(ctx) {
   [-38 - 46.3, -38 + 46.3].forEach((z) => escena.add(en(caja(6.05, 0.14, 0.45, M.borde, 1.2), 0, 0.05, z)));
   [-1, 1].forEach((s) => { for (let z = 6; z > -84; z -= 1.25) escena.add(en(caja(1.9, 0.06, 1.15, M.piedra, 1.2), s * 4.3, 0.03, z)); });
   [-46, -20, 6].forEach((z) => { escena.add(en(caja(1.8, 0.12, 5.8, M.madera, 1.5), 0, 0.18, z)); });
-  // camastros junto al canal
-  const camastro = (x, z, r) => { const g = new THREE.Group(); g.add(en(caja(0.72, 0.28, 1.95, M.madera, 1), 0, 0.14, 0)); g.add(en(caja(0.66, 0.08, 1.35, M.cojin), 0, 0.32, 0.25)); const resp = caja(0.66, 0.08, 0.75, M.cojin); resp.position.set(0, 0.55, -0.62); resp.rotation.x = 0.75; g.add(resp); g.position.set(x, 0, z); g.rotation.y = r; return g; };
-  for (let z = 2; z > -80; z -= 13) [-1, 1].forEach((s) => { escena.add(camastro(s * 6.2, z, s * 0.2)); escena.add(camastro(s * 6.2, z - 1.0, s * 0.2)); });
 
   // bloque de vivienda: frente hacia el eje (lado = -1 si el eje queda al -x)
   function bloque(cx, cz, w, d, pisos, lado) {
@@ -56,22 +75,22 @@ export default function escenaConjunto(ctx) {
     g.add(en(caja(w + 0.6, y0, d + 0.6, M.piedra, 2), cx, y0 / 2, cz));
     for (let n = 0; n < pisos; n++) {
       const y = y0 + n * H;
-      // losa con borde blanco que vuela 1,6 m sobre el eje (balcón) y antepecho + baranda de listones
+      // losa con borde blanco que vuela 1,6 m sobre el eje (balcón) y antepecho + baranda de cables con pasamanos de madera
       g.add(en(caja(w + 1.6, 0.34, d + 0.4, M.blanco, 2), cx - lado * 0.8, y + H - 0.17, cz));
-      if (n < pisos) { const yb = y; g.add(en(caja(0.22, 0.45, d + 0.2, M.blanco, 2), fx - lado * 1.5, yb + 0.25, cz)); g.add(en(celosia(d + 0.2, 0.62, 'z', M.madera, 0.12, 0.05, 0.04), fx - lado * 1.5, yb + 0.8, cz)); g.add(en(caja(0.06, 0.05, d + 0.2, M.perfil), fx - lado * 1.5, yb + 1.12, cz)); }
-      // fachada de celosía de madera de piso a techo con perfilería (sin vidrio); interior en penumbra detrás
+      if (n < pisos) { const yb = y; g.add(en(caja(0.22, 0.45, d + 0.2, M.blanco, 2), fx - lado * 1.5, yb + 0.25, cz)); g.add(en(barandaCable(d + 0.2, 'z', M.madera, M.perfil), fx - lado * 1.5, yb + 0.45, cz)); }
+      // fachada de persianas de madera de piso a techo en paneles de lamas (sin vidrio); interior en penumbra detrás
       const zz0 = cz - d / 2 + 0.4; const zz1 = cz + d / 2 - 0.4; const largo = zz1 - zz0;
-      g.add(en(celosia(largo, H - 0.4, 'z', M.madera, 0.16, 0.08, 0.06), fx - lado * 0.02, y + (H - 0.34) / 2, cz)); const fondo = caja(0.04, H - 0.4, largo, M.sombra); fondo.castShadow = false; fondo.position.set(fx + lado * 3.2, y + (H - 0.34) / 2, cz); g.add(fondo);
+      g.add(en(persiana(largo, H - 0.4, 'z', M.madera, 0.75, n * 5 + cz), fx - lado * 0.02, y + (H - 0.34) / 2, cz)); const fondo = caja(0.04, H - 0.4, largo, M.sombra); fondo.castShadow = false; fondo.position.set(fx + lado * 3.2, y + (H - 0.34) / 2, cz); g.add(fondo);
       const vInt = caja(0.05, H - 0.6, largo - 0.6, M.interior); vInt.castShadow = false; vInt.position.set(fx + lado * 2.4, y + (H - 0.34) / 2, cz); g.add(vInt);
       for (let z = zz0; z <= zz1 + 0.01; z += 1.5) g.add(en(caja(0.07, H - 0.34, 0.06, M.perfil), fx, y + (H - 0.34) / 2, z));
       g.add(en(caja(0.07, 0.06, largo, M.perfil), fx, y + 2.3, cz));
-      for (let k = 0; k < 3; k++) { const zc = cz - d / 2 + 2.4 + k * (d - 4.8) / 2; if ((k + n) % 2) continue; const cel = new THREE.Group(); for (let j = 0; j < 14; j++) cel.add(en(caja(0.14, H - 0.4, 0.06, M.madera, 0.8), 0, 0, -1.1 + j * 0.17)); cel.position.set(fx - lado * 0.3, y + (H - 0.34) / 2, zc); g.add(cel); }
+      for (let k = 0; k < 3; k++) { const zc = cz - d / 2 + 2.4 + k * (d - 4.8) / 2; if ((k + n) % 2) continue; const cel = persiana(1.5, H - 0.45, 'z', M.madera, 0.75, zc + n); cel.position.set(fx - lado * 0.3, y + (H - 0.34) / 2, zc + 0.75); g.add(cel); }
       // aletas verticales blancas entre unidades
       [cz - d / 2 + 0.1, cz, cz + d / 2 - 0.1].forEach((z) => g.add(en(caja(1.7, H - 0.34, 0.24, M.blanco, 2), fx - lado * 0.75, y + (H - 0.34) / 2, z)));
       // fachada trasera y testeros
       g.add(en(caja(0.3, H - 0.34, d, M.blanco, 2), cx + lado * (w / 2 - 0.15), y + (H - 0.34) / 2, cz));
       [cz - d / 2 + 0.15, cz + d / 2 - 0.15].forEach((z) => g.add(en(caja(w - 0.4, H - 0.34, 0.3, M.blanco, 2), cx, y + (H - 0.34) / 2, z)));
-      for (let z = cz - d / 2 + 2; z < cz + d / 2 - 1; z += 3.2) { g.add(en(celosia(1.4, 1.6, 'z', M.madera, 0.12, 0.05, 0.05), cx + lado * (w / 2 + 0.04), y + 1.4, z)); }
+      for (let z = cz - d / 2 + 2; z < cz + d / 2 - 1; z += 3.2) { g.add(en(persiana(1.4, 1.6, 'z', M.madera, 0.7, z), cx + lado * (w / 2 + 0.04), y + 1.4, z)); }
     }
     // cubierta: antepecho, volumen de escalera y pérgola blanca sobre la terraza
     const yt = y0 + pisos * H;
