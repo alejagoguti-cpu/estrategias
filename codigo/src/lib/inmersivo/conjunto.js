@@ -3,7 +3,7 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 import { BASE, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies } from './comun.js';
 
 // Conjunto de vivienda en la meseta (referencia: conjunto de bloques blancos alrededor de un eje de agua):
-// dos hileras de bloques de tres y cuatro pisos, escalonados, de revoque blanco, con persianas de madera de piso a
+// dos hileras de bloques de tres y cuatro pisos, escalonados, de piedra coralina y losas blancas, con persianas de madera de piso a
 // techo en paneles de lamas (sin vidrio), perfilería fina, balcones con antepecho y baranda de cables, aletas verticales y terrazas con
 // pérgola. Eje central: canal de retención de lluvia con borde de piedra, prado y cocoteros.
 const H = 3.2;
@@ -52,6 +52,7 @@ export default function escenaConjunto(ctx) {
     sombra: new THREE.MeshStandardMaterial({ color: 0x2a2620, roughness: 1 }),
     perfil: new THREE.MeshStandardMaterial({ color: 0x2c2f31, metalness: 0.7, roughness: 0.35 }), madera: pbr(tl, 'madera', [0.5, 2], { color: 0xc4925e }),
     piedra: pbr(tl, 'concreto', [1, 1], { color: 0xf0ebe0 }), borde: pbr(tl, 'roca', [1, 1], { color: 0xece6da }), cojin: new THREE.MeshStandardMaterial({ color: 0xf2efe8, roughness: 0.9 }),
+    coralina: pbr(tl, 'coralina', [1, 1], { color: 0xf6ead4 }), // piedra coralina (Poly Haven coral_stone_wall, CC0)
     interior: new THREE.MeshStandardMaterial({ color: 0xffe4b8, emissive: 0x3a2a14, roughness: 0.9 }),
   };
   {
@@ -72,7 +73,7 @@ export default function escenaConjunto(ctx) {
   // bloque de vivienda: frente hacia el eje (lado = -1 si el eje queda al -x)
   function bloque(cx, cz, w, d, pisos, lado) {
     const g = new THREE.Group(); const fx = cx - lado * (w / 2); const y0 = 0.5;
-    g.add(en(caja(w + 0.6, y0, d + 0.6, M.piedra, 2), cx, y0 / 2, cz));
+    g.add(en(caja(w + 0.6, y0, d + 0.6, M.coralina, 2), cx, y0 / 2, cz));
     for (let n = 0; n < pisos; n++) {
       const y = y0 + n * H;
       // losa con borde blanco que vuela 1,6 m sobre el eje (balcón) y antepecho + baranda de cables con pasamanos de madera
@@ -85,17 +86,17 @@ export default function escenaConjunto(ctx) {
       for (let z = zz0; z <= zz1 + 0.01; z += 1.5) g.add(en(caja(0.07, H - 0.34, 0.06, M.perfil), fx, y + (H - 0.34) / 2, z));
       g.add(en(caja(0.07, 0.06, largo, M.perfil), fx, y + 2.3, cz));
       for (let k = 0; k < 3; k++) { const zc = cz - d / 2 + 2.4 + k * (d - 4.8) / 2; if ((k + n) % 2) continue; const cel = persiana(1.5, H - 0.45, 'z', M.madera, 0.75, zc + n); cel.position.set(fx - lado * 0.3, y + (H - 0.34) / 2, zc + 0.75); g.add(cel); }
-      // aletas verticales blancas entre unidades
-      [cz - d / 2 + 0.1, cz, cz + d / 2 - 0.1].forEach((z) => g.add(en(caja(1.7, H - 0.34, 0.24, M.blanco, 2), fx - lado * 0.75, y + (H - 0.34) / 2, z)));
-      // fachada trasera y testeros
-      g.add(en(caja(0.3, H - 0.34, d, M.blanco, 2), cx + lado * (w / 2 - 0.15), y + (H - 0.34) / 2, cz));
-      [cz - d / 2 + 0.15, cz + d / 2 - 0.15].forEach((z) => g.add(en(caja(w - 0.4, H - 0.34, 0.3, M.blanco, 2), cx, y + (H - 0.34) / 2, z)));
+      // aletas verticales de piedra coralina entre unidades
+      [cz - d / 2 + 0.1, cz, cz + d / 2 - 0.1].forEach((z) => g.add(en(caja(1.7, H - 0.34, 0.3, M.coralina, 2), fx - lado * 0.75, y + (H - 0.34) / 2, z)));
+      // fachada trasera y testeros de piedra coralina
+      g.add(en(caja(0.3, H - 0.34, d, M.coralina, 2), cx + lado * (w / 2 - 0.15), y + (H - 0.34) / 2, cz));
+      [cz - d / 2 + 0.15, cz + d / 2 - 0.15].forEach((z) => g.add(en(caja(w - 0.4, H - 0.34, 0.3, M.coralina, 2), cx, y + (H - 0.34) / 2, z)));
       for (let z = cz - d / 2 + 2; z < cz + d / 2 - 1; z += 3.2) { g.add(en(persiana(1.4, 1.6, 'z', M.madera, 0.7, z), cx + lado * (w / 2 + 0.04), y + 1.4, z)); }
     }
     // cubierta: antepecho, volumen de escalera y pérgola blanca sobre la terraza
     const yt = y0 + pisos * H;
     g.add(en(caja(w + 1.6, 0.55, d + 0.4, M.blanco, 2), cx - lado * 0.8, yt + 0.27, cz));
-    g.add(en(caja(w * 0.32, 2.6, d * 0.28, M.blanco, 2), cx + lado * w * 0.2, yt + 1.3, cz + d * 0.2));
+    g.add(en(caja(w * 0.32, 2.6, d * 0.28, M.coralina, 2), cx + lado * w * 0.2, yt + 1.3, cz + d * 0.2));
     const pg = new THREE.Group(); [-1, 1].forEach((sz) => [-1, 1].forEach((sx) => pg.add(en(caja(0.22, 2.5, 0.22, M.blanco), sx * w * 0.2, 1.25, sz * d * 0.22))));
     pg.add(en(caja(w * 0.45, 0.22, d * 0.5, M.blanco), 0, 2.55, 0)); for (let k = -5; k <= 5; k++) pg.add(en(caja(w * 0.42, 0.08, 0.12, M.madera), 0, 2.4, k * d * 0.045));
     pg.position.set(cx - lado * w * 0.15, yt, cz - d * 0.1); g.add(pg);

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { PAS, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies, texSolar } from './comun.js';
 
-// Colegio en la ladera del bosque: dos barras largas escalonadas, de dos pisos sobre pilotes de acero, con
+// Colegio en la ladera del bosque: dos barras largas escalonadas, de dos pisos sobre pilares de piedra coralina, con
 // fachada de persianas de madera de lamas horizontales en paneles (sin vidrio), balcones corridos con baranda de cables, cubiertas
 // flotantes de pérgola de listones y paneles solares, y escaleras exteriores entre niveles. El recorrido sube del sendero a los balcones.
 const PISO = 3.4;
@@ -57,6 +57,7 @@ export default function escenaLadera(ctx) {
     listones: pbr(tl, 'madera', [0.25, 1.4], { color: 0xd9a978 }), madera: pbr(tl, 'madera', [1, 1], { color: 0xc8996c }),
     losa: (() => { const m = pbr(tl, 'concreto', [1, 1], { color: 0xd8d4cc }); return m; })(),
     acero: new THREE.MeshStandardMaterial({ color: 0x3a3e42, metalness: 0.8, roughness: 0.38 }), aceroClaro: new THREE.MeshStandardMaterial({ color: 0xa9b0b4, metalness: 0.85, roughness: 0.3 }),
+    coralina: pbr(tl, 'coralina', [1, 1], { color: 0xf6ead4 }), // piedra coralina (Poly Haven coral_stone_wall, CC0)
     interior: new THREE.MeshStandardMaterial({ color: 0xf0dcc0, emissive: 0x2a1e10, roughness: 0.9 }), fascia: new THREE.MeshStandardMaterial({ color: 0xece8e0, roughness: 0.7 }), cieloRaso: pbr(tl, 'madera', [1, 1], { color: 0xe0b07a }),
     luz: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff4dc, emissiveIntensity: 2 }), piso: pbr(tl, 'concreto', [1, 1], { color: 0xc8b8a0 }), solar: new THREE.MeshPhysicalMaterial({ map: texSolar(), roughness: 0.12, metalness: 0.35, clearcoat: 1 }),
   };
@@ -82,7 +83,9 @@ export default function escenaLadera(ctx) {
     const g = new THREE.Group(); const prof = 9; const zAtras = zFrente - prof; const yB = terreno(0, zAtras) + 0.6; const L = x1 - x0; const cx = (x0 + x1) / 2;
     for (let n = 0; n < 2; n++) {
       const y = yB + n * PISO;
-      { const lo = en(caja(L + 3, 0.34, prof + 2.2, M.losa, 2), cx - 1.5, y - 0.17, zAtras + (prof + 2.2) / 2); lo.material = [M.fascia, M.fascia, M.piso, M.cieloRaso, M.fascia, M.fascia]; g.add(lo); }
+      { const lo = en(caja(L + 3, 0.34, prof + 2.2, M.losa, 2), cx - 1.5, y - 0.17, zAtras + (prof + 2.2) / 2); lo.material = [M.coralina, M.coralina, M.piso, M.cieloRaso, M.coralina, M.coralina]; g.add(lo);
+        // banda de piedra coralina bajo cada losa, al borde del balcón (como la referencia)
+        g.add(en(caja(L + 3, 0.55, 0.35, M.coralina, 2), cx - 1.5, y - 0.34 - 0.27, zAtras + prof + 2.2 - 0.18)); }
       for (let x = x0 + 1.4; x < x1; x += 2.4) { const lam = caja(0.18, 0.04, 1.6, M.luz); lam.castShadow = false; lam.position.set(x, y + PISO - 0.38, zAtras + prof / 2); g.add(lam); }
       g.add(en(caja(L, PISO - 0.3, 0.2, M.interior, 2), cx, y + (PISO - 0.3) / 2, zAtras + 0.1));
       // banda continua de persianas de madera en paneles (sin vidrio)
@@ -93,9 +96,9 @@ export default function escenaLadera(ctx) {
       g.add(baranda(x0 - 3, x1, y, zFrente + 2.0));
     }
     // cajas cerradas de persianas en los extremos
-    [x0 + 3, x1 - 3].forEach((xc) => { const b = new THREE.Group(); b.add(persiana(6, PISO * 2 - 0.3, 'x', M.listones, 0.75, xc)); b.position.set(xc, yB + PISO - 0.15, zFrente + 0.12); g.add(b); g.add(en(caja(6, PISO * 2 - 0.3, prof - 0.4, M.madera, 1.5), xc, yB + PISO - 0.15, zAtras + prof / 2 - 0.1)); });
-    // pilotes de acero hasta el terreno
-    for (let x = x0; x <= x1 + 0.01; x += 6) [zFrente + 2, zFrente - 2, zAtras + 1].forEach((z) => { const h = yB - terreno(x, z); if (h > 0.2) g.add(en(caja(0.24, h, 0.24, M.acero), x, terreno(x, z) + h / 2, z)); });
+    [x0 + 3, x1 - 3].forEach((xc) => { const b = new THREE.Group(); b.add(persiana(6, PISO * 2 - 0.3, 'x', M.listones, 0.75, xc)); b.position.set(xc, yB + PISO - 0.15, zFrente + 0.12); g.add(b); g.add(en(caja(6, PISO * 2 - 0.3, prof - 0.4, M.coralina, 2), xc, yB + PISO - 0.15, zAtras + prof / 2 - 0.1)); });
+    // pilares de piedra coralina hasta el terreno
+    for (let x = x0; x <= x1 + 0.01; x += 6) [zFrente + 2, zFrente - 2, zAtras + 1].forEach((z) => { const h = yB - terreno(x, z); if (h > 0.2) g.add(en(caja(0.6, h, 0.6, M.coralina, 2), x, terreno(x, z) + h / 2, z)); });
     // cubierta flotante: vigas inclinadas, franjas alternas de paneles solares y pérgola de listones
     const yT = yB + PISO * 2; const yA = yT + 1.5; const yF = yT + 0.5; const zA = zAtras - 0.5; const zF = zFrente + 4.2; const yR = (z) => yA + ((z - zA) / (zF - zA)) * (yF - yA);
     for (let x = x0 - 3; x <= x1 + 0.01; x += 6) { g.add(en(caja(0.2, yA - yT, 0.2, M.acero), x, yT + (yA - yT) / 2, zA + 0.4)); const vg = caja(0.16, 0.3, Math.hypot(zF - zA, yA - yF), M.acero); vg.position.set(x, (yA + yF) / 2, (zA + zF) / 2); vg.rotation.x = Math.atan2(yA - yF, zF - zA); g.add(vg); }
