@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { Water } from 'three/examples/jsm/objects/Water.js';
-import { BASE, PAS, conViento, pbr, hacerMarco, clamp, suave, crearBriznas, cargarPasto, crearArboles, posarEspecies, animarEspecies, cinta, baranda, crearBancoSolar } from './comun.js';
+import { BASE, PAS, conViento, pbr, hacerMarco, clamp, suave, crearBriznas, cargarPasto, crearArboles, bosquetes, posarEspecies, animarEspecies, cinta, baranda, crearBancoSolar } from './comun.js';
 
 // Humedal de fitofiltración en la meseta de Tierra Bomba: lagunas de retención excavadas en la pradera,
 // orillas de juncos (Cyperus), lirio acuático (Pontederia crassipes) flotando, sendero rojo con un puente
@@ -148,6 +148,8 @@ export default function escenaHumedal(ctx) {
   posar('colibri', Array.from({ length: 6 }, () => { const s = rnd() * L; const f = marco(s, (rnd() > 0.5 ? 1 : -1) * (4 + rnd() * 3)); return { p: new THREE.Vector3(), esc: 0.11, tam: 0.7, tipo: 'mariposa', aleteo: 0.6, base: f.p.setY(terreno(f.p.x, f.p.z) + 2.2), f: rnd() * 6 }; }));
   posar('gaviota_v', Array.from({ length: 6 }, (_, i) => ({ p: new THREE.Vector3(), esc: 0.8, tipo: 'vuelo', aleteo: 0.18, c: new THREE.Vector3(-20 + rnd() * 40, 14 + rnd() * 12, -40 - rnd() * 180), r: 20 + rnd() * 30, v: (0.1 + rnd() * 0.08) * (i % 2 ? 1 : -1), f: rnd() * 6 })));
 
+  // bosquetes de arbolitos pegados alrededor (Tierra Bomba tiene matorral y bosque seco denso)
+  crearArboles(escena, tl, bosquetes(rnd, { suelo: terreno, camino: curva.getSpacedPoints(240), grupos: 150, cz: -100, rMin: 0, rMax: 170, escalaX: 0.8, holgura: 5, libre: (x, z) => terreno(x, z) > NIVEL + 0.4 && dLaguna(x, z) > 1.8 }), rnd, [0.9, 0.92, 0.86]);
   return {
     curva, L, marco, altura,
     actualizar: (t) => { agua.material.uniforms.time.value = t * 0.25; animarEspecies(animales, t); },

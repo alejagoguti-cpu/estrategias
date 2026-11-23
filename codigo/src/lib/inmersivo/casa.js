@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { PAS, pbr, clamp, crearBriznas, cargarPasto, crearArboles, posarEspecies, animarEspecies, texSolar } from './comun.js';
+import { PAS, pbr, clamp, crearBriznas, cargarPasto, crearArboles, bosquetes, posarEspecies, animarEspecies, texSolar } from './comun.js';
 
 // Vivienda modular y replicable en la meseta de Tierra Bomba: cinco módulos de 3,6 m (sala-comedor, zaguán
 // abierto, dos dormitorios), cubiertas inclinadas con cielo raso de madera, persianas y tablas de madera en
@@ -167,5 +167,7 @@ export default function escenaCasa(ctx) {
   const marco = (s, lado = 0) => { const u = clamp(s / L, 0, 1); const p = curva.getPointAt(u); const t = curva.getTangentAt(u).setY(0).normalize(); const l = new THREE.Vector3().crossVectors(t, new THREE.Vector3(0, 1, 0)).normalize(); return { p: p.addScaledVector(l, lado), t, l }; };
   const piso = (s) => { const p = marco(s).p; if (enPiso(p.x, p.z) && !enFoso(p.x, p.z)) return p.z > 9.5 ? 0.22 : PISO; return terreno(p.x, p.z); };
   const altura = (s) => (piso(s - 0.5) + piso(s) * 2 + piso(s + 0.5)) / 4;
+  // bosquetes de arbolitos pegados alrededor (Tierra Bomba tiene matorral y bosque seco denso)
+  crearArboles(escena, tl, bosquetes(rnd, { suelo: terreno, camino: curva.getSpacedPoints(240), grupos: 140, rMin: 14, rMax: 75, escalaX: 1.2, libre: (x, z) => !(x > -17 && x < 16 && z > -10 && z < 13) && ![[46, -42], [-52, -36], [8, -86], [92, -14]].some(([a, b]) => Math.hypot(x - a, z - b) < 17) }), rnd, [0.9, 0.92, 0.86]);
   return { curva, L, marco, altura, actualizar: (t) => animarEspecies(animales, t) };
 }

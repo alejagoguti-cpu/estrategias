@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { PAS, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies } from './comun.js';
+import { PAS, pbr, clamp, crearBriznas, crearArboles, bosquetes, posarEspecies, animarEspecies } from './comun.js';
 
 // Parque de juego natural en un claro del bosque seco: piso de viruta, red de trepar en A con postes de acero,
 // torre de madera con red, troncos de equilibrio, pilotes para saltar, túnel, rocas, sendero de concreto y bancas.
@@ -73,5 +73,7 @@ export default function escenaParque(ctx) {
   const L = curva.getLength();
   const marco = (s, lado = 0) => { const u = clamp(s / L, 0, 1); const p = curva.getPointAt(u); const t = curva.getTangentAt(u).setY(0).normalize(); const l = new THREE.Vector3().crossVectors(t, new THREE.Vector3(0, 1, 0)).normalize(); return { p: p.addScaledVector(l, lado), t, l }; };
   const altura = (s) => { const p = marco(s).p; return terreno(p.x, p.z) + 0.08; };
+  // bosquetes de arbolitos pegados alrededor (Tierra Bomba tiene matorral y bosque seco denso)
+  crearArboles(escena, tl, bosquetes(rnd, { suelo: terreno, camino: curva.getSpacedPoints(240), grupos: 140, rMin: 19, rMax: 95, libre: (x, z) => (x / 19) ** 2 + (z / 15.5) ** 2 > 1 && sendero.getSpacedPoints(60).every((p) => Math.hypot(p.x - x, p.z - z) > 3.5) }), rnd, [0.88, 0.94, 0.84]);
   return { curva, L, marco, altura, actualizar: (t) => animarEspecies(animales, t) };
 }

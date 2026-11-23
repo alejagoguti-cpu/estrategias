@@ -114,8 +114,22 @@ export function crearArboles(escena, tl, todos, rnd, tinte = [0.86, 0.86, 0.84])
   const mats = vistas.map((t) => new THREE.SpriteMaterial({ map: t, alphaTest: 0.42, color: new THREE.Color(...tinte), fog: true }));
   lugares.forEach((l) => {
     const vi = l.tipo != null ? l.tipo * 4 + Math.floor(rnd() * 4) : Math.floor(rnd() * 8); const esIsla = vi < 4; const esPalma = vi >= 8; const h = (l.h ?? (esIsla ? 5.5 : 8)) * (esPalma ? 0.85 + rnd() * 0.3 : 0.7 + rnd() * 0.7);
-    const sp = new THREE.Sprite(mats[vi]); sp.center.set(0.5, 0.02); sp.position.set(l.x, l.y, l.z); const k = h * (esPalma ? 1.45 : esIsla ? 1.28 : 1.04); sp.scale.set(esPalma ? k * 0.845 : k, k, 1); escena.add(sp);
+    const sp = new THREE.Sprite(mats[vi]); sp.center.set(0.5, 0.02); sp.position.set(l.x, l.y, l.z); const k = h * (esPalma ? 1.45 : esIsla ? 1.28 : 1.04); sp.scale.set((esPalma ? k * 0.845 : k) * (l.ancho ?? 1), k, 1); escena.add(sp);
   });
+}
+
+// bosquetes frondosos de árboles pegados (Tierra Bomba no es calva: bosque seco denso en manchas).
+// Reparte grupos en un anillo rMin..rMax alrededor de (cx, cz); cada grupo junta varios árboles bajos en un
+// radio corto. libre(x, z) excluye edificios; camino (puntos del recorrido) deja libre una franja de holgura.
+export function bosquetes(rnd, { grupos = 80, cx = 0, cz = 0, rMin = 15, rMax = 90, escalaX = 1, porGrupo = [10, 18], radio = [4, 8.5], h = [6, 10.5], suelo, libre = () => true, camino = [], holgura = 4 }) {
+  const out = []; const ok = (x, z) => libre(x, z) && !camino.some((p) => (p.x - x) ** 2 + (p.z - z) ** 2 < holgura * holgura);
+  for (let g = 0; g < grupos; g++) {
+    const a = rnd() * 6.283; const r = rMin + Math.sqrt(rnd()) * (rMax - rMin); const gx = cx + Math.cos(a) * r * escalaX; const gz = cz + Math.sin(a) * r;
+    const n = porGrupo[0] + Math.floor(rnd() * (porGrupo[1] - porGrupo[0])); const R = radio[0] + rnd() * (radio[1] - radio[0]);
+    for (let k = 0; k < n; k++) { const t = rnd() * 6.283; const d = R * Math.sqrt(rnd()); const x = gx + Math.cos(t) * d; const z = gz + Math.sin(t) * d; if (!ok(x, z)) continue;
+      out.push({ x, y: suelo(x, z) - 0.15, z, h: h[0] + rnd() * (h[1] - h[0]), tipo: rnd() < 0.92 ? 0 : 1, ancho: 1.25 + rnd() * 0.4 }); } // copas anchas que se tocan: bosque frondoso
+  }
+  return out;
 }
 
 // ---------- especies 3D en puntos ----------

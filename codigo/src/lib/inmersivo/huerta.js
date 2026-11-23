@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { PAS, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies } from './comun.js';
+import { PAS, pbr, clamp, crearBriznas, crearArboles, bosquetes, posarEspecies, animarEspecies } from './comun.js';
 
 // Huerta-vivero comunitaria: invernadero de marco de acero galvanizado (columnas, cerchas, tornapuntas,
 // correas) con cubierta a dos aguas de policarbonato ondulado translúcido y manchado, costados abiertos,
@@ -140,5 +140,7 @@ export default function escenaHuerta(ctx) {
   const L = curva.getLength();
   const marco = (s, lado = 0) => { const u = clamp(s / L, 0, 1); const p = curva.getPointAt(u); const t = curva.getTangentAt(u).setY(0).normalize(); const l = new THREE.Vector3().crossVectors(t, new THREE.Vector3(0, 1, 0)).normalize(); return { p: p.addScaledVector(l, lado), t, l }; };
   const altura = (s) => { const p = marco(s).p; return terreno(p.x, p.z) + 0.04; };
+  // bosquetes de arbolitos pegados alrededor (Tierra Bomba tiene matorral y bosque seco denso)
+  crearArboles(escena, tl, bosquetes(rnd, { suelo: terreno, camino: curva.getSpacedPoints(240), grupos: 140, rMin: 14, rMax: 90, libre: (x, z) => !(x > -13 && x < 36 && z > -25 && z < 25) }), rnd, [0.92, 0.92, 0.84]);
   return { curva, L, marco, altura, actualizar: (t) => animarEspecies(animales, t) };
 }

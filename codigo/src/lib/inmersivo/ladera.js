@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { PAS, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies, texSolar } from './comun.js';
+import { PAS, pbr, clamp, crearBriznas, crearArboles, bosquetes, posarEspecies, animarEspecies, texSolar } from './comun.js';
 
 // Colegio en la ladera del bosque: dos barras largas escalonadas, de dos pisos sobre pilares de piedra coralina, con
 // fachada de persianas de madera de lamas horizontales en paneles (sin vidrio), balcones corridos con baranda de cables, cubiertas
@@ -147,5 +147,7 @@ export default function escenaLadera(ctx) {
   const altura = (s) => curva.getPointAt(clamp(s / L, 0, 1)).y;
   { const cache = {}; const cg = new GLTFLoader(); const traer = (n) => cache[n] || (cache[n] = new Promise((ok) => cg.load(`${PAS}colegio/${n}.glb`, (r2) => ok(r2.scene), undefined, () => ok(null))));
     [baja, alta].forEach((b, bi) => [0, 1].forEach((n) => { const y = b.yB + n * PISO; const zf = bi ? -30 : -14; for (let x = -18; x < 18; x += 4.2) for (let j = 0; j < 2; j++) { const z = zf - 2.6 - j * 2.6; traer("WoodenTable_01").then((e) => { if (!e || !vivo()) return; const m = e.clone(true); m.position.set(x, y, z); escena.add(m); }); [-0.45, 0.45].forEach((dx) => traer("SchoolChair_01").then((e) => { if (!e || !vivo()) return; const m = e.clone(true); m.position.set(x + dx, y, z - 0.55); escena.add(m); })); } })); }
+  // bosquetes de arbolitos pegados alrededor (Tierra Bomba tiene matorral y bosque seco denso)
+  crearArboles(escena, tl, bosquetes(rnd, { suelo: terreno, camino: curva.getSpacedPoints(240), grupos: 90, cz: -50, rMin: 0, rMax: 95, libre: (x, z) => libre(x, z) && x > -90 && x < 90 && z < 30 }), rnd, [0.82, 0.9, 0.8]);
   return { curva, L, marco, altura, actualizar: (t) => animarEspecies(animales, t) };
 }

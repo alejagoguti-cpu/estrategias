@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { PAS, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies } from './comun.js';
+import { PAS, pbr, clamp, crearBriznas, crearArboles, bosquetes, posarEspecies, animarEspecies } from './comun.js';
 
 // Colegio de Tierra Bomba: aulas de bloque de tierra comprimida sobre zócalo de piedra, galería de madera,
 // gran cubierta flotante de lámina ondulada sobre cerchas de madera (separada de los muros para ventilar),
@@ -150,5 +150,7 @@ export default function escenaColegio(ctx) {
   const marco = (s, lado = 0) => { const u = clamp(s / L, 0, 1); const p = curva.getPointAt(u); const t = curva.getTangentAt(u).setY(0).normalize(); const l = new THREE.Vector3().crossVectors(t, new THREE.Vector3(0, 1, 0)).normalize(); return { p: p.addScaledVector(l, lado), t, l }; };
   const piso = (s) => { const p = marco(s).p; if (p.x > -0.5 && p.x < 30.5 && p.z > -8 && p.z < 4.2) return PISO; return terreno(p.x, p.z) + 0.06; };
   const altura = (s) => (piso(s - 0.5) + piso(s) * 2 + piso(s + 0.5)) / 4;
+  // bosquetes de arbolitos pegados alrededor (Tierra Bomba tiene matorral y bosque seco denso)
+  crearArboles(escena, tl, bosquetes(rnd, { suelo: terreno, camino: curva.getSpacedPoints(240), grupos: 150, cx: 5, rMin: 12, rMax: 85, libre: (x, z) => !(x > -27 && x < 37 && z > -29 && z < 9) }), rnd, [0.92, 0.92, 0.84]);
   return { curva, L, marco, altura, actualizar: (t) => animarEspecies(animales, t) };
 }

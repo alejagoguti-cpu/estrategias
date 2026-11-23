@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Water } from 'three/examples/jsm/objects/Water.js';
-import { BASE, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies } from './comun.js';
+import { BASE, pbr, clamp, crearBriznas, crearArboles, bosquetes, posarEspecies, animarEspecies } from './comun.js';
 
 // Conjunto de vivienda en la meseta (referencia: conjunto de bloques blancos alrededor de un eje de agua):
 // dos hileras de bloques de tres y cuatro pisos, escalonados, de piedra coralina y losas blancas, con persianas de madera de piso a
@@ -126,5 +126,7 @@ export default function escenaConjunto(ctx) {
   const L = curva.getLength();
   const marco = (s, lado = 0) => { const u = clamp(s / L, 0, 1); const p = curva.getPointAt(u); const t = curva.getTangentAt(u).setY(0).normalize(); const l = new THREE.Vector3().crossVectors(t, new THREE.Vector3(0, 1, 0)).normalize(); return { p: p.addScaledVector(l, lado), t, l }; };
   const altura = (s) => { const p = marco(s).p; return Math.abs(p.x) < 3.0 && p.z < 8 && p.z > -84 ? 0.24 : terreno(p.x, p.z) + 0.06; };
+  // bosquetes de arbolitos pegados alrededor (Tierra Bomba tiene matorral y bosque seco denso)
+  crearArboles(escena, tl, bosquetes(rnd, { suelo: terreno, camino: curva.getSpacedPoints(240), grupos: 130, cz: -30, rMin: 44, rMax: 130, escalaX: 1.2, libre: (x, z) => !(Math.abs(x) < 38 && z > -96 && z < 20) }), rnd, [0.9, 0.95, 0.88]);
   return { curva, L, marco, altura, actualizar: (t) => { agua.material.uniforms.time.value = t * 0.3; animarEspecies(animales, t); } };
 }
