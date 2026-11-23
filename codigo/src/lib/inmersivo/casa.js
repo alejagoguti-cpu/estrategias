@@ -3,7 +3,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { PAS, pbr, clamp, crearBriznas, cargarPasto, crearArboles, posarEspecies, animarEspecies, texSolar } from './comun.js';
 
 // Vivienda modular y replicable en la meseta de Tierra Bomba: cinco módulos de 3,6 m (sala-comedor, zaguán
-// abierto, dos dormitorios), cubiertas inclinadas con cielo raso de madera y ventanas altas, celosía de
+// abierto, dos dormitorios), cubiertas inclinadas con cielo raso de madera, persianas y tablas de madera en
+// lugar de vidrio, celosía de
 // ladrillo, paneles solares, deck con sala hundida y muebles reales (Poly Haven). Otras casas iguales se
 // replican en el fondo para mostrar que el módulo se repite.
 const PISO = 0.45; const H = 3.0; const TOPE = PISO + H;
@@ -11,6 +12,24 @@ const terreno = (x, z) => 0.05 * Math.sin(x * 0.11) * Math.cos(z * 0.09) + 0.03 
 const enPiso = (x, z) => x > -9.6 && x < 13.2 && z > -6 && z < 10.4;
 const enFoso = (x, z) => x > 3 && x < 7.2 && z > 4.4 && z < 6.8;
 
+// persianas de madera como la referencia: paneles con marco (largueros, travesaños y travesaño intermedio) y
+// lamas horizontales inclinadas. Todo en dos InstancedMesh. L = largo, h = alto, eje = dirección del paño.
+function persiana(L, h, eje, mat, anchoPanel = 0.75, semilla = 0) {
+  const n = Math.max(1, Math.round(L / anchoPanel)); const wp = L / n; const paso = 0.085; const nl = Math.ceil(h / paso) + 2;
+  const geo = new THREE.BoxGeometry(1, 1, 1); const marcos = new THREE.InstancedMesh(geo, mat, n * 5); const lamas = new THREE.InstancedMesh(geo, mat, n * nl);
+  const o = new THREE.Object3D(); let im = 0; let il = 0;
+  const poner = (mesh, i, t, y, st, sy, sd, giro = 0) => { if (eje === 'x') { o.position.set(t, y, 0); o.scale.set(st, sy, sd); o.rotation.set(giro, 0, 0); } else { o.position.set(0, y, t); o.scale.set(sd, sy, st); o.rotation.set(0, 0, giro); } o.updateMatrix(); mesh.setMatrixAt(i, o.matrix); };
+  const yMed = -h / 2 + h * 0.36;
+  for (let p = 0; p < n; p++) {
+    const c = -L / 2 + (p + 0.5) * wp;
+    poner(marcos, im++, c - wp / 2 + 0.035, 0, 0.065, h, 0.07); poner(marcos, im++, c + wp / 2 - 0.035, 0, 0.065, h, 0.07);
+    poner(marcos, im++, c, h / 2 - 0.045, wp, 0.09, 0.07); poner(marcos, im++, c, -h / 2 + 0.06, wp, 0.12, 0.07); poner(marcos, im++, c, yMed, wp, 0.08, 0.07);
+    const giro = 0.62 + 0.18 * Math.sin((p + semilla) * 2.7); // cada panel con sus lamas un poco distintas
+    for (let y = -h / 2 + 0.16; y < h / 2 - 0.09; y += paso) { if (Math.abs(y - yMed) < 0.07) continue; poner(lamas, il++, c, y, wp - 0.12, 0.012, 0.075, giro); }
+  }
+  marcos.count = im; lamas.count = il; [marcos, lamas].forEach((m) => { m.castShadow = true; m.receiveShadow = true; });
+  const g = new THREE.Group(); g.add(marcos, lamas); return g;
+}
 // caja con UV a escala real (repite la textura cada `tile` metros)
 function caja(w, h, d, mat, tile = 1) {
   const g = new THREE.BoxGeometry(w, h, d); const uv = g.attributes.uv; const dims = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]];
@@ -26,7 +45,7 @@ export default function escenaCasa(ctx) {
     revoque: (() => { const m = pbr(tl, 'revoque', [1, 1], { color: 0xd8c7ab }); m.map = null; return m; })(), ladrillo: pbr(tl, 'ladrillo', [1, 1], { color: 0xf2c9a8 }),
     lamina: new THREE.MeshStandardMaterial({ color: 0x3b3936, metalness: 0.55, roughness: 0.45 }),
     bronce: new THREE.MeshStandardMaterial({ color: 0x3a332c, metalness: 0.75, roughness: 0.35 }),
-    vidrio: new THREE.MeshPhysicalMaterial({ color: 0xd8e6ea, metalness: 0.1, roughness: 0.04, transparent: true, opacity: 0.22, envMapIntensity: 1.6, side: THREE.DoubleSide, depthWrite: false }),
+    persiana: pbr(tl, 'madera', [1, 1], { color: 0xd9a978 }),
     solar: new THREE.MeshPhysicalMaterial({ map: texSolar(), roughness: 0.12, metalness: 0.35, clearcoat: 1, clearcoatRoughness: 0.05 }),
     gris: new THREE.MeshStandardMaterial({ color: 0x4a5156, metalness: 0.6, roughness: 0.4 }),
   };
@@ -39,16 +58,16 @@ export default function escenaCasa(ctx) {
     const m = new THREE.Mesh(g, pbr(tl, 'cesped', [1, 1], { vertexColors: true })); m.receiveShadow = true; escena.add(m);
   }
 
-  function vidrioX(x0, x1, z, y0 = PISO, y1 = TOPE, paso = 1.2) { // paño de vidrio a lo largo de x
-    const g = new THREE.Group(); const w = x1 - x0; const p = new THREE.Mesh(new THREE.PlaneGeometry(w, y1 - y0), M.vidrio); en(p, (x0 + x1) / 2, (y0 + y1) / 2, z); g.add(p);
-    for (let x = x0; x <= x1 + 0.01; x += paso) g.add(en(caja(0.06, y1 - y0, 0.09, M.bronce), Math.min(x, x1), (y0 + y1) / 2, z));
-    g.add(en(caja(w, 0.07, 0.1, M.bronce), (x0 + x1) / 2, y0 + 0.035, z)); g.add(en(caja(w, 0.07, 0.1, M.bronce), (x0 + x1) / 2, y1 - 0.035, z)); return g;
+  function vidrioX(x0, x1, z, y0 = PISO, y1 = TOPE, paso = 1.2) { // paño de persianas de madera (sin vidrio) a lo largo de x
+    const g = new THREE.Group(); const w = x1 - x0; g.add(en(persiana(w - 0.1, y1 - y0 - 0.14, 'x', M.persiana, 0.6, x0 + z), (x0 + x1) / 2, (y0 + y1) / 2, z));
+    for (let x = x0; x <= x1 + 0.01; x += paso) g.add(en(caja(0.1, y1 - y0, 0.12, M.madera), Math.min(x, x1), (y0 + y1) / 2, z));
+    g.add(en(caja(w, 0.08, 0.14, M.madera), (x0 + x1) / 2, y0 + 0.04, z)); g.add(en(caja(w, 0.08, 0.14, M.madera), (x0 + x1) / 2, y1 - 0.04, z)); return g;
   }
   function vidrioZ(z0, z1, x, y0 = PISO, y1 = TOPE, paso = 1.2) { const g = vidrioX(z0, z1, 0, y0, y1, paso); g.rotation.y = -Math.PI / 2; g.position.x = x; return g; }
-  function triangulo(xa, ya, xb, yb, yBase, z) { // vidrio del hastial bajo la cubierta inclinada
+  function triangulo(xa, ya, xb, yb, yBase, z) { // hastial de tablas de madera con ranura (deja salir el aire caliente)
     const s = new THREE.Shape(); s.moveTo(xa, yBase); s.lineTo(xb, yBase); s.lineTo(xb, yb); s.lineTo(xa, ya); s.closePath();
-    const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.ShapeGeometry(s), M.vidrio); m.position.z = z; g.add(m);
-    for (let x = xa; x <= xb + 0.01; x += 1.2) { const yt = ya + ((yb - ya) * (x - xa)) / (xb - xa); g.add(en(caja(0.06, yt - yBase, 0.09, M.bronce), Math.min(x, xb), (yt + yBase) / 2, z)); }
+    const g = new THREE.Group(); for (let x = xa + 0.07; x < xb - 0.05; x += 0.16) { const yt = ya + ((yb - ya) * (x - xa)) / (xb - xa) - 0.04; if (yt - yBase > 0.05) g.add(en(caja(0.12, yt - yBase, 0.03, M.persiana, 1), x, (yt + yBase) / 2, z)); }
+    for (let x = xa; x <= xb + 0.01; x += 1.2) { const yt = ya + ((yb - ya) * (x - xa)) / (xb - xa); g.add(en(caja(0.1, yt - yBase, 0.1, M.madera), Math.min(x, xb), (yt + yBase) / 2, z)); }
     return g;
   }
   function cubierta(x0, x1, yAlto, yBajo, z0, z1, altaIzq = true) {
@@ -74,7 +93,7 @@ export default function escenaCasa(ctx) {
     c.add(en(caja(18.8, PISO, 8.0, M.maderaPiso, 2), 0, PISO / 2, -1.8));
     [[-14, 3, 2.2, 9.5], [7.2, 13, 2.2, 9.5], [3, 7.2, 2.2, 4.4], [3, 7.2, 6.8, 9.5]].forEach(([a, b, d, e]) => c.add(en(caja(b - a, PISO, e - d, M.madera, 2), (a + b) / 2, PISO / 2, (d + e) / 2)));
     c.add(en(caja(4.2, 0.05, 2.4, M.madera, 2), 5.1, 0.025, 5.6)); c.add(en(caja(27, 0.22, 0.8, M.madera, 2), -0.5, 0.11, 9.9));
-    // ala izquierda: sala-comedor con vidrio de piso a techo
+    // ala izquierda: sala-comedor con persianas de madera de piso a techo (sin vidrio)
     c.add(en(caja(7.2, H, 0.22, M.revoque, 2), -5.4, PISO + H / 2, -5.4));
     c.add(vidrioX(-9, -1.8, 1.8)); c.add(vidrioZ(-5.3, 1.8, -9)); c.add(vidrioZ(-5.3, 1.8, -1.8));
     [[-9, 1.8], [-1.8, 1.8], [-9, -5.4], [-1.8, -5.4]].forEach(([x, z]) => c.add(en(caja(0.3, H, 0.3, M.revoque, 2), x, PISO + H / 2, z)));

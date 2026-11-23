@@ -36,11 +36,11 @@ function pintarFondo(x) {
   x.fillStyle = '#8b6440'; x.fillRect(452, PISO - 22, 52, 4); x.fillRect(456, PISO - 22, 3, 22); x.fillRect(497, PISO - 22, 3, 22); // comedor
   x.fillStyle = '#e6e2da'; x.fillRect(660, PISO - 16, 70, 12); x.fillStyle = '#7a6a58'; x.fillRect(660, PISO - 30, 6, 26); // cama
   x.fillStyle = '#d9c9a8'; x.fillRect(560, PISO - 14, 34, 14); // banca del zaguán
-  // muros cortados y vidrios
+  // muros cortados y persianas de madera
   x.fillStyle = '#efe6d6'; [[mod(3), 8], [mod(5) - 4, 8]].forEach(([wx, w]) => x.fillRect(wx - w / 2, TECHO, w, PISO - TECHO));
-  x.fillStyle = '#9ed4e4'; [mod(0), mod(2)].forEach((gx) => { x.fillRect(gx - 1.5, TECHO, 3, PISO - TECHO); }); x.fillStyle = '#3a332c'; [mod(0), mod(2)].forEach((gx) => { x.fillRect(gx - 3, TECHO, 6, 4); x.fillRect(gx - 3, PISO - 4, 6, 4); });
-  // ventana alta (efecto chimenea) y vidrio lateral de dormitorios
-  x.fillStyle = '#9ed4e4'; x.fillRect(mod(3) - 1.5, techoB(mod(3)) + 4, 3, TECHO - techoB(mod(3)) - 4); x.fillRect(mod(5) + 6 - 1.5, 396, 3, 40);
+  x.fillStyle = '#c8996c'; [mod(0), mod(2)].forEach((gx) => { x.fillRect(gx - 1.5, TECHO, 3, PISO - TECHO); }); x.fillStyle = '#6b4a2c'; [mod(0), mod(2)].forEach((gx) => { x.fillRect(gx - 3, TECHO, 6, 4); x.fillRect(gx - 3, PISO - 4, 6, 4); });
+  // ventana alta de tablas con ranura (efecto chimenea) y persiana lateral de dormitorios
+  x.fillStyle = '#c8996c'; x.fillRect(mod(3) - 1.5, techoB(mod(3)) + 4, 3, TECHO - techoB(mod(3)) - 4); x.fillRect(mod(5) + 6 - 1.5, 396, 3, 40);
   // cielo rasos y cubiertas con canto de madera
   const cubierta = (a, b, f, lam = '#3d3a36') => { x.fillStyle = lam; x.beginPath(); x.moveTo(a, f(a) - 8); x.lineTo(b, f(b) - 8); x.lineTo(b, f(b)); x.lineTo(a, f(a)); x.fill(); x.strokeStyle = '#c9935a'; x.lineWidth = 3; x.beginPath(); x.moveTo(a, f(a) + 1); x.lineTo(b, f(b) + 1); x.stroke(); };
   cubierta(310, 545, techoA); cubierta(605, 850, techoB);

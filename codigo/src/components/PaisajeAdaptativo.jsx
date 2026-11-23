@@ -97,7 +97,7 @@ export function ViviendaModular() {
       id="vivienda" etiqueta="04 · Vivienda modular" titulo="Una casa que se arma por módulos y se replica"
       cfg={corteCasa} construir={escenaCasa}
       aria="Vivienda modular y replicable en la meseta de Tierra Bomba"
-      leyenda="Cinco módulos de 3,6 m sobre la meseta segura: zaguán abierto para la brisa, cubiertas que captan lluvia y sol, celosía de ladrillo que da sombra. El mismo módulo se repite en hilera o en L."
+      leyenda="Cinco módulos de 3,6 m sobre la meseta segura: zaguán abierto para la brisa, cubiertas que captan lluvia y sol, celosías de ladrillo y persianas de madera sin vidrio que dan sombra y dejan pasar la brisa. El mismo módulo se repite en hilera o en L."
       nota="Corte esquemático. Módulo de 3,6 × 3,6 m; captación de lluvia hacia cisterna con rebose al humedal (09). Muebles: Poly Haven (CC0). Especies e interacciones de la base de especies de la isla (iNaturalist, Poelen 2014, Bello et al. 2017, Ollerton et al. 2019)."
     />
   );
