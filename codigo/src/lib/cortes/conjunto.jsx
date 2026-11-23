@@ -19,7 +19,7 @@ function pintarFondo(x) {
     const eje = k === 0 ? b : a; const dir = k === 0 ? 1 : -1;
     for (let n = 0; n < NP; n++) { const y = suelo(600) - n * PISO;
       x.fillStyle = '#f4f1ea'; x.fillRect(a - 8, y - 6, b - a + 16, 6); x.fillRect(eje + dir * 0 - (dir > 0 ? 0 : 22), y - 6, 22, 6);
-      x.fillStyle = '#25353b'; x.fillRect(a + 10, y - PISO + 2, b - a - 20, PISO - 8);
+      x.fillStyle = '#4a3a28'; x.fillRect(a + 10, y - PISO + 2, b - a - 20, PISO - 8); x.fillStyle = '#c4925e'; for (let px = a + 10; px < b - 10; px += 4) x.fillRect(px, y - PISO + 2, 2.4, PISO - 8);
       x.fillStyle = '#f4f1ea'; for (let px = a + 10; px < b - 8; px += 26) x.fillRect(px, y - PISO + 2, 5, PISO - 8);
       if (n > 0) { x.strokeStyle = 'rgba(200,225,230,.85)'; x.lineWidth = 1.4; x.strokeRect(eje + (dir > 0 ? 6 : -28), y - 20, 22, 14); } }
     const yt = suelo(600) - NP * PISO; x.fillStyle = '#f4f1ea'; x.fillRect(a - 8, yt - 8, b - a + 16, 8); x.fillRect((a + b) / 2 - 30, yt - 40, 60, 32);

@@ -3,8 +3,8 @@ import { Water } from 'three/examples/jsm/objects/Water.js';
 import { BASE, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies } from './comun.js';
 
 // Conjunto de vivienda en la meseta (referencia: conjunto de bloques blancos alrededor de un eje de agua):
-// dos hileras de bloques de tres y cuatro pisos, escalonados, de revoque blanco, con ventanales oscuros de piso a
-// techo, perfilería fina, celosías de madera, balcones con antepecho y vidrio, aletas verticales y terrazas con
+// dos hileras de bloques de tres y cuatro pisos, escalonados, de revoque blanco, con celosías de madera de piso a
+// techo (sin vidrio), perfilería fina, balcones con antepecho y baranda de listones, aletas verticales y terrazas con
 // pérgola. Eje central: canal de retención de lluvia con borde de piedra, prado, camastros y cocoteros.
 const H = 3.2;
 const terreno = (x, z) => 0.03 * Math.sin(x * 0.1) * Math.cos(z * 0.08) + Math.max(0, Math.hypot(x, z + 30) - 140) / 200 * 6;
@@ -15,12 +15,19 @@ function caja(w, h, d, mat, tile = 1) {
 }
 const en = (m, x, y, z) => { m.position.set(x, y, z); return m; };
 
+// celosía de listones verticales (InstancedMesh): L = largo, h = alto, eje = dirección del paño ('x' | 'z')
+function celosia(L, h, eje, mat, paso = 0.15, ancho = 0.07, prof = 0.05) {
+  const n = Math.max(2, Math.round(L / paso)); const geo = new THREE.BoxGeometry(eje === 'x' ? ancho : prof, h, eje === 'x' ? prof : ancho);
+  const im = new THREE.InstancedMesh(geo, mat, n); const o = new THREE.Object3D();
+  for (let i = 0; i < n; i++) { const t = -L / 2 + (i + 0.5) * (L / n); o.position.set(eje === 'x' ? t : 0, 0, eje === 'z' ? t : 0); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
+  im.castShadow = true; im.receiveShadow = true; return im;
+}
+
 export default function escenaConjunto(ctx) {
   const { escena, tl, sol, nieblaU, uT, vivo, rnd } = ctx;
   const M = {
     blanco: (() => { const m = pbr(tl, 'revoque', [1, 1], { color: 0xffffff }); m.map = null; m.roughness = 0.85; m.aoMap = null; m.roughnessMap = null; m.metalnessMap = null; return m; })(),
-    vidrio: new THREE.MeshPhysicalMaterial({ color: 0x1a262c, metalness: 0.2, roughness: 0.03, envMapIntensity: 1.8, clearcoat: 1 }),
-    vidrioClaro: new THREE.MeshPhysicalMaterial({ color: 0xdbe9ec, roughness: 0.03, transparent: true, opacity: 0.25, side: THREE.DoubleSide, depthWrite: false, envMapIntensity: 1.5 }),
+    sombra: new THREE.MeshStandardMaterial({ color: 0x2a2620, roughness: 1 }),
     perfil: new THREE.MeshStandardMaterial({ color: 0x2c2f31, metalness: 0.7, roughness: 0.35 }), madera: pbr(tl, 'madera', [0.5, 2], { color: 0xc4925e }),
     piedra: pbr(tl, 'concreto', [1, 1], { color: 0xf0ebe0 }), borde: pbr(tl, 'roca', [1, 1], { color: 0xece6da }), cojin: new THREE.MeshStandardMaterial({ color: 0xf2efe8, roughness: 0.9 }),
     interior: new THREE.MeshStandardMaterial({ color: 0xffe4b8, emissive: 0x3a2a14, roughness: 0.9 }),
@@ -49,12 +56,12 @@ export default function escenaConjunto(ctx) {
     g.add(en(caja(w + 0.6, y0, d + 0.6, M.piedra, 2), cx, y0 / 2, cz));
     for (let n = 0; n < pisos; n++) {
       const y = y0 + n * H;
-      // losa con borde blanco que vuela 1,6 m sobre el eje (balcón) y antepecho + vidrio
+      // losa con borde blanco que vuela 1,6 m sobre el eje (balcón) y antepecho + baranda de listones
       g.add(en(caja(w + 1.6, 0.34, d + 0.4, M.blanco, 2), cx - lado * 0.8, y + H - 0.17, cz));
-      if (n < pisos) { const yb = y; g.add(en(caja(0.22, 0.45, d + 0.2, M.blanco, 2), fx - lado * 1.5, yb + 0.25, cz)); const vc = new THREE.Mesh(new THREE.PlaneGeometry(d + 0.2, 0.62), M.vidrioClaro); vc.rotation.y = Math.PI / 2; vc.position.set(fx - lado * 1.5, yb + 0.8, cz); g.add(vc); g.add(en(caja(0.06, 0.05, d + 0.2, M.perfil), fx - lado * 1.5, yb + 1.12, cz)); }
-      // ventanales oscuros con perfilería y cuerpos de madera
+      if (n < pisos) { const yb = y; g.add(en(caja(0.22, 0.45, d + 0.2, M.blanco, 2), fx - lado * 1.5, yb + 0.25, cz)); g.add(en(celosia(d + 0.2, 0.62, 'z', M.madera, 0.12, 0.05, 0.04), fx - lado * 1.5, yb + 0.8, cz)); g.add(en(caja(0.06, 0.05, d + 0.2, M.perfil), fx - lado * 1.5, yb + 1.12, cz)); }
+      // fachada de celosía de madera de piso a techo con perfilería (sin vidrio); interior en penumbra detrás
       const zz0 = cz - d / 2 + 0.4; const zz1 = cz + d / 2 - 0.4; const largo = zz1 - zz0;
-      const v = new THREE.Mesh(new THREE.PlaneGeometry(largo, H - 0.34), M.vidrio); v.rotation.y = lado > 0 ? -Math.PI / 2 : Math.PI / 2; v.position.set(fx + lado * 0.05, y + (H - 0.34) / 2, cz); g.add(v);
+      g.add(en(celosia(largo, H - 0.4, 'z', M.madera, 0.16, 0.08, 0.06), fx - lado * 0.02, y + (H - 0.34) / 2, cz)); const fondo = caja(0.04, H - 0.4, largo, M.sombra); fondo.castShadow = false; fondo.position.set(fx + lado * 3.2, y + (H - 0.34) / 2, cz); g.add(fondo);
       const vInt = caja(0.05, H - 0.6, largo - 0.6, M.interior); vInt.castShadow = false; vInt.position.set(fx + lado * 2.4, y + (H - 0.34) / 2, cz); g.add(vInt);
       for (let z = zz0; z <= zz1 + 0.01; z += 1.5) g.add(en(caja(0.07, H - 0.34, 0.06, M.perfil), fx, y + (H - 0.34) / 2, z));
       g.add(en(caja(0.07, 0.06, largo, M.perfil), fx, y + 2.3, cz));
@@ -64,7 +71,7 @@ export default function escenaConjunto(ctx) {
       // fachada trasera y testeros
       g.add(en(caja(0.3, H - 0.34, d, M.blanco, 2), cx + lado * (w / 2 - 0.15), y + (H - 0.34) / 2, cz));
       [cz - d / 2 + 0.15, cz + d / 2 - 0.15].forEach((z) => g.add(en(caja(w - 0.4, H - 0.34, 0.3, M.blanco, 2), cx, y + (H - 0.34) / 2, z)));
-      for (let z = cz - d / 2 + 2; z < cz + d / 2 - 1; z += 3.2) { const vt = caja(0.04, 1.6, 1.4, M.vidrio); vt.position.set(cx + lado * (w / 2), y + 1.4, z); g.add(vt); }
+      for (let z = cz - d / 2 + 2; z < cz + d / 2 - 1; z += 3.2) { g.add(en(celosia(1.4, 1.6, 'z', M.madera, 0.12, 0.05, 0.05), cx + lado * (w / 2 + 0.04), y + 1.4, z)); }
     }
     // cubierta: antepecho, volumen de escalera y pérgola blanca sobre la terraza
     const yt = y0 + pisos * H;

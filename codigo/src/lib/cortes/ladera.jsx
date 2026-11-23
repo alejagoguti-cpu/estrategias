@@ -21,14 +21,14 @@ function pintarFondo(x) {
     const y0 = base(b);
     // pilotes
     x.fillStyle = '#3a3e42'; for (let px = b.x0 + 6; px <= b.x1; px += 30) { const h = suelo(px) - y0; if (h > 2) x.fillRect(px - 2, y0, 4, h); }
-    // losas, vidrio, listones y baranda
+    // losas, celosías de listones y baranda
     for (let n = 0; n < 2; n++) { const y = y0 - n * PISO; x.fillStyle = '#d8d4cc'; x.fillRect(b.x0 - 18, y - 3, b.x1 - b.x0 + 18, 5);
-      x.fillStyle = 'rgba(170,210,220,.8)'; x.fillRect(b.x0 + 20, y - PISO + 5, b.x1 - b.x0 - 40, PISO - 8);
+      x.fillStyle = '#5a4630'; x.fillRect(b.x0 + 20, y - PISO + 5, b.x1 - b.x0 - 40, PISO - 8); x.fillStyle = '#d9a978'; for (let px = b.x0 + 20; px < b.x1 - 20; px += 3) x.fillRect(px, y - PISO + 5, 2, PISO - 8);
       x.fillStyle = '#d9a978'; for (let px = b.x0; px < b.x0 + 20; px += 3) x.fillRect(px, y - PISO + 4, 2, PISO - 7); for (let px = b.x1 - 20; px < b.x1; px += 3) x.fillRect(px, y - PISO + 4, 2, PISO - 7);
       x.strokeStyle = '#a9b0b4'; x.lineWidth = 1.4; x.beginPath(); x.moveTo(b.x0 - 18, y - 16); x.lineTo(b.x0 + 2, y - 16); x.stroke(); }
     // cubierta flotante inclinada con paneles
     const yt = techo(b); x.strokeStyle = '#3a3e42'; x.lineWidth = 3; x.beginPath(); x.moveTo(b.x0 - 30, yt - 8); x.lineTo(b.x1 + 6, yt - 24); x.stroke();
-    for (let px = b.x0 - 28; px < b.x1 + 4; px += 8) { const yy = yt - 8 - ((px - b.x0 + 30) / (b.x1 - b.x0 + 36)) * 16; x.fillStyle = (px / 8) % 2 < 1 ? '#23409a' : 'rgba(220,235,240,.8)'; x.fillRect(px, yy - 4, 7, 3); }
+    for (let px = b.x0 - 28; px < b.x1 + 4; px += 8) { const yy = yt - 8 - ((px - b.x0 + 30) / (b.x1 - b.x0 + 36)) * 16; x.fillStyle = (px / 8) % 2 < 1 ? '#23409a' : '#c8996c'; x.fillRect(px, yy - 4, 7, 3); }
     [b.x0 + 4, b.x1 - 4].forEach((px) => { x.fillRect(px - 1.5, yt - 22, 3, 22); });
   });
   // escalera exterior entre barras

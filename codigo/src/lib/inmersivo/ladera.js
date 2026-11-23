@@ -3,8 +3,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { PAS, pbr, clamp, crearBriznas, crearArboles, posarEspecies, animarEspecies, texSolar } from './comun.js';
 
 // Colegio en la ladera del bosque: dos barras largas escalonadas, de dos pisos sobre pilotes de acero, con
-// fachada de listones de madera, bandas de vidrio, balcones corridos con baranda, cubiertas flotantes de vidrio y
-// paneles solares, y escaleras exteriores entre niveles. El recorrido sube del sendero a los balcones.
+// fachada de celosías de listones de madera (sin vidrio), balcones corridos con baranda de listones, cubiertas
+// flotantes de pérgola de listones y paneles solares, y escaleras exteriores entre niveles. El recorrido sube del sendero a los balcones.
 const PISO = 3.4;
 const terreno = (x, z) => clamp((-z - 6) * 0.32, 0, 24) + 0.25 * Math.sin(x * 0.09) * Math.cos(z * 0.07);
 function caja(w, h, d, mat, tile = 1) {
@@ -14,16 +14,22 @@ function caja(w, h, d, mat, tile = 1) {
 }
 const en = (m, x, y, z) => { m.position.set(x, y, z); return m; };
 
+// celosía de listones verticales (InstancedMesh): L = largo, h = alto, eje = dirección del paño ('x' | 'z')
+function celosia(L, h, eje, mat, paso = 0.15, ancho = 0.07, prof = 0.05) {
+  const n = Math.max(2, Math.round(L / paso)); const geo = new THREE.BoxGeometry(eje === 'x' ? ancho : prof, h, eje === 'x' ? prof : ancho);
+  const im = new THREE.InstancedMesh(geo, mat, n); const o = new THREE.Object3D();
+  for (let i = 0; i < n; i++) { const t = -L / 2 + (i + 0.5) * (L / n); o.position.set(eje === 'x' ? t : 0, 0, eje === 'z' ? t : 0); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
+  im.castShadow = true; im.receiveShadow = true; return im;
+}
+
 export default function escenaLadera(ctx) {
   const { escena, tl, sol, nieblaU, uT, vivo, rnd } = ctx;
   const M = {
     listones: pbr(tl, 'madera', [0.25, 1.4], { color: 0xd9a978 }), madera: pbr(tl, 'madera', [1, 1], { color: 0xc8996c }),
     losa: (() => { const m = pbr(tl, 'concreto', [1, 1], { color: 0xd8d4cc }); return m; })(),
     acero: new THREE.MeshStandardMaterial({ color: 0x3a3e42, metalness: 0.8, roughness: 0.38 }), aceroClaro: new THREE.MeshStandardMaterial({ color: 0xa9b0b4, metalness: 0.85, roughness: 0.3 }),
-    vidrio: new THREE.MeshPhysicalMaterial({ color: 0xcfe0e4, metalness: 0.1, roughness: 0.04, transparent: true, opacity: 0.28, envMapIntensity: 1.5, side: THREE.DoubleSide, depthWrite: false }),
     interior: new THREE.MeshStandardMaterial({ color: 0xf0dcc0, emissive: 0x2a1e10, roughness: 0.9 }), fascia: new THREE.MeshStandardMaterial({ color: 0xece8e0, roughness: 0.7 }), cieloRaso: pbr(tl, 'madera', [1, 1], { color: 0xe0b07a }),
     luz: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff4dc, emissiveIntensity: 2 }), piso: pbr(tl, 'concreto', [1, 1], { color: 0xc8b8a0 }), solar: new THREE.MeshPhysicalMaterial({ map: texSolar(), roughness: 0.12, metalness: 0.35, clearcoat: 1 }),
-    techoVidrio: new THREE.MeshPhysicalMaterial({ color: 0xe4eef0, roughness: 0.1, transparent: true, opacity: 0.35, side: THREE.DoubleSide, depthWrite: false }),
   };
   // bruma de ladera (como en la referencia)
   escena.fog = new THREE.Fog(0xc6d1cd, 40, 520); nieblaU.value.set(0.776, 0.82, 0.804, 480);
@@ -37,11 +43,11 @@ export default function escenaLadera(ctx) {
     [[-120, -420, 260, 120], [160, -460, 300, 150], [20, -560, 360, 190]].forEach(([x, z, r, h]) => { const c = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), cerro); c.position.set(x, 18, z); c.scale.set(r, h, r * 0.5); escena.add(c); });
   }
 
-  function baranda(x0, x1, y, z) { // baranda de acero y vidrio a lo largo de x
+  function baranda(x0, x1, y, z) { // baranda de acero con listones de madera a lo largo de x
     const g = new THREE.Group(); const L = x1 - x0;
     g.add(en(caja(L, 0.05, 0.06, M.aceroClaro), (x0 + x1) / 2, y + 1.05, z)); g.add(en(caja(L, 0.03, 0.03, M.aceroClaro), (x0 + x1) / 2, y + 0.1, z));
     for (let x = x0; x <= x1 + 0.01; x += 1.5) g.add(en(caja(0.04, 1.05, 0.04, M.aceroClaro), x, y + 0.53, z));
-    const v = new THREE.Mesh(new THREE.PlaneGeometry(L, 0.9), M.vidrio); v.position.set((x0 + x1) / 2, y + 0.55, z); g.add(v); return g;
+    g.add(en(celosia(L, 0.85, 'x', M.listones, 0.12, 0.05, 0.04), (x0 + x1) / 2, y + 0.56, z)); return g;
   }
   function barra(zFrente, x0, x1) {
     const g = new THREE.Group(); const prof = 9; const zAtras = zFrente - prof; const yB = terreno(0, zAtras) + 0.6; const L = x1 - x0; const cx = (x0 + x1) / 2;
@@ -50,10 +56,10 @@ export default function escenaLadera(ctx) {
       { const lo = en(caja(L + 3, 0.34, prof + 2.2, M.losa, 2), cx - 1.5, y - 0.17, zAtras + (prof + 2.2) / 2); lo.material = [M.fascia, M.fascia, M.piso, M.cieloRaso, M.fascia, M.fascia]; g.add(lo); }
       for (let x = x0 + 1.4; x < x1; x += 2.4) { const lam = caja(0.18, 0.04, 1.6, M.luz); lam.castShadow = false; lam.position.set(x, y + PISO - 0.38, zAtras + prof / 2); g.add(lam); }
       g.add(en(caja(L, PISO - 0.3, 0.2, M.interior, 2), cx, y + (PISO - 0.3) / 2, zAtras + 0.1));
-      // banda de vidrio retranqueada con marcos
-      const v = new THREE.Mesh(new THREE.PlaneGeometry(L - 0.4, PISO - 0.4), M.vidrio); v.position.set(cx, y + (PISO - 0.3) / 2, zFrente - 0.15); g.add(v);
+      // banda continua de celosía de listones de madera con marcos (sin vidrio)
+      g.add(en(celosia(L - 0.2, PISO - 0.45, 'x', M.listones, 0.14, 0.07, 0.05), cx, y + (PISO - 0.3) / 2, zFrente - 0.15));
       for (let x = x0; x <= x1 + 0.01; x += 2.4) g.add(en(caja(0.06, PISO - 0.3, 0.08, M.acero), x, y + (PISO - 0.3) / 2, zFrente - 0.15));
-      // celosías corredizas de listones de madera en algunos paños
+      // segunda capa: celosías corredizas de listones al frente en algunos paños
       for (let x = x0 + 1.2; x < x1; x += 2.4) if (((x - x0) / 2.4 + n) % 3 < 1.2) { const p = new THREE.Group(); for (let k = 0; k < 14; k++) p.add(en(caja(0.07, PISO - 0.5, 0.04, M.listones, 0.8), -1.1 + k * 0.17, 0, 0)); p.position.set(x, y + (PISO - 0.3) / 2, zFrente + 0.05); g.add(p); }
       g.add(baranda(x0 - 3, x1, y, zFrente + 2.0));
     }
@@ -61,11 +67,11 @@ export default function escenaLadera(ctx) {
     [x0 + 3, x1 - 3].forEach((xc) => { const b = new THREE.Group(); for (let k = 0; k < 34; k++) b.add(en(caja(0.08, PISO * 2 - 0.3, 0.06, M.listones, 0.8), -2.9 + k * 0.175, 0, 0)); b.position.set(xc, yB + PISO - 0.15, zFrente + 0.12); g.add(b); g.add(en(caja(6, PISO * 2 - 0.3, prof - 0.4, M.madera, 1.5), xc, yB + PISO - 0.15, zAtras + prof / 2 - 0.1)); });
     // pilotes de acero hasta el terreno
     for (let x = x0; x <= x1 + 0.01; x += 6) [zFrente + 2, zFrente - 2, zAtras + 1].forEach((z) => { const h = yB - terreno(x, z); if (h > 0.2) g.add(en(caja(0.24, h, 0.24, M.acero), x, terreno(x, z) + h / 2, z)); });
-    // cubierta flotante: vigas inclinadas, franjas alternas de paneles solares y vidrio
+    // cubierta flotante: vigas inclinadas, franjas alternas de paneles solares y pérgola de listones
     const yT = yB + PISO * 2; const yA = yT + 1.5; const yF = yT + 0.5; const zA = zAtras - 0.5; const zF = zFrente + 4.2; const yR = (z) => yA + ((z - zA) / (zF - zA)) * (yF - yA);
     for (let x = x0 - 3; x <= x1 + 0.01; x += 6) { g.add(en(caja(0.2, yA - yT, 0.2, M.acero), x, yT + (yA - yT) / 2, zA + 0.4)); const vg = caja(0.16, 0.3, Math.hypot(zF - zA, yA - yF), M.acero); vg.position.set(x, (yA + yF) / 2, (zA + zF) / 2); vg.rotation.x = Math.atan2(yA - yF, zF - zA); g.add(vg); }
     const ang = Math.atan2(yA - yF, zF - zA); const largoT = Math.hypot(zF - zA, yA - yF);
-    for (let x = x0 - 3; x < x1; x += 1.5) { const solar = Math.round((x - x0) / 1.5) % 2 === 0; const p = caja(1.35, 0.04, largoT, solar ? M.solar : M.techoVidrio); if (solar) p.material = [M.acero, M.acero, M.solar, M.acero, M.acero, M.acero]; p.position.set(x + 0.75, (yA + yF) / 2 + 0.2, (zA + zF) / 2); p.rotation.x = ang; g.add(p); }
+    for (let x = x0 - 3; x < x1; x += 1.5) { const solar = Math.round((x - x0) / 1.5) % 2 === 0; let p; if (solar) { p = caja(1.35, 0.04, largoT, M.solar); p.material = [M.acero, M.acero, M.solar, M.acero, M.acero, M.acero]; } else p = celosia(1.35, 0.06, 'x', M.listones, 0.15, 0.08, largoT); p.position.set(x + 0.75, (yA + yF) / 2 + 0.2, (zA + zF) / 2); p.rotation.x = ang; g.add(p); }
     return { g, yB };
   }
   const baja = barra(-14, -24, 24); escena.add(baja.g); const alta = barra(-30, -24, 24); escena.add(alta.g);
