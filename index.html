@@ -62,5 +62,20 @@
  update();
 })();
 </script>
+<script>
+(function(){
+const root=document.getElementById('root');if(!root)return;
+const items=[['Amortiguar','Reducir la energía del oleaje mediante vegetación costera.'],['Elevar','Mantener la conectividad mediante pasarelas elevadas.'],['Regenerar','Recuperar ecosistemas y favorecer la retención de sedimentos.'],['Adaptar','Permitir la transformación del paisaje frente al ascenso del mar.']];
+function render(){
+const h=[...root.querySelectorAll('h1,h2,h3,h4')].find(e=>/habitar un borde costero cambiante|ascenso del mar e incertidumbre de sedimentos/i.test(e.textContent));
+if(!h||h.nextElementSibling?.classList.contains('operaciones-adaptativas'))return;
+const wrap=document.createElement('div');wrap.className='operaciones-adaptativas';wrap.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;color:#e8eef0;font:12px Geist Mono,monospace';
+const info=document.createElement('div');info.style.cssText='flex-basis:100%;color:#d6dfe1;line-height:1.5';info.hidden=true;info.setAttribute('role','status');
+for(const [name,desc] of items){const b=document.createElement('button');b.type='button';b.textContent=name;b.title=desc;b.style.cssText='border:1px solid #b96d59;background:transparent;color:#df947d;padding:8px 10px;border-radius:3px;cursor:pointer';b.setAttribute('aria-expanded','false');b.onclick=()=>{const open=b.getAttribute('aria-expanded')!=='true';for(const x of wrap.querySelectorAll('button'))x.setAttribute('aria-expanded','false');b.setAttribute('aria-expanded',String(open));info.hidden=!open;info.textContent=open?desc:'';};wrap.append(b);}
+wrap.append(info);h.after(wrap);
+}
+new MutationObserver(render).observe(root,{childList:true,subtree:true,characterData:true});render();
+})();
+</script>
 </body>
 </html>
