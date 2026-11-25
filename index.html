@@ -77,5 +77,26 @@ wrap.append(info);h.after(wrap);
 new MutationObserver(render).observe(root,{childList:true,subtree:true,characterData:true});render();
 })();
 </script>
+<script>
+(function(){
+const root=document.getElementById('root');if(!root)return;
+const items=[['Captar','Aprovechar la topografía para recolectar aguas lluvias.'],['Retener','Almacenar el agua mediante lagunas de retención.'],['Filtrar','Mejorar la calidad del agua mediante especies vegetales.'],['Reutilizar','Aprovechar el agua tratada para riego y usos comunitarios compatibles con su calidad.']];
+function render(){
+const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);let n;
+while(n=walker.nextNode()){
+const s=n.nodeValue;
+if(/agua de lluvia retenida y limpiada en la meseta/i.test(s))n.nodeValue=s.replace(/agua de lluvia retenida y limpiada en la meseta/gi,'Cosechar el agua a través del paisaje');
+else if(/^\s*09\s*·\s*humedal de fitofiltración\s*$/i.test(s))n.nodeValue='ESTRATEGIA 09 · INFRAESTRUCTURA HÍDRICA';
+else if(/^\s*Corte esquemático, sin escala vertical; niveles de agua ilustrativos para una laguna de retención/i.test(s))n.nodeValue='Transformar la meseta en una infraestructura ecológica de captación, almacenamiento y fitofiltración de aguas lluvias, fortaleciendo la autonomía hídrica de Tierra Bomba. '+s.trim();
+}
+const h=[...root.querySelectorAll('h1,h2,h3,h4')].find(e=>/cosechar el agua a través del paisaje/i.test(e.textContent));if(!h||h.nextElementSibling?.classList.contains('operaciones-hidricas'))return;
+const wrap=document.createElement('div');wrap.className='operaciones-hidricas';wrap.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;color:#e8eef0;font:12px Geist Mono,monospace';
+const info=document.createElement('div');info.style.cssText='flex-basis:100%;color:#d6dfe1;line-height:1.5';info.hidden=true;info.setAttribute('role','status');
+for(const [name,desc] of items){const b=document.createElement('button');b.type='button';b.textContent=name;b.title=desc;b.style.cssText='border:1px solid #b96d59;background:transparent;color:#df947d;padding:8px 10px;border-radius:3px;cursor:pointer';b.setAttribute('aria-expanded','false');b.onclick=()=>{const open=b.getAttribute('aria-expanded')!=='true';for(const x of wrap.querySelectorAll('button'))x.setAttribute('aria-expanded','false');b.setAttribute('aria-expanded',String(open));info.hidden=!open;info.textContent=open?desc:'';};wrap.append(b);}
+wrap.append(info);h.after(wrap);
+}
+new MutationObserver(render).observe(root,{childList:true,subtree:true,characterData:true});render();
+})();
+</script>
 </body>
 </html>
