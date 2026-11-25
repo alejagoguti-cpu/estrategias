@@ -45,5 +45,22 @@
       <script>(function () { var p = document.getElementById('pre'); var ver = function () { p.classList.add('letra'); }; if (document.fonts && document.fonts.load) { Promise.all([document.fonts.load('300 40px "Barlow Condensed"'), document.fonts.load('400 16px "Geist"'), document.fonts.load('400 12px "Geist Mono"')]).then(ver, ver); setTimeout(ver, 2500); } else { ver(); } })();</script>
     </div>
     <div id="root"></div>
-  </body>
+  <script>
+(function(){
+ const root=document.getElementById('root');
+ if(!root)return;
+ function update(){
+ const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
+ let n;
+ while(n=walker.nextNode()){
+ const s=n.nodeValue;
+ if(/ascenso del mar\s+e\s+incertidumbre de sedimentos/i.test(s)) n.nodeValue=s.replace(/ascenso del mar\s+e\s+incertidumbre de sedimentos/gi,'Habitar un borde costero cambiante');
+ else if(/^\s*Corte dibujado con puntos/i.test(s)) n.nodeValue='La sección territorial representa la transición entre el ecosistema marino y el suelo habitable, integrando manglares, zonas intermareales y pasarelas elevadas como mecanismos de adaptación frente a las inundaciones y la transformación del litoral. '+s.trim();
+ }
+ }
+ new MutationObserver(update).observe(root,{childList:true,subtree:true,characterData:true});
+ update();
+})();
+</script>
+</body>
 </html>
