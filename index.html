@@ -66,5 +66,25 @@ wrap.append(info);h.after(wrap);
 new MutationObserver(render).observe(document.body,{childList:true,subtree:true,characterData:true});render();window.addEventListener('load',render);setInterval(render,1500);
 })();
 </script>
+<style>
+#criterios-diseno{background:#101619;color:#e8eef0;padding:90px 4vw 50px;font-family:Geist,sans-serif;scroll-margin-top:80px}#criterios-diseno h2{font:300 clamp(36px,6vw,72px)/1 'Barlow Condensed',sans-serif;text-transform:uppercase;margin:12px 0 28px}#criterios-diseno .cg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}#criterios-diseno button{background:none;border:0;border-top:1px solid #ffffff25;text-align:left;color:inherit;padding:12px 0;cursor:pointer;min-width:0}#criterios-diseno svg{width:100%;display:block;aspect-ratio:1.35}#criterios-diseno small{font:12px 'Geist Mono',monospace;color:#df947d}#criterios-diseno strong{display:block;font-size:16px;margin:5px 0}#criterios-diseno .motion{animation:criterionFloat 3s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}#criterios-diseno .water{animation:criterionWater 3s ease-in-out infinite alternate;transform-origin:bottom;transform-box:fill-box}@keyframes criterionFloat{from{transform:translateY(0)}to{transform:translateY(-13px)}}@keyframes criterionWater{from{transform:scaleY(.55);opacity:.5}to{transform:scaleY(1);opacity:.9}}@media(max-width:800px){#criterios-diseno .cg{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}}@media(prefers-reduced-motion:reduce){#criterios-diseno *{animation:none!important}}
+</style><script>
+(function(){
+const entries=[['paisaje-adaptativo','Adaptación costera','#65b9c9'],['humedal','Gestión hídrica','#65b9c9'],['vivienda','Modularidad','#d28b69'],['colegio','Bioclimática','#e1bd67'],['huerta','Paisaje productivo','#a3c76b'],['parque','Integración ecológica','#a3c76b'],['colegio-ladera','Adaptación topográfica','#d28b69'],['conjunto','Hábitat colectivo','#65b9c9']];
+function block(x,y,h,col){return '<g><path d="M'+x+' '+y+'l30 -15 30 15 -30 15z" fill="'+col+'"/><path d="M'+x+' '+y+'v'+h+'l30 15v-'+h+'z" fill="#657176"/><path d="M'+(x+30)+' '+(y+15)+'l30 -15v'+h+'l-30 15z" fill="#303e44"/></g>'}
+function diagram(i,col){let s='<svg viewBox="0 0 240 175" aria-hidden="true"><path d="M12 105L120 51 228 105 120 159Z" fill="#202d32" stroke="#526168"/><path d="M39 119L147 65M66 132L174 78M93 146L201 92M39 92L147 146M66 78L174 132M93 65L201 119" stroke="#526168" opacity=".35"/>';
+if(i===0||i===1||i===7)s+='<path class="water" d="M22 105L95 69 151 97 78 134Z" fill="'+col+'" opacity=".65"/>';
+if(i===0){s+='<path d="M65 91L165 91M65 91v35M115 91v27M165 91v15" stroke="#d5b18a" stroke-width="4"/><path class="motion" d="M35 110l15 -25 15 25m80 5 15 -25 15 25" stroke="#a3c76b" stroke-width="4" fill="none"/>';}
+else if(i===1){s+='<g class="motion" stroke="'+col+'" stroke-width="2" stroke-dasharray="5 5"><path d="M55 25v60M90 15v60M125 25v60M160 15v60"/></g><path d="M90 100l8 -20 8 20m15 8 8 -20 8 20" stroke="#a3c76b" stroke-width="4" fill="none"/>';}
+else if(i===2){s+=block(55,85,32,col)+'<g class="motion">'+block(115,85,32,col)+'</g>'+block(85,115,20,col);}
+else if(i===3){s+=block(85,85,32,'#b9c4c7')+'<g class="motion"><path d="M55 65l65 -32 65 32 -65 32z" fill="'+col+'"/></g><path d="M30 110q55 -40 120 -10" stroke="#65b9c9" stroke-width="3" stroke-dasharray="6 5" fill="none"/>';}
+else if(i===4||i===5){for(let j=0;j<5;j++){let x=50+j*30,y=105+(j%2)*15;s+='<g class="motion" style="animation-delay:'+j*.2+'s"><path d="M'+x+' '+y+'v-25" stroke="#a3c76b" stroke-width="3"/><circle cx="'+x+'" cy="'+(y-25)+'" r="'+(i===4?9:15)+'" fill="'+col+'"/></g>';}if(i===5)s+='<path d="M85 120l30 -30 30 30" stroke="#d28b69" stroke-width="4" fill="none"/>';}
+else if(i===6){s+='<path d="M55 125l70 -35 55 25M80 125v-45M150 115V55" stroke="#b9c4c7" stroke-width="4"/>'+block(55,65,20,col)+'<g class="motion">'+block(125,40,20,col)+'</g>';}
+else{s+=block(45,65,45,'#b9c4c7')+block(145,75,45,'#b9c4c7')+'<path class="motion" d="M110 100v-20m0 8l-10 -10m10 10 10 -10" stroke="#a3c76b" stroke-width="4"/>';}
+return s+'</svg>';}
+function mount(){if(document.getElementById('criterios-diseno'))return;const first=document.getElementById('paisaje-adaptativo')||[...document.querySelectorAll('h2')].find(h=>/habitar un borde costero|ascenso del mar e incertidumbre/i.test(h.textContent))?.closest('section');if(!first)return;const el=document.createElement('section');el.id='criterios-diseno';el.innerHTML='<small>TIERRA BOMBA · OPERACIONES PROYECTUALES</small><h2>Criterios de diseño</h2><div class="cg">'+entries.map(([id,name,col],i)=>'<button type="button" data-target="'+id+'">'+diagram(i,col)+'<small>0'+(i+1)+'</small><strong>'+name+'</strong></button>').join('')+'</div>';el.addEventListener('click',e=>{const b=e.target.closest('button[data-target]');if(b)document.getElementById(b.dataset.target)?.scrollIntoView({behavior:'smooth'});});first.before(el);}
+new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});mount();window.addEventListener('load',mount);
+})();
+</script>
 </body>
 </html>
